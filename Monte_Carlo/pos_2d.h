@@ -1,0 +1,22 @@
+#ifndef POS_2D_H
+#define POS_2D_H
+
+typedef unsigned int POS_2D_TYPE;
+
+struct POS_2D
+{
+	POS_2D_TYPE X;
+	POS_2D_TYPE Y;
+
+	POS_2D(const POS_2D_TYPE &_X, const POS_2D_TYPE &_Y) : X(_X), Y(_Y) {}
+	POS_2D() = default;
+	POS_2D(const POS_2D &S) = default;
+	POS_2D(POS_2D &&S) = default;
+	POS_2D &operator=(const POS_2D &S) = default;
+	POS_2D &operator=(POS_2D &&S) = default;
+
+	POS_2D operator+(const POS_2D &S) const { return POS_2D(this->X+S.X, this->Y+S.Y); }
+	bool operator==(const POS_2D &S) const { return ((this->X == S.X && this->Y == S.Y)? 1:0); }
+};
+
+#endif // POS_2D_H
