@@ -1,6 +1,7 @@
 #ifndef MAP_2D_TEMPLATES_H
 #define MAP_2D_TEMPLATES_H
 
+#include "standard_definitions.h"
 #include "map_2d.h"
 
 template<class T>
@@ -24,11 +25,11 @@ void Map2D<T>::ResetMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeigh
 template<class T>
 int Map2D<T>::GetPixel(const POS_2D &Position, T &Value) const
 {
-	const POS_2D_TYPE cellPosInVector = Position.X + this->_Width*Position.Y;
-	if(cellPosInVector >= this->_CellData.size())
+	if(Position.X >= this->_Width || Position.Y >= this->_Height
+			|| Position.X < 0 || Position.Y < 0)
 		return -1;
 
-	Value = this->_CellData.at(cellPosInVector);
+	Value = this->_CellData.at(Position.X + this->_Width*Position.Y);
 	return 1;
 }
 

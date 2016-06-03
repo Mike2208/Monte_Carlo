@@ -1,6 +1,8 @@
 #ifndef POS_2D_H
 #define POS_2D_H
 
+#include "standard_definitions.h"
+
 typedef unsigned int POS_2D_TYPE;
 
 struct POS_2D
@@ -17,6 +19,14 @@ struct POS_2D
 
 	POS_2D operator+(const POS_2D &S) const { return POS_2D(this->X+S.X, this->Y+S.Y); }
 	bool operator==(const POS_2D &S) const { return ((this->X == S.X && this->Y == S.Y)? 1:0); }
+	bool operator!=(const POS_2D &S) const { return ((this->X == S.X && this->Y == S.Y)? 0:1); }
 };
+
+#ifdef DEBUG	// DEBUG
+static std::ostream& operator<<(std::ostream& os, const POS_2D &obj)
+{
+	return (os << "X: " << obj.X << "\tY: " << obj.Y);
+}
+#endif			// ~DEBUG
 
 #endif // POS_2D_H

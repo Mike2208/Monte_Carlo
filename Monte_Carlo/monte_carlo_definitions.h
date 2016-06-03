@@ -1,6 +1,7 @@
 #ifndef MONTE_CARLO_DEFINITIONS_H
 #define MONTE_CARLO_DEFINITIONS_H
 
+#include "standard_definitions.h"
 #include "tree_class.h"
 #include "monte_carlo_node_data.h"
 

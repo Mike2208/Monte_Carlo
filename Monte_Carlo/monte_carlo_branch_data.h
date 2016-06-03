@@ -5,6 +5,8 @@
  *		stores values for one run-through
  */
 
+
+#include "standard_definitions.h"
 #include "monte_carlo_node_data.h"
 #include "monte_carlo_definitions.h"
 
@@ -21,7 +23,7 @@ class MonteCarloBranchData
 		typedef OGM_LOG_TYPE	LOG_MAP_TYPE;
 
 	public:
-		MonteCarloBranchData();
+		//MonteCarloBranchData() = default;
 
 		void Reset();
 
@@ -33,13 +35,15 @@ class MonteCarloBranchData
 		int	MoveUpOneNode();			// Moves up the tree towards the root
 
 		const MonteCarloNodeData &GetNodeData() const { return this->pCurNode->GetData(); }
+		const POS_2D &GetBotPos() const { return this->PathTaken.at(this->PathTaken.size()-1); }
+		bool AtRootNode() const { return (this->pCurNode->GetParent() == nullptr ? 1:0); }		// Returns whether we are at root node
 
 		POS_2D				Destination;	// Necessary for D* map calculation
 
 		MONTE_CARLO_NODE	*pCurNode;		// Current node of this branch
 
 		std::vector<POS_2D>	PathTaken;					// Path of robot to reach this node
-		PATH_ITERATOR		FirstMoveAfterObservation;	// Stores where the last observation took place
+		PATH_ITERATOR		FirstPosAfterObservation;	// Stores where the last observation took place
 
 		const Map2D<OGM_CELL_TYPE>	*pOGMap;		// Occupancy Grid Map
 		Map2D<LOG_MAP_TYPE>			LogMap;			// Converted Occupancy Grid Map to log values for D* algorithm ( log values let us add probabilities instead of multiplying )

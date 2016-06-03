@@ -31,4 +31,6 @@ HEADERS += \
     monte_carlo_definitions.h \
     monte_carlo_node_data.h \
     d_star_map.h \
-    tree_node_templates.h
+    tree_node_templates.h \
+    d_star_map_templates.h \
+    tree_class_templates.h

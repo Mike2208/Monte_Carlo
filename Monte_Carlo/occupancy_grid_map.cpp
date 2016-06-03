@@ -36,14 +36,21 @@ OGM_PROB_TYPE OccupancyGridMap::CalculateProbValueFromLog(const OGM_LOG_TYPE &Va
 	return OGM_PROB_MAX-static_cast<OGM_PROB_TYPE>(exp(-Value));
 }
 
+OGM_PROB_TYPE OccupancyGridMap::CalculateCertaintyFromLog(const OGM_LOG_TYPE &Value)
+{
+	return static_cast<OGM_PROB_TYPE>(exp(-Value));
+}
+
 OGM_ENTROPY_TYPE OccupancyGridMap::CalculateEntropyFromCell(const OGM_CELL_TYPE &Value)
 {
 	// prevent 0*inf
 	if(Value == OGM_CELL_MAX || Value == OGM_CELL_MIN)
 		return 0;
 
-	OGM_CELL_TYPE invertedVal = OGM_CELL_MAX-Value;
-	return static_cast<OGM_ENTROPY_TYPE>(-(log2(Value)*Value+log2(invertedVal)*invertedVal));
+	// Convert to probability
+	const OGM_PROB_TYPE prob = OccupancyGridMap::CalculateProbValFromCell(Value);
+	const OGM_PROB_TYPE invertedProb = OGM_PROB_MAX-prob;
+	return static_cast<OGM_ENTROPY_TYPE>(-(log2(prob)*prob+log2(invertedProb)*invertedProb));
 }
 
 OGM_ENTROPY_TYPE OccupancyGridMap::CalculateEntropyFromMap(const OGM_MAP_TYPE &Map)

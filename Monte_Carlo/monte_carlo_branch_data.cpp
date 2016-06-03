@@ -3,7 +3,7 @@
 void MonteCarloBranchData::Reset()
 {
 	this->PathTaken.clear();
-	this->FirstMoveAfterObservation = 0;
+	this->FirstPosAfterObservation = 0;
 	this->pOGMap = nullptr;
 }
 
@@ -19,7 +19,7 @@ void MonteCarloBranchData::ResetBranchDataToRoot(const MONTE_CARLO_TREE_CLASS &T
 {
 	// Set paths to zero
 	this->PathTaken.clear();
-	this->FirstMoveAfterObservation = 0;
+	this->FirstPosAfterObservation = 0;
 
 	// Recalculate log map
 	OccupancyGridMap::CalculateLogMapFromCellMap(*this->pOGMap, this->LogMap);
@@ -38,7 +38,7 @@ void MonteCarloBranchData::ResetBranchDataToRoot(const MONTE_CARLO_TREE_CLASS &T
 int	MonteCarloBranchData::MoveDownOneNode(const MONTE_CARLO_NODE::CHILD_ID &NextNodeID)
 {
 	// Check that next node exists
-	if(this->pCurNode->GetNumChildren() >= NextNodeID)
+	if(NextNodeID >= this->pCurNode->GetNumChildren())
 		return -1;
 
 	// Update all data
@@ -77,8 +77,10 @@ void MonteCarloBranchData::UpdateBranchData(const MONTE_CARLO_NODE &NextNode)
 	}
 	else if(nextData.Action.IsObserveAction())
 	{
-		// If this is observe action, reset first position after observation to next move
-		this->FirstMoveAfterObservation = this->PathTaken.size();
+		// If this is observe action, reset first position after observation to this position
+		this->FirstPosAfterObservation = this->PathTaken.size()-1;
+		//if(this->FirstPosAfterObservation > 0)
+		//	this->FirstPosAfterObservation--;		// Set last position as first
 	}
 	else
 	{
@@ -100,33 +102,37 @@ void MonteCarloBranchData::UpdateBranchData(const MONTE_CARLO_NODE &NextNode)
 
 void MonteCarloBranchData::RevertBranchData(const MONTE_CARLO_NODE &PrevNode)
 {
-	// Set new current node
-	this->pCurNode = const_cast<MONTE_CARLO_NODE *>(&PrevNode);
+	// Check that given node is parent
+	if(&PrevNode != this->pCurNode->GetParent())
+		return;
 
-	// Get Data
-	const MonteCarloNodeData &prevData = PrevNode.GetData();
+	// Get current Data
+	const MonteCarloNodeData &curData = this->pCurNode->GetData();
 
 	// Revert maps with data
-	if(prevData.Action.IsMoveAction())
+	if(curData.Action.IsMoveAction())
 	{
 		// If this node represents a move action, update path and visits map
-		this->NumVisitsMap.GetPixelR(prevData.NewCell)--;
+		this->NumVisitsMap.GetPixelR(curData.NewCell)--;
 
 		this->PathTaken.pop_back();
 
 		// Just set first move after observation to invalid
-		this->FirstMoveAfterObservation = this->PathTaken.size();
+		this->FirstPosAfterObservation = this->PathTaken.size();
 	}
-	else if(prevData.Action.IsObserveAction())
+	else if(curData.Action.IsObserveAction())
 	{
 		// If this is observe action, reset first position after observation to next move
-		this->FirstMoveAfterObservation = this->PathTaken.size();
+		this->FirstPosAfterObservation = this->PathTaken.size();
 	}
 	else
 	{
 		// Recalculate Log Map value from cell data
-		this->LogMap.GetPixelR(prevData.NewCell) = OccupancyGridMap::CalculateLogValFromCell(this->pOGMap->GetPixel(prevData.NewCell));
+		this->LogMap.GetPixelR(curData.NewCell) = OccupancyGridMap::CalculateLogValFromCell(this->pOGMap->GetPixel(curData.NewCell));
 
 		this->DStarCostMap.CalculateDStarCostMap(this->LogMap, this->Destination, OGM_LOG_MIN, OGM_LOG_MAX);
 	}
+
+	// Set new current node
+	this->pCurNode = const_cast<MONTE_CARLO_NODE *>(&PrevNode);
 }

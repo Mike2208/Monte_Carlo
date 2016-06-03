@@ -1,8 +1,9 @@
 #ifndef TREE_NODE_H
 #define TREE_NODE_H
 
+#include "standard_definitions.h"
 #include <vector>
-
+#include <algorithm>	// std::sort
 
 template<class T>
 class TreeNode
@@ -12,13 +13,13 @@ class TreeNode
 	public:
 		typedef typename CHILD_STORAGE::size_type CHILD_ID;
 
-		TreeNode() = default;
-		TreeNode(const TreeNode<T> &S) noexcept;			// Copy Constructor
-		TreeNode(TreeNode<T> &&S) noexcept;		// Move Constructor
-		TreeNode(TreeNode<T> *const Parent, const T &NewData) noexcept : _Parent(Parent), _Children(), _Data(NewData) { this->_Children.resize(0); }
+		TreeNode(TreeNode<T> *const Parent, const T &NewData) noexcept;
 
-		TreeNode<T> &operator=(const TreeNode<T> &S) noexcept;		// copy assignment operator
-		TreeNode<T> &operator=(TreeNode<T> &&S) noexcept;	// move assignment operator
+		TreeNode() = default;
+		TreeNode(const TreeNode<T> &S) noexcept;	// Copy Constructor
+		TreeNode(TreeNode<T> &&S) noexcept;			// Move Constructor
+		TreeNode<T> &operator=(const TreeNode<T> &S) noexcept;	// copy assignment operator
+		TreeNode<T> &operator=(TreeNode<T> &&S) noexcept;		// move assignment operator
 
 		void Reset()	{ this->_Children.clear(); this->_Parent = nullptr; }
 
@@ -35,9 +36,17 @@ class TreeNode
 
 		TreeNode<T> *AddChild(const T &NewData);
 
+		template<class U>
+		void SortChildren(const U &CompareClass) { std::sort(this->_Children.begin(), this->_Children.end(), CompareClass); }
+
 		bool IsLeaf() const { return (this->_Children.size() > 0 ? 0:1); }		// Returns whether node is leaf ( no children )
 
 		const CHILD_STORAGE &GetStorage() const	{ return this->_Children; }
+
+#ifdef DEBUG	// DEBUG
+		unsigned int _NodeDepth;
+		void PrintNode() const;
+#endif			// ~DEBUG
 
 	private:
 		TreeNode<T>		*_Parent;

@@ -1,6 +1,7 @@
 #ifndef MAP_2D_H
 #define MAP_2D_H
 
+#include "standard_definitions.h"
 #include "pos_2d.h"
 #include <vector>
 
@@ -10,7 +11,7 @@ class Map2D
 		typedef std::vector<T> CELL_STORAGE;
 	public:
 
-		Map2D() = default;
+		//Map2D() = default;
 
 		void ResizeMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight);
 		void ResetMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight, const T &DefaultCellValue);

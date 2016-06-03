@@ -1,6 +1,7 @@
 #ifndef ALGORITHM_D_STAR_TEMPLATES_H
 #define ALGORITHM_D_STAR_TEMPLATES_H
 
+#include "standard_definitions.h"
 #include "robot_navigation.h"
 #include "algorithm_d_star.h"
 
@@ -47,10 +48,6 @@ void AlgorithmDStar<T>::CalculateDStarCostMap(const Map2D<T> &OriginalMap, const
 				// Add to queue to be checked
 				posToCheck.push(adjoiningPos);
 			}
-			else if(adjoiningDist == compDistVal)
-			{
-				// If two adjacent positions have the same cost to goal, select the closer one
-			}
 		}
 
 		// Position checked, go to next pos
@@ -61,11 +58,11 @@ void AlgorithmDStar<T>::CalculateDStarCostMap(const Map2D<T> &OriginalMap, const
 
 // code copied from CalculateDStarMap
 template<class T>
-void AlgorithmDStar<T>::CalculateDStarHomologyDistMap(const Map2D<T> &OriginalMap, const POS_2D &ZeroPos, const T &CutOffValue, D_STAR_DIST_MAP &DistMap)
+void AlgorithmDStar<T>::CalculateDStarHomologyDistMap(const Map2D<T> &OriginalMap, const POS_2D &ZeroPos, const T &CutOffValue, DIST_MAP &DistMap)
 {
-	const D_STAR_MAP_DIST_TYPE maxVal = GetInfiniteVal<D_STAR_MAP_DIST_TYPE>();
+	const DIST_MAP_TYPE maxVal = GetInfiniteVal<DIST_MAP_TYPE>();
 
-	DistMap.ResetMap(OriginalMap.GetHeight(), OriginalMap.GetWidth(), maxVal);
+	DistMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), maxVal);
 
 	std::queue<POS_2D> posToCheck;
 
@@ -79,13 +76,13 @@ void AlgorithmDStar<T>::CalculateDStarHomologyDistMap(const Map2D<T> &OriginalMa
 	do
 	{
 		const POS_2D &curPos = posToCheck.front();
-		const D_STAR_MAP_DIST_TYPE &curDist = DistMap.GetPixel(curPos);
+		const DIST_MAP_TYPE &curDist = DistMap.GetPixel(curPos);
 
 		// Check all adjoining positions
 		for(auto navDirection : NavigationOptions)
 		{
 			const POS_2D adjoiningPos = curPos+navDirection;
-			D_STAR_MAP_DIST_TYPE adjoiningDist;
+			DIST_MAP_TYPE adjoiningDist;
 
 			if(DistMap.GetPixel(adjoiningPos, adjoiningDist) < 0)
 				continue;		// Check that adjoining pos is valid (not outside of map)

@@ -1,6 +1,7 @@
 #ifndef ROBOT_NAVIGATION_H
 #define ROBOT_NAVIGATION_H
 
+#include "standard_definitions.h"
 #include "pos_2d.h"
 
 typedef int NAV_OPTION_TYPE;
