@@ -2,8 +2,8 @@
 #define STANDARD_DEFINITIONS_H
 
 #ifndef DEBUG
-#define DEBUG
-#include <iostream>
+//#define DEBUG
+//#include <iostream>
 #endif
 
 #include <type_traits>
