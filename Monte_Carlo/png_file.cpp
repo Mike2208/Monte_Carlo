@@ -91,8 +91,8 @@ int PNGFile::ReadImageToArray(std::vector<PIXEL_TYPE> &ImageArray, IMAGE_SIZE_TY
 	//png_set_strip_16(png_ptr);
 
 	auto rowbytes = png_get_rowbytes(png_ptr, info_ptr);
-	auto color_type = png_get_color_type(png_ptr, info_ptr);
-	auto bit_depth  = png_get_bit_depth(png_ptr, info_ptr);
+//	auto color_type = png_get_color_type(png_ptr, info_ptr);
+//	auto bit_depth  = png_get_bit_depth(png_ptr, info_ptr);
 
 	// Create row pointers to save where the image should be stored
 	std::vector<png_byte> tmpImage;

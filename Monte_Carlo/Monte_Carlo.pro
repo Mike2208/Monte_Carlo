@@ -15,7 +15,12 @@ SOURCES += main.cpp \
     monte_carlo_node_data.cpp \
     d_star_map.cpp \
     png_file.cpp \
-    png_convert_image_to_ogm.cpp
+    png_convert_image_to_ogm.cpp \
+    ogm_divider.cpp \
+    graph_class.cpp \
+    graph_vertice.cpp \
+    graph_edge.cpp \
+    graph_node.cpp
 
 HEADERS += \
     map_2d.h \
@@ -37,6 +42,12 @@ HEADERS += \
     d_star_map_templates.h \
     tree_class_templates.h \
     png_file.h \
-    png_convert_image_to_ogm.h
+    png_convert_image_to_ogm.h \
+    ogm_divider.h \
+    graph_class.h \
+    graph_vertice.h \
+    graph_definitions.h \
+    graph_edge.h \
+    graph_node.h
 
 unix:!macx: LIBS += -lpng
