@@ -110,4 +110,83 @@ void AlgorithmDStar<T>::CalculateDStarHomologyDistMap(const Map2D<T> &OriginalMa
 	while(posToCheck.size() > 0);
 }
 
+template<class T>
+void AlgorithmDStar<T>::UpdateMap_SingleValue(const Map2D<T> &UpdatedOriginalMap, const POS_2D &UpdatedPos, Map2D<T> &DStarMapToUpdate)
+{
+	std::queue<POS_2D> posToCheck;		// First value in array: Position to check, second value: Position that update originated from
+
+	//Begin by checking start position
+	posToCheck.push(UpdatedPos);
+
+	// Continue until all values have been updated
+	AlgorithmDStar<T>::UpdateMap_Routine(UpdatedOriginalMap, posToCheck, DStarMapToUpdate);
+}
+
+template<class T>
+void AlgorithmDStar<T>::UpdateMap(const Map2D<T> &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedPos, Map2D<T> &DStarMapToUpdate)
+{
+	std::queue<POS_2D> posToCheck;		// First value in array: Position to check, second value: Position that update originated from
+
+	//Begin by checking all updated positions
+	for(const auto &curPos : UpdatedPos)
+	{
+		posToCheck.push(curPos);
+	}
+
+	// Continue until all values have been updated
+	AlgorithmDStar<T>::UpdateMap_Routine(UpdatedOriginalMap, posToCheck, DStarMapToUpdate);
+}
+
+template<class T>
+void AlgorithmDStar<T>::UpdateMap_Routine(const Map2D<T> &UpdatedOriginalMap, std::queue<POS_2D> &PosToCheck, Map2D<T> &DStarMapToUpdate)
+{
+	// Continue until all values have been updated
+	do
+	{
+		const POS_2D &curPos = PosToCheck.front();
+
+		T bestAdjacentDistVal = GetInfiniteVal<T>();
+		POS_2D bestPos;
+
+		const T curVal = UpdatedOriginalMap.GetPixel(curPos);
+
+		// Find best distance to zero position
+		for(const auto &curNavOption : NavigationOptions)
+		{
+			const POS_2D adjacentPos = curPos + curNavOption;
+
+			//Check if pos exists and get value
+			T adjacentDistVal;
+			if(DStarMapToUpdate.GetPixel(adjacentPos, adjacentDistVal) < 0)
+				continue;		// Skip if pos is invalid
+
+			//Compare to best value
+			if(adjacentDistVal <= bestAdjacentDistVal)
+			{
+				bestPos = adjacentPos;
+				bestAdjacentDistVal = adjacentDistVal;
+			}
+		}
+
+		// Save best value if it is different, skip it and adjacent neighbors if nothing changes
+		T *pCurDistVal = &(DStarMapToUpdate.GetPixelR(curPos));
+		if(*pCurDistVal != bestAdjacentDistVal + curVal)
+		{
+			*pCurDistVal = bestAdjacentDistVal + curVal;
+
+			// Add all adjacent positions except for best one
+			for(const auto &curNavOption : NavigationOptions)
+			{
+				const POS_2D adjacentPos = curPos + curNavOption;
+
+				if(adjacentPos != bestPos)
+					PosToCheck.push(adjacentPos);
+			}
+		}
+
+		PosToCheck.pop();
+	}
+	while(PosToCheck.size() > 0);
+}
+
 #endif // ALGORITHM_D_STAR_TEMPLATES_H

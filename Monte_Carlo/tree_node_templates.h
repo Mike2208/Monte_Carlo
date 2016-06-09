@@ -42,8 +42,8 @@ template<class T>
 TreeNode<T> &TreeNode<T>::operator=(const TreeNode<T> &S) noexcept
 {
 	this->_Parent = S._Parent;
-	this->_Children = S->_Children;
-	this->_Data = S->_Data;
+	this->_Children = S._Children;
+	this->_Data = S._Data;
 
 #ifdef DEBUG	// DEBUG
 	this->_NodeDepth = S._NodeDepth;

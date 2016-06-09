@@ -21,7 +21,10 @@ SOURCES += main.cpp \
     graph_vertice.cpp \
     graph_edge.cpp \
     graph_node.cpp \
-    test_functions.cpp
+    test_functions.cpp \
+    test_map_2d.cpp \
+    policy_tree.cpp \
+    robot_action.cpp
 
 HEADERS += \
     map_2d.h \
@@ -50,6 +53,9 @@ HEADERS += \
     graph_definitions.h \
     graph_edge.h \
     graph_node.h \
-    test_functions.h
+    test_functions.h \
+    test_map_2d.h \
+    policy_tree.h \
+    robot_action.h
 
 unix:!macx: LIBS += -lpng

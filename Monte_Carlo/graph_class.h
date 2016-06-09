@@ -32,7 +32,7 @@ class GraphClass
 		GraphClass<T,U> &operator=(const GraphClass<T,U> &S) = default;
 		GraphClass<T,U> &operator=(GraphClass<T,U> &&S) = default;
 
-		void Init()	{ this->_Vertices.clear(); this->_Edges.clear(); this->_Vertices.push_back(GraphVertice<T,U>()); }		// Clear any previous data and add empty vertice
+		void Init()	{ this->_Vertices.clear(); this->_Edges.clear(); this->_Vertices.push_back(GRAPH_CLASS::GraphVertice<T,U>()); }		// Clear any previous data and add empty vertice
 
 	private:
 

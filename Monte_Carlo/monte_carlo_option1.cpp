@@ -138,13 +138,13 @@ int MonteCarloOption1::Expansion()
 
 			// Add node for movement
 			newNodeAdded = true;
-			this->_CurBranchData.pCurNode->AddChild(MonteCarloNodeData(adjacentPos, MONTE_CARLO_NODE_DATA::ACTION_MOVE, this->_CurBranchData.pCurNode->GetData().RemainingMapEntropy));
+			this->_CurBranchData.pCurNode->AddChild(MonteCarloNodeData(adjacentPos, ROBOT_ACTION::ACTION_MOVE, this->_CurBranchData.pCurNode->GetData().RemainingMapEntropy));
 		}
 		else if(adjacentProb < OGM_LOG_MAX)
 		{
 			// if position is unknown, perform observation action
 			newNodeAdded = true;
-			this->_CurBranchData.pCurNode->AddChild(MonteCarloNodeData(adjacentPos, MONTE_CARLO_NODE_DATA::ACTION_OBSERVE, this->_CurBranchData.pCurNode->GetData().RemainingMapEntropy));
+			this->_CurBranchData.pCurNode->AddChild(MonteCarloNodeData(adjacentPos, ROBOT_ACTION::ACTION_OBSERVE, this->_CurBranchData.pCurNode->GetData().RemainingMapEntropy));
 		}
 		// else cell is occupied, ignore it
 	}
@@ -181,13 +181,13 @@ int MonteCarloOption1::Simulation()
 				remainingEntropy = 0;	// remove rounding errors
 
 			// Add free observation and simulate it
-			this->_CurBranchData.pCurNode->AddChild(MonteCarloNodeData(this->_CurBranchData.GetNodeData().NewCell, MONTE_CARLO_NODE_DATA::RESULT_FREE, remainingEntropy));
+			this->_CurBranchData.pCurNode->AddChild(MonteCarloNodeData(this->_CurBranchData.GetNodeData().NewCell, ROBOT_ACTION::RESULT_FREE, remainingEntropy));
 			this->_CurBranchData.MoveDownOneNode(0);
 			this->NodeSimulation(this->_CurBranchData, *(this->_CurBranchData.pCurNode));
 			this->_CurBranchData.MoveUpOneNode();
 
 			// Add occupied observation and simulate it
-			this->_CurBranchData.pCurNode->AddChild(MonteCarloNodeData(this->_CurBranchData.GetNodeData().NewCell, MONTE_CARLO_NODE_DATA::RESULT_OCCUPIED, remainingEntropy));
+			this->_CurBranchData.pCurNode->AddChild(MonteCarloNodeData(this->_CurBranchData.GetNodeData().NewCell, ROBOT_ACTION::RESULT_OCCUPIED, remainingEntropy));
 			this->_CurBranchData.MoveDownOneNode(1);
 			this->NodeSimulation(this->_CurBranchData, *(this->_CurBranchData.pCurNode));
 			this->_CurBranchData.MoveUpOneNode();

@@ -12,7 +12,7 @@ void OccupancyGridMap::PrintMap(const char *FileName)
 	file << this->GetWidth() << " " << this->GetHeight() << std::endl;
 	file << std::to_string(OGM_CELL_MAX) << std::endl;		// Max value
 
-	for(POS_2D_TYPE Y=this->GetHeight()-1; Y>=0 && Y<this->GetHeight(); --Y)
+	for(POS_2D_TYPE Y=this->GetHeight()-1; (std::is_signed<POS_2D_TYPE>() ? Y>=0 : Y<this->GetHeight()); --Y)
 	{
 		for(POS_2D_TYPE X=0; X<this->GetWidth(); ++X)
 		{

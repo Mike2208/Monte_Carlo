@@ -37,4 +37,9 @@ class Map2D
 
 #include "map_2d_templates.h"
 
+typedef bool OGM_DISCRETE_TYPE;
+const OGM_DISCRETE_TYPE OGM_DISCRETE_FULL = 1;
+const OGM_DISCRETE_TYPE OGM_DISCRETE_EMPTY = 0;
+typedef Map2D<bool> Map2D_Discrete;
+
 #endif // MAP_2D_H
