@@ -20,7 +20,8 @@ SOURCES += main.cpp \
     graph_class.cpp \
     graph_vertice.cpp \
     graph_edge.cpp \
-    graph_node.cpp
+    graph_node.cpp \
+    test_functions.cpp
 
 HEADERS += \
     map_2d.h \
@@ -48,6 +49,7 @@ HEADERS += \
     graph_vertice.h \
     graph_definitions.h \
     graph_edge.h \
-    graph_node.h
+    graph_node.h \
+    test_functions.h
 
 unix:!macx: LIBS += -lpng
