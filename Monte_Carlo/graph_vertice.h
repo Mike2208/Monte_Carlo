@@ -23,20 +23,17 @@ class GraphVertice
 
 	public:
 
-		GraphVertice(VERTICE_STORAGE &Storage) : _Storage(Storage) {}
-
 		VERTICE_ID GetNumConnectedVertices() const	{ return this->_ConnectedVertices.size(); }
-		GraphVertice *GetConnectedVertice(const VERTICE_ID &ConnectedVerticeNum) const  { return &(this->_Storage.at(this->_ConnectedVertices.at(ConnectedVerticeNum))); }
+		VERTICE_ID GetConnectedVerticeID(const VERTICE_ID &ConnectedVerticeNum) const { return this->_ConnectedVertices.at(ConnectedVerticeNum); }
+
+		EDGE_ID GetConnectedEdgeID(const VERTICE_ID &ConnectedVerticeNum) const { return this->_ConnectedEdges.at(ConnectedVerticeNum); }
 
 		const T &GetVerticeData() const	{ return this->_Data; }	// Returns data of this vertice
-		T &GetVerticeDataR() { return this->_Data; }			// Returns reference to data of this vertice
+		T		&GetVerticeDataR() { return this->_Data; }			// Returns reference to data of this vertice
 
 		void SetVerticeData(const T &NewData)	{ this->_Data = NewData; }		// Sets data stored here
 
 	private:
-
-		VERTICE_STORAGE	&_Storage;		// Reference to storage vector of all vertices
-		VERTICE_ID		_VerticeID;		// ID of current vertice
 
 		T	_Data;		// Data stored in this node
 

@@ -23,10 +23,15 @@ class DStarMap
 		int CalculateMinCostPathLength(const POS_2D &StartPos, PATH_LENGTH_TYPE &PathLength, const T *const CutOffCellVal = nullptr) const
 		{ return DStarMap<T>::CalculateMinCostPathLength((*this), StartPos, PathLength, CutOffCellVal); }
 
+		int UpdateMap_SinglePos(const Map2D<T> &UpdatedOriginalMap, const T &OldValue,const POS_2D &UpdatePos, const bool IsUpdatedValueSmaller);		// Update one position of D* Map with new value
+
 	private:
 
 		POS_2D		_ZeroPos;
 		Map2D<T>	_DStarMap;
+
+		int UpdateMap_SinglePos_SmallerValue(const Map2D<T> &UpdatedOriginalMap, const T &OldValue,const POS_2D &UpdatePos);
+		int UpdateMap_SinglePos_LargerValue(const Map2D<T> &UpdatedOriginalMap, const T &OldValue,const POS_2D &UpdatePos);
 };
 
 #include "d_star_map_templates.h"

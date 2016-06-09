@@ -3,6 +3,9 @@
 
 #include "graph_definitions.h"
 
+#include <array>
+#include <vector>
+
 template<class T, class U>
 class GraphEdge
 {
@@ -13,22 +16,18 @@ class GraphEdge
 
 	public:
 
-		GraphEdge(EDGE_STORAGE &Storage) : _Storage(Storage) {}
+		VERTICE_ID GetConnectedVerticeID(const bool FirstVertice) const		{ return this->_ConnectedVertices[FirstVertice]; }
 
-		const U &GetEdgeData() const	{ return this->_Data; }	// Returns data of this vertice
-		U &GetEdgeDataR() { return this->_Data; }			// Returns reference to data of this vertice
+		const U &GetEdgeData() const	{ return this->_Data; }		// Returns data of this vertice
+		U &GetEdgeDataR() { return this->_Data; }					// Returns reference to data of this vertice
 
-		void SetEdgeData(const U &NewData)	{ this->_Data = NewData; }		// Sets data stored here
+		void SetEdgeData(const U &NewData) { this->_Data = NewData; }		// Sets data stored here
 
 	private:
 
-		EDGE_STORAGE &_Storage;			// Reference to storage vector of all vertices
-		VERTICE_ID		_VerticeID;		// ID of current vertice
-
 		U	_Data;		// Data stored in this node
 
-		std::vector<VERTICE_ID>		_ConnectedVertices;		// Stores IDs of connected vertices
-		std::vector<EDGE_ID>		_ConnectedEdges;		// Stores IDs of connected edges
+		std::array<VERTICE_ID,2>		_ConnectedVertices;		// Stores IDs of vertices connected with this edge
 };
 
 #endif // GRAPH_EDGE_H

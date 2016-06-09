@@ -2,6 +2,8 @@
 #include "monte_carlo_option1.h"
 #include "png_convert_image_to_ogm.h"
 
+#include "graph_class.h"
+
 #include <fstream>
 #include <iostream>
 
@@ -11,6 +13,9 @@ int main()
 {
 	OccupancyGridMap testMap;
 	PNGConvertImageToOGM::ConvertPNGToOGM("test.png", testMap);
+
+	GraphClass<int,float> testGraph;
+	GraphNode<int,float> testNode(testGraph);
 
 	testMap.PrintMap("/tmp/tmp.pgm");
 
