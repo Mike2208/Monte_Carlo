@@ -24,7 +24,9 @@ SOURCES += main.cpp \
     test_functions.cpp \
     test_map_2d.cpp \
     policy_tree.cpp \
-    robot_action.cpp
+    robot_action.cpp \
+    policy_monte_carlo_converter.cpp \
+    test_policy.cpp
 
 HEADERS += \
     map_2d.h \
@@ -56,6 +58,8 @@ HEADERS += \
     test_functions.h \
     test_map_2d.h \
     policy_tree.h \
-    robot_action.h
+    robot_action.h \
+    policy_monte_carlo_converter.h \
+    test_policy.h
 
 unix:!macx: LIBS += -lpng

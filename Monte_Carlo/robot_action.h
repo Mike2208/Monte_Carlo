@@ -30,10 +30,12 @@ class RobotAction
 		bool IsCellFree() const			{ return (this->_Action == ROBOT_ACTION::RESULT_FREE		? 1:0);}
 
 		void SetMoveAction()	{ this->_Action = ROBOT_ACTION::ACTION_MOVE;		}
-		void SetObserveAction()	{ this->_Action = ROBOT_ACTION::ACTION_OBSERVE;	}
+		void SetObserveAction()	{ this->_Action = ROBOT_ACTION::ACTION_OBSERVE;		}
 
-		void SetOccupiedResult() { this->_Action = ROBOT_ACTION::RESULT_OCCUPIED; }
-		void SetFreeResult()	{ this->_Action = ROBOT_ACTION::RESULT_FREE; }
+		void SetOccupiedResult() { this->_Action = ROBOT_ACTION::RESULT_OCCUPIED;	}
+		void SetFreeResult()	{ this->_Action = ROBOT_ACTION::RESULT_FREE;		}
+
+		bool operator==(const RobotAction &i) const { return (this->_Action == i._Action); }
 
 #ifdef DEBUG	// DEBUG
 		std::ostream& PrintAction(std::ostream& os) const;

@@ -12,9 +12,9 @@ void OccupancyGridMap::PrintMap(const char *FileName)
 	file << this->GetWidth() << " " << this->GetHeight() << std::endl;
 	file << std::to_string(OGM_CELL_MAX) << std::endl;		// Max value
 
-	for(POS_2D_TYPE Y=this->GetHeight()-1; (std::is_signed<POS_2D_TYPE>() ? Y>=0 : Y<this->GetHeight()); --Y)
+	for(POS_2D_TYPE Y=this->GetHeight()-1; (std::is_signed<POS_2D_TYPE>() ? Y>=POS_2D_MIN : Y<this->GetHeight()); --Y)
 	{
-		for(POS_2D_TYPE X=0; X<this->GetWidth(); ++X)
+		for(POS_2D_TYPE X=POS_2D_MIN; X<this->GetWidth(); ++X)
 		{
 			file << std::to_string(this->GetPixel(POS_2D(X,Y))) << " ";
 		}
@@ -40,9 +40,9 @@ void OccupancyGridMap::CalculateLogMapFromCellMap(const OGM_MAP_TYPE &CellMap, O
 {
 	LogMap.ResizeMap(CellMap.GetWidth(), CellMap.GetHeight());
 
-	for(POS_2D_TYPE X=0; X<CellMap.GetWidth(); X++)
+	for(POS_2D_TYPE X=POS_2D_MIN; X<CellMap.GetWidth(); X++)
 	{
-		for(POS_2D_TYPE Y=0; Y<CellMap.GetHeight(); Y++)
+		for(POS_2D_TYPE Y=POS_2D_MIN; Y<CellMap.GetHeight(); Y++)
 		{
 			POS_2D tmpPos(X,Y);
 			LogMap.GetPixelR(tmpPos) = OccupancyGridMap::CalculateLogValFromCell(CellMap.GetPixel(tmpPos));
@@ -81,9 +81,9 @@ OGM_ENTROPY_TYPE OccupancyGridMap::CalculateEntropyFromMap(const OGM_MAP_TYPE &M
 {
 	// Add together all cell entropy values
 	OGM_ENTROPY_TYPE retEntropy = 0;
-	for(POS_2D_TYPE X=0; X<Map.GetWidth(); ++X)
+	for(POS_2D_TYPE X=POS_2D_MIN; X<Map.GetWidth(); ++X)
 	{
-		for(POS_2D_TYPE Y=0; Y<Map.GetHeight(); ++Y)
+		for(POS_2D_TYPE Y=POS_2D_MIN; Y<Map.GetHeight(); ++Y)
 		{
 			retEntropy += OccupancyGridMap::CalculateEntropyFromCell(Map.GetPixel(POS_2D(X,Y)));
 		}

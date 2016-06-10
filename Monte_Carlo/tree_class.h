@@ -8,6 +8,8 @@ template<class T>
 class TreeClass
 {
 	public:
+		typedef TreeNode<T> TREE_NODE;
+		typedef T			TREE_NODE_DATA;
 #ifdef DEBUG
 		TreeClass() : _Root() { this->_Root._NodeDepth = 0; }
 #else
@@ -15,6 +17,7 @@ class TreeClass
 #endif
 
 		TreeNode<T> &GetRoot() { return this->_Root; }
+		const TreeNode<T> &GetRoot() const { return this->_Root; }
 
 #ifdef DEBUG	// DEBUG
 		void PrintTree_BreadthFirst();

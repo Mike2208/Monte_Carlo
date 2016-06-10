@@ -4,6 +4,7 @@
 #include "standard_definitions.h"
 
 typedef unsigned int POS_2D_TYPE;
+const POS_2D_TYPE POS_2D_MIN = 0;
 
 struct POS_2D
 {

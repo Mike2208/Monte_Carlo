@@ -30,9 +30,9 @@ void TestMap2D::EstimateRealMapFromOGM()
 #endif
 
 	// Estimate whether a position is occupied or not
-	for(POS_2D_TYPE X=0; X<this->_InitialMap.GetWidth(); X++)
+	for(POS_2D_TYPE X=POS_2D_MIN; X<this->_InitialMap.GetWidth(); X++)
 	{
-		for(POS_2D_TYPE Y=0; Y<this->_InitialMap.GetHeight(); Y++)
+		for(POS_2D_TYPE Y=POS_2D_MIN; Y<this->_InitialMap.GetHeight(); Y++)
 		{
 			// Get random value
 			const OGM_CELL_TYPE randVal = rand() % (OGM_CELL_MAX);

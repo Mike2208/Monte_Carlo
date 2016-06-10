@@ -11,6 +11,7 @@ class TreeNode
 		typedef std::vector<TreeNode<T>> CHILD_STORAGE;
 
 	public:
+		typedef T DATA_TYPE;
 		typedef typename CHILD_STORAGE::size_type CHILD_ID;
 
 		TreeNode(TreeNode<T> *const Parent, const T &NewData) noexcept;
@@ -33,6 +34,7 @@ class TreeNode
 
 		CHILD_ID GetNumChildren() const  { return this->_Children.size(); }
 		TreeNode<T> *GetChild(const CHILD_ID &ID)  { return &(this->_Children.at(ID)); }
+		const TreeNode<T> *GetChild(const CHILD_ID &ID) const { return &(this->_Children.at(ID)); }
 
 		TreeNode<T> *AddChild(const T &NewData);
 

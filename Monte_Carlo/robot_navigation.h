@@ -19,7 +19,6 @@ POS_2D GetAdjoiningPos(const POS_2D &CurPos, const NAV_OPTION_TYPE &OptionID);
 class Robot_Navigation
 {
 	public:
-		Robot_Navigation();
 };
 
 #endif // ROBOT_NAVIGATION_H

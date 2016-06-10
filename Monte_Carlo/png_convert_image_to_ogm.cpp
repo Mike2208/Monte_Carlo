@@ -18,9 +18,9 @@ int PNGConvertImageToOGM::ConvertPNGToOGM(const char *PNGFileName, OccupancyGrid
 
 	// Calculate all OGM values from PNG
 	NewMap.ResizeMap(width, height);
-	for(unsigned int X=0; X<width; ++X)
+	for(unsigned int X=POS_2D_MIN; X<width; ++X)
 	{
-		for(unsigned int Y=0; Y<height; ++Y)
+		for(unsigned int Y=POS_2D_MIN; Y<height; ++Y)
 		{
 			NewMap.SetPixel(POS_2D(X,Y), PNGConvertImageToOGM::CalculateOGMValue(imageArray[X+width*Y]));
 		}
