@@ -10,7 +10,7 @@ class Map2D
 {
 		typedef std::vector<T> CELL_STORAGE;
 	public:
-
+		typedef T CELL_TYPE;
 		//Map2D() = default;
 
 		void ResizeMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight);

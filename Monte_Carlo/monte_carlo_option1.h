@@ -33,6 +33,8 @@ class MonteCarloOption1
 
 		int PerformMonteCarlo(const OccupancyGridMap &OGMap, const POS_2D &StartPos, const POS_2D &Destination);
 
+		const MONTE_CARLO_TREE_CLASS &GetTree() const { return this->_Tree; }
+
 #ifdef DEBUG	// DEBUG
 		void PrintTree() { this->_Tree.PrintTree_DepthFirst(); }
 #endif			// ~DEBUG

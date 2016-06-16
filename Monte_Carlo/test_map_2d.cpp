@@ -46,3 +46,75 @@ void TestMap2D::EstimateRealMapFromOGM()
 		}
 	}
 }
+
+void TestMap2D::ScaleMapsDownByFactor(const unsigned int &DownScaleFactor)
+{
+	Map2D_Discrete newRealMap;
+	OccupancyGridMap newInitialMap;
+
+	// Get number of cells in new map
+	const POS_2D_TYPE newWidth = static_cast<POS_2D_TYPE>(std::ceil(static_cast<double>(this->_RealMap.GetWidth())/DownScaleFactor));
+	const POS_2D_TYPE newHeight = static_cast<POS_2D_TYPE>(std::ceil(static_cast<double>(this->_RealMap.GetHeight())/DownScaleFactor));
+
+	newRealMap.ResizeMap(newWidth,newHeight);
+	newInitialMap.ResizeMap(newWidth, newHeight);
+
+	// Fill new cells
+	POS_2D curPos;
+	for(curPos.X = 0; curPos.X < newWidth; ++curPos.X)
+	{
+		for(curPos.Y = 0; curPos.Y < newHeight; ++curPos.Y)
+		{
+			const POS_2D oldCellPos(curPos.X*DownScaleFactor, curPos.Y*DownScaleFactor);
+
+			newInitialMap.SetPixel(curPos, this->CalculateOGMScaledDownCell(oldCellPos, DownScaleFactor));
+			newRealMap.SetPixel(curPos, this->CalculateRealMapScaledDownCell(oldCellPos, DownScaleFactor));
+		}
+	}
+
+	this->_InitialMap = std::move(newInitialMap);
+	this->_RealMap = std::move(newRealMap);
+}
+
+OGM_CELL_TYPE TestMap2D::CalculateOGMScaledDownCell(const POS_2D &OldCellPos, const SCALING_FACTOR &Scale) const
+{
+	OGM_LOG_TYPE curLogProbability = 0;
+
+	// Go through values that should be integrated into one
+	for(SCALING_FACTOR curValX = 0; curValX < Scale; ++curValX)
+	{
+		for(SCALING_FACTOR curValY = 0; curValY < Scale; ++curValY)
+		{
+			const POS_2D curPos = OldCellPos + POS_2D(curValX, curValY);
+
+			OGM_CELL_TYPE curCellVal;
+			if(this->_InitialMap.GetPixel(curPos, curCellVal) < 0)
+				continue;		// Skip if invalid pos (this happens at edges)
+
+			curLogProbability += OccupancyGridMap::CalculateLogValFromCell(OGM_CELL_MAX - curCellVal);
+		}
+	}
+
+	return OGM_CELL_MAX - OccupancyGridMap::CalculateCellValFromLog(curLogProbability);
+}
+
+OGM_DISCRETE_TYPE TestMap2D::CalculateRealMapScaledDownCell(const POS_2D &OldCellPos, const SCALING_FACTOR &Scale) const
+{
+	OGM_DISCRETE_TYPE curVal;
+
+	// Go through values that should be integrated into one
+	for(SCALING_FACTOR curValX = 0; curValX < Scale; ++curValX)
+	{
+		for(SCALING_FACTOR curValY = 0; curValY < Scale; ++curValY)
+		{
+			const POS_2D curPos = OldCellPos + POS_2D(curValX, curValY);
+			if(this->_RealMap.GetPixel(curPos, curVal) < 0)
+				continue;		// Skip if invalid pos (this happens at edges)
+
+			if(curVal == OGM_DISCRETE_FULL)
+				return OGM_DISCRETE_FULL;		// If one cell is occupied, position can't be accessed
+		}
+	}
+
+	return OGM_DISCRETE_EMPTY;
+}

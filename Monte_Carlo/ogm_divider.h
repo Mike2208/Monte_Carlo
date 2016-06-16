@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "occupancy_grid_map.h"
+#include "graph_class.h"
 
 namespace OGM_DIVIDER
 {
@@ -24,14 +25,14 @@ class OGMDivider
 {
 		typedef OGM_DIVIDER::OG_MAP OG_MAP;
 	public:
+		typedef std::vector<OG_MAP> DISTRICT_STORAGE;
 		OGMDivider() = default;
 
-		static int DivideOGM(const OG_MAP &OGMap, const OGM_CELL_TYPE &DivisionValue, std::vector<OG_MAP> &Districts);
+		static int DivideOGM(const OG_MAP &OGMap, const OGM_CELL_TYPE &DivisionValue, DISTRICT_STORAGE &Districts);
 
 	private:
-		const OG_MAP			*_MainMap;		// Map to be divided
-		std::vector<OG_MAP>		_Districts;		// Storage of districts
-
+		const OG_MAP			*_MainMap;			// Map to be divided
+		DISTRICT_STORAGE		_Districts;			// Storage of districts
 };
 
 #endif // OGM_DIVIDER_H

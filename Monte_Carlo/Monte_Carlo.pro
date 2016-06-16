@@ -26,7 +26,12 @@ SOURCES += main.cpp \
     policy_tree.cpp \
     robot_action.cpp \
     policy_monte_carlo_converter.cpp \
-    test_policy.cpp
+    test_policy.cpp \
+	algorithm_voronoi_fields.cpp \
+    district_map.cpp \
+    district_map_storage.cpp \
+    district_tree.cpp \
+    district_graph.cpp
 
 HEADERS += \
     map_2d.h \
@@ -60,6 +65,12 @@ HEADERS += \
     policy_tree.h \
     robot_action.h \
     policy_monte_carlo_converter.h \
-    test_policy.h
+    test_policy.h \
+    algorithm_voronoi_fields.h \
+    district_map.h \
+    district_map_storage.h \
+    district_tree.h \
+    district_graph.h \
+    district_map_definitions.h
 
 unix:!macx: LIBS += -lpng

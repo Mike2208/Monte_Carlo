@@ -28,7 +28,9 @@ class OccupancyGridMap : public OGM_MAP_TYPE
 
 		void SetMap(const OGM_MAP_TYPE &NewMap)  { static_cast<OGM_MAP_TYPE &>(*this) = NewMap; }
 
-		void PrintMap(const char *FileName);
+		void PrintMap(const char *FileName) const;
+
+		static OGM_CELL_TYPE CalculateCellValFromLog(const OGM_LOG_TYPE &Value);
 
 		static OGM_LOG_TYPE CalculateLogValFromCell(const OGM_CELL_TYPE &Value);		// Cell -> Log
 		static OGM_PROB_TYPE CalculateProbValFromCell(const OGM_CELL_TYPE &Value);		// Cell -> Prob

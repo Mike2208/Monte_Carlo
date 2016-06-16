@@ -2,7 +2,7 @@
 #include <cmath>
 #include <fstream>
 
-void OccupancyGridMap::PrintMap(const char *FileName)
+void OccupancyGridMap::PrintMap(const char *FileName) const
 {
 	std::fstream file;
 	file.open(FileName, std::ios_base::out);
@@ -23,6 +23,11 @@ void OccupancyGridMap::PrintMap(const char *FileName)
 	}
 
 	file.close();		// Close file after finish
+}
+
+OGM_CELL_TYPE OccupancyGridMap::CalculateCellValFromLog(const OGM_LOG_TYPE &Value)
+{
+	return OGM_CELL_MAX-static_cast<OGM_CELL_TYPE>(exp(log(OGM_CELL_MAX)-static_cast<double>(Value)));
 }
 
 OGM_LOG_TYPE OccupancyGridMap::CalculateLogValFromCell(const OGM_CELL_TYPE &Value)
