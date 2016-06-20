@@ -31,7 +31,9 @@ SOURCES += main.cpp \
     district_map.cpp \
     district_map_storage.cpp \
     district_tree.cpp \
-    district_graph.cpp
+    district_graph.cpp \
+    tree_class_permanent.cpp \
+    tree_node_permanent.cpp
 
 HEADERS += \
     map_2d.h \
@@ -71,6 +73,12 @@ HEADERS += \
     district_map_storage.h \
     district_tree.h \
     district_graph.h \
-    district_map_definitions.h
+    district_map_definitions.h \
+    graph_class_templates.h \
+    tree_class_permanent.h \
+    tree_class_permanent_templates.h \
+    tree_node_permanent.h \
+    tree_node_permanent_templates.h \
+    graph_vertice_templates.h
 
 unix:!macx: LIBS += -lpng

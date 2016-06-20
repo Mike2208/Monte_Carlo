@@ -27,7 +27,7 @@ class DistrictMapStorage
 		void ResetDistricts(const Map2D<T> &OriginalMap);		// Resets everything and resizes _TotalMap to size of OriginalMap
 
 		template<class T>
-		void DivideMap(const DISTRICT_ID &DistrictToDivide, const Map2D<T> &OriginalMap, const T &CutOffValue);		// Divide given map into smaller areas (use CutOffValue to separate district)
+		int DivideMap(const DISTRICT_ID &DistrictToDivide, const Map2D<T> &OriginalMap, const T &CutOffValue);		// Divide given map into smaller areas (use CutOffValue to separate district)
 
 		// Total Map Navigation
 		void ResetTotalMap();			// Resets total map

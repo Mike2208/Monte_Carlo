@@ -35,7 +35,10 @@ class DistrictMap : public DISTRICT_MAP::MAP_TYPE
 
 		POS_2D				_GlobalMapPosition;	// Position of map in global map
 		DISTRICT_ID			_ID;				// ID of this district
-		DISTRICT_ID			_ParentID;			// ID of parent
+
+		void SetDistrictMap(const DISTRICT_MAP_TYPE &NewMapData, const POS_2D &NewMapPos);
+		void SetID(const DISTRICT_ID &NewID);
+		void SetParentID(const DISTRICT_ID &ParentID);
 
 		friend class DistrictMapStorage;
 };

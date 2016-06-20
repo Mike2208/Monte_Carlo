@@ -9,6 +9,8 @@
 #include "district_map_definitions.h"
 #include "graph_class.h"
 
+class DistrictMapStorage;
+
 namespace DISTRICT_GRAPH
 {
 	struct EDGE_DATA
@@ -27,6 +29,8 @@ class DistrictGraph : public GraphClass<DISTRICT_GRAPH::VERTICE_DATA, DISTRICT_G
 	public:
 
 	private:
+
+		friend class DistrictMapStorage;
 };
 
 #endif // DISTRICT_GRAPH_H

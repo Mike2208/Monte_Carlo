@@ -6,28 +6,47 @@
 #include <array>
 #include <vector>
 
+#ifndef GRAPH_CLASS_H
 template<class T, class U>
-class GraphEdge
+class GraphClass;
+#endif
+
+namespace GRAPH_CLASS
 {
-		typedef typename GRAPH_DEFINITIONS::STORAGES<T,U>::EDGE_STORAGE		EDGE_STORAGE;
-		typedef typename GRAPH_DEFINITIONS::STORAGES<T,U>::EDGE_ID			EDGE_ID;
-		typedef typename GRAPH_DEFINITIONS::STORAGES<T,U>::VERTICE_STORAGE	VERTICE_STORAGE;
-		typedef typename GRAPH_DEFINITIONS::STORAGES<T,U>::VERTICE_ID		VERTICE_ID;
+	template<class T, class U>
+	class GraphEdge
+	{
+			typedef typename GRAPH_DEFINITIONS::STORAGES<T,U>::EDGE_STORAGE		EDGE_STORAGE;
+			typedef typename GRAPH_DEFINITIONS::STORAGES<T,U>::EDGE_ID			EDGE_ID;
+			typedef typename GRAPH_DEFINITIONS::STORAGES<T,U>::VERTICE_STORAGE	VERTICE_STORAGE;
+			typedef typename GRAPH_DEFINITIONS::STORAGES<T,U>::VERTICE_ID		VERTICE_ID;
 
-	public:
+		public:
 
-		VERTICE_ID GetConnectedVerticeID(const bool FirstVertice) const		{ return this->_ConnectedVertices[FirstVertice]; }
+			GraphEdge(const U &Data) : _Data(Data), _ConnectedVertices() {}
 
-		const U &GetEdgeData() const	{ return this->_Data; }		// Returns data of this vertice
-		U &GetEdgeDataR() { return this->_Data; }					// Returns reference to data of this vertice
+			GraphEdge() = default;
+			GraphEdge(const GraphEdge &S) = default;
+			GraphEdge(GraphEdge &&S) = default;
+			GraphEdge &operator=(const GraphEdge &S) = default;
+			GraphEdge &operator=(GraphEdge &&S) = default;
 
-		void SetEdgeData(const U &NewData) { this->_Data = NewData; }		// Sets data stored here
+			VERTICE_ID GetConnectedVerticeID(const bool FirstVertice) const		{ return this->_ConnectedVertices[FirstVertice]; }
 
-	private:
+			const U &GetEdgeData() const	{ return this->_Data; }		// Returns data of this vertice
+			U &GetEdgeDataR() { return this->_Data; }					// Returns reference to data of this vertice
 
-		U	_Data;		// Data stored in this node
+			void SetEdgeData(const U &NewData) { this->_Data = NewData; }		// Sets data stored heregr
 
-		std::array<VERTICE_ID,2>		_ConnectedVertices;		// Stores IDs of vertices connected with this edge
-};
+		private:
+
+			U	_Data;		// Data stored in this node
+
+			std::array<VERTICE_ID,2>		_ConnectedVertices;		// Stores IDs of vertices connected with this edge
+
+			template<class V, class W>
+			friend class GraphClass;
+	};
+}
 
 #endif // GRAPH_EDGE_H

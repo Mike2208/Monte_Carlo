@@ -7,7 +7,7 @@
 
 #include "standard_definitions.h"
 #include "district_map_definitions.h"
-#include "tree_class.h"
+#include "tree_class_permanent.h"
 
 namespace DISTRICT_TREE
 {
@@ -17,7 +17,7 @@ namespace DISTRICT_TREE
 		unsigned int					Depth;	// Depth of current node
 	};
 
-	typedef TreeClass<NODE_DATA>	TREE_CLASS;
+	typedef TreeClassPermanent<NODE_DATA>	TREE_CLASS;
 	typedef TREE_CLASS::TREE_NODE	TREE_NODE;
 }
 
