@@ -32,20 +32,8 @@ class DistrictMapStorage
 		// Total Map Navigation
 		void ResetTotalMap();			// Resets total map
 
-		int TotalMapMoveUp();			// Move total map up one depth
-		int TotalMapMoveDown();		// Move total map down one depth
-
-		int TotalMapMoveIDDown(const DISTRICT_ID &IDToMoveDown);
-		int TotalMapMoveIDUp(const DISTRICT_ID &IDToMoveUp);
-
-		// Get Navigation data
-		const DISTRICT_MAP_TYPE &GetTotalMapData() const { return this->_TotalMap; }
-		const DistrictGraph		&GetTotalDistrictGraph() const { return this->_TotalGraph; }
-
 	private:
 
-		DISTRICT_MAP_TYPE						_TotalMap;				// Total map that can be created through dividing districts
-		DistrictGraph							_TotalGraph;			// Total graph of connections
 		DISTRICT_MAP_DEFINITIONS::STORAGE		_DistrictStorage;		// Contains all maps
 		DistrictTree							_DistrictTree;			// Tree with data on which districts are split into smaller ones
 		DISTRICT_MAP_STORAGE::GRAPH_STORAGE		_GraphStorage;			// Contains connection graphs of all depths of a tree

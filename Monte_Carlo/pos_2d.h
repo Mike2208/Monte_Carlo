@@ -18,6 +18,7 @@ struct POS_2D
 	POS_2D &operator=(const POS_2D &S) = default;
 	POS_2D &operator=(POS_2D &&S) = default;
 
+	POS_2D operator-(const POS_2D &S) const { return POS_2D(this->X-S.X, this->Y-S.Y); }
 	POS_2D operator+(const POS_2D &S) const { return POS_2D(this->X+S.X, this->Y+S.Y); }
 	bool operator==(const POS_2D &S) const { return ((this->X == S.X && this->Y == S.Y)? 1:0); }
 	bool operator!=(const POS_2D &S) const { return ((this->X == S.X && this->Y == S.Y)? 0:1); }

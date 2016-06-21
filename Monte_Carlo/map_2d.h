@@ -11,7 +11,14 @@ class Map2D
 		typedef std::vector<T> CELL_STORAGE;
 	public:
 		typedef T CELL_TYPE;
-		//Map2D() = default;
+
+		Map2D(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight, const T &DefaultCellValue) : _Height(NewHeight), _Width(NewWidth), _CellData(NewHeight*NewWidth) { this->ResetMap(NewWidth, NewHeight, DefaultCellValue); }
+
+		Map2D() = default;
+		Map2D(const Map2D &S) = default;
+		Map2D(Map2D &&S) = default;
+		Map2D &operator=(const Map2D &S) = default;
+		Map2D &operator=(Map2D &&S) = default;
 
 		void ResizeMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight);
 		void ResetMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight, const T &DefaultCellValue);

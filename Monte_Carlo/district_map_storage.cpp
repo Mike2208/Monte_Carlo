@@ -1,20 +1,14 @@
 #include "district_map_storage.h"
+#include "algorithm_voronoi_fields.h"
 
 template<class T>
 void DistrictMapStorage::ResetDistricts(const Map2D<T> &OriginalMap)
 {
 	// Reset all data
-	this->_TotalGraph.Init();
-	this->_TotalMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), 0);
-
 	this->_DistrictStorage.clear();
 	this->_DistrictTree.GetRoot().Reset();
 
-	DistrictMap tmpMap;
-	tmpMap.SetDistrictMap(this->_TotalMap, POS_2D(0,0));
-	tmpMap.SetID(0);			// This is first map
-	tmpMap.SetParentID(DISTRICT_MAP_DEFINITIONS::INVALID_DISTRICT_ID);		// No parent ID
-
+	DistrictMap tmpMap(0, POS_2D(0,0), OriginalMap.GetWidth(), OriginalMap.GetHeight(), DISTRICT_MAP::IN_DISTRICT);
 	this->_DistrictStorage.push_back(std::move(tmpMap));			// Move tmpMap to storage
 }
 
@@ -27,4 +21,9 @@ int DistrictMapStorage::DivideMap(const DISTRICT_ID &DistrictToDivide, const Map
 
 	// Make access easier
 	const DistrictMap &oldDistrict = this->_DistrictStorage.at(DistrictToDivide);
+
+	// Perform Division
+	ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE occupiedDistricts, freeDistricts;
+	AlgorithmVoronoiFields<T>::CalculateVoronoiField(OriginalMap, oldDistrict, CutOffValue, occupiedDistricts, freeDistricts);
+
 }

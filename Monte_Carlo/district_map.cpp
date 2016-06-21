@@ -10,8 +10,3 @@ void DistrictMap::SetID(const DISTRICT_ID &NewID)
 {
 	this->_ID = NewID;
 }
-
-void DistrictMap::SetParentID(const DISTRICT_ID &ParentID)
-{
-	this->_ParentID = ParentID;
-}
