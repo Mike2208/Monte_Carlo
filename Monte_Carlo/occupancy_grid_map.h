@@ -5,7 +5,7 @@
 #include "map_2d.h"
 #include <limits>
 
-typedef char OGM_CELL_TYPE;
+typedef unsigned char OGM_CELL_TYPE;
 const OGM_CELL_TYPE	OGM_CELL_MAX = 100;
 const OGM_CELL_TYPE	OGM_CELL_MIN = 0;
 

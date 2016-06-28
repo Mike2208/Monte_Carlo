@@ -35,6 +35,8 @@ class Map2D<bool>
 		// Gets entire cell storage ( usefull for parsing entire map )
 		const CELL_STORAGE &GetCellStorage() const;
 
+		void PrintMap(const char *FileName) const;
+
 	private:
 
 		POS_2D_TYPE		_Height;		// Map height

@@ -26,8 +26,13 @@ void AlgorithmVoronoiFields<T>::CalculateVoronoiField(const Map2D<T> &OriginalMa
 	ALGORITHM_VORONOI_FIELDS::ID_MAP idMap;
 	ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP occupationMap;
 
+	OriginalMap.PrintMap("/tmp/testOriginal.pgm", OGM_CELL_MAX, 0);
+
 	// Step 1: Separate map into districts
 	AlgorithmVoronoiFields<T>::SeparateMapIntoUnconnectedDistricts(OriginalMap, OriginalDistrictData, CutOffValue, OccupiedDistricts, FreeDistricts, idMap, occupationMap, NextFreeDistrictID);
+
+	idMap.PrintMap("/tmp/testID.pgm", NextFreeDistrictID-1, 0);
+	occupationMap.PrintMap("/tmp/testOcc.pgb");
 
 	// Step 2.1: Find shortest distances between free districts
 	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, FreeDistricts, NextFreeDistrictID, idMap);
@@ -57,14 +62,17 @@ T AlgorithmVoronoiFields<T>::CalculateMapAverage(const Map2D<T> &OriginalMap, co
 		}
 	}
 
-	return static_cast<T>(tmpVal/numElements);
+	if(std::numeric_limits<T>::is_integer())
+		return static_cast<T>(round(tmpVal/numElements));		// round if integer
+	else
+		return static_cast<T>(tmpVal/numElements);
 }
 
 template<class T>
 void AlgorithmVoronoiFields<T>::SeparateMapIntoUnconnectedDistricts(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, const T &CutOffValue, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID)
 {
 	IDMap.ResetMap(OriginalDistrictData.GetWidth(), OriginalDistrictData.GetHeight(), ALGORITHM_VORONOI_FIELDS::INVALID_ID);
-	OccupationMap.ResetMap(OriginalDistrictData.GetWidth(), OriginalDistrictData.GetHeight(), ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED);
+	OccupationMap.ResetMap(OriginalDistrictData.GetWidth(), OriginalDistrictData.GetHeight(), !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED);
 
 	// Vector to store district sizes
 	ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR districtSizes;
@@ -81,65 +89,33 @@ void AlgorithmVoronoiFields<T>::SeparateMapIntoUnconnectedDistricts(const Map2D<
 				const POS_2D globalPos = OriginalDistrictData.ConvertToGlobalPosition(curLocalPos);
 
 				ALGORITHM_VORONOI_FIELDS::ID &r_cellID =  IDMap.GetPixelR(curLocalPos);
+				if(r_cellID != ALGORITHM_VORONOI_FIELDS::INVALID_ID)
+					continue;		// Skip if already in district
+
 
 				// Check if current cell is supposed to be occupied or free
-				ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE occupationLevel;
-				if(OriginalMap.GetPixel(globalPos) > CutOffValue)
-					occupationLevel = ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED;
-				else
-					occupationLevel = !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED;
+				ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE occupationLevel = AlgorithmVoronoiFields<T>::IsOccupiedCell(OriginalMap.GetPixel(globalPos), CutOffValue);
 
 				// Set Occupation Map
 				OccupationMap.SetPixel(curLocalPos, occupationLevel);
 
-				// Check if a surrounding cell that has same occupation has already been set to an ID
-				for(const auto &curNavOption : NavigationOptions)
+				// Create new district
+				r_cellID = NextFreeID;
+				// Create new size and create new district in correct vector (occupied or unoccupied)
+				districtSizes.Sizes.push_back(ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE(r_cellID, curLocalPos));
+				if(occupationLevel == ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED)
 				{
-					const POS_2D curAdjacentPos = curLocalPos+curNavOption;
-
-					// Check that pos is in district and get adjacent ID
-					//bool inDistrict;
-					//if(OriginalDistrictData.GetPixel(curAdjacentPos, inDistrict) < 0 || inDistrict != DISTRICT_MAP::IN_DISTRICT)
-					//	continue;		// not in district, ignore
-					ALGORITHM_VORONOI_FIELDS::ID adjacentID;
-					if(IDMap.GetPixel(curAdjacentPos, adjacentID) < 0 || adjacentID == ALGORITHM_VORONOI_FIELDS::INVALID_ID)
-						continue;		// not yet checked or not in district, ignore
-
-					// Compare occupation levels
-					if(OccupationMap.GetPixel(curAdjacentPos) != occupationLevel)
-						continue;		// skip if other occupation level
-
-					// Save first ID that has same occupation level, and integrate all other adjacent IDs that are connected through curPos to this one
-					if(r_cellID == ALGORITHM_VORONOI_FIELDS::INVALID_ID)
-					{
-						r_cellID = adjacentID;
-						districtSizes.FindID(r_cellID)->ComparePos(curLocalPos);		// Check if size needs to be expanded
-					}
-					else if(r_cellID != adjacentID)		// Check if two IDs need to be merged
-					{
-						// Merge districts into one, then erase unnecessary districts
-						if(occupationLevel == ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED)
-							AlgorithmVoronoiFields<T>::CombineTwoIDs(r_cellID, adjacentID, curLocalPos, IDMap, districtSizes, OccupiedDistricts);
-						else
-							AlgorithmVoronoiFields<T>::CombineTwoIDs(r_cellID, adjacentID, curLocalPos, IDMap, districtSizes, FreeDistricts);
-					}
+					OccupiedDistricts.push_back(DistrictMap(r_cellID, curLocalPos, 0, 0, DISTRICT_MAP::IN_DISTRICT));
+				}
+				else
+				{
+					FreeDistricts.push_back(DistrictMap(r_cellID, curLocalPos, 0, 0, DISTRICT_MAP::IN_DISTRICT));
 				}
 
-				// If no other adjacent districts where found, create a new one for this position
-				if(r_cellID == ALGORITHM_VORONOI_FIELDS::INVALID_ID)
-				{
-					r_cellID = NextFreeID;
+				NextFreeID++;		// Move to next free ID
 
-					// Create new size and create new district in correct vector (occupied or unoccupied)
-					districtSizes.Sizes.push_back(ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE(r_cellID, curLocalPos));
-
-					if(occupationLevel == ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED)
-						OccupiedDistricts.push_back(DistrictMap(r_cellID, curLocalPos, 0, 0, DISTRICT_MAP::IN_DISTRICT));
-					else
-						FreeDistricts.push_back(DistrictMap(r_cellID, curLocalPos, 0, 0, DISTRICT_MAP::IN_DISTRICT));
-
-					NextFreeID++;
-				}
+				// Check all surrounding positions and add them to this district if possible
+				AlgorithmVoronoiFields<T>::CreateTotalDistrict(OriginalMap, OriginalDistrictData, globalPos, CutOffValue, occupationLevel, districtSizes.Sizes.back(), IDMap, OccupationMap);
 			}
 		}
 	}
@@ -301,41 +277,80 @@ void AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Or
 }
 
 template<class T>
-void AlgorithmVoronoiFields<T>::CombineTwoIDs(const ALGORITHM_VORONOI_FIELDS::ID &OriginalID, const ALGORITHM_VORONOI_FIELDS::ID &IDToCombine, const POS_2D &ConnectionPos, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR &DistrictSizeStorage, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &DistrictStorage)
+void AlgorithmVoronoiFields<T>::CreateTotalDistrict(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, const POS_2D &GlobalStartPos, const T &CutOffValue, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupationLevel, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE &DistrictSize, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap)
 {
 	std::queue<POS_2D> posToCheck;
 
+	posToCheck.push(GlobalStartPos);
+	do
+	{
+		for(const auto &navOption : NavigationOptions)
+		{
+			const POS_2D adjacentGlobalPos = posToCheck.front() + navOption;
+			const POS_2D adjacentLocalPos = OriginalDistrictData.ConvertToLocalPosition(adjacentGlobalPos);
+
+			DistrictMap::CELL_TYPE inDistrict;
+			if(OriginalDistrictData.GetPixel(adjacentLocalPos, inDistrict) < 0 || inDistrict != DISTRICT_MAP::IN_DISTRICT)
+				continue;		// Skip if not in district
+
+			if(IDMap.GetPixel(adjacentLocalPos) != ALGORITHM_VORONOI_FIELDS::INVALID_ID)
+				continue;		// Skip if already checked
+
+			// Check if adjacent cell has same occuptation level
+			const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE adjacentOccupationLevel = IsOccupiedCell(OriginalMap.GetPixel(adjacentGlobalPos), CutOffValue);
+			if(OccupationLevel == adjacentOccupationLevel)
+			{
+				// Add this position to district
+				IDMap.SetPixel(adjacentLocalPos, DistrictSize.DistrictID);
+				OccupationMap.SetPixel(adjacentLocalPos, OccupationLevel);
+				DistrictSize.ComparePos(adjacentGlobalPos);
+
+				posToCheck.push(adjacentGlobalPos);
+			}
+		}
+
+		posToCheck.pop();
+	}
+	while(posToCheck.size() > 0);
+}
+
+template<class T>
+void AlgorithmVoronoiFields<T>::CombineTwoIDs(const ALGORITHM_VORONOI_FIELDS::ID &OriginalID, const ALGORITHM_VORONOI_FIELDS::ID &IDToCombine, const POS_2D &GlobalConnectionPos, const POS_2D &IDMapConnectionPos, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR &DistrictSizeStorage, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &DistrictStorage)
+{
+	std::queue<POS_2D> posToCheck;
+
+	const POS_2D idMapOffset = IDMapConnectionPos - GlobalConnectionPos;
 	const ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR::STORAGE_TYPE::size_type sizeIterator = DistrictSizeStorage.FindIDIterator(OriginalID);
 
 	// Set first position to new value
 
 	// Set To new ID
-	IDMap.SetPixel(ConnectionPos, OriginalID);
+	IDMap.SetPixel(IDMapConnectionPos, OriginalID);
 	// Enlarge district map if necessary
-	DistrictSizeStorage.Sizes.at(sizeIterator).ComparePos(ConnectionPos);
+	DistrictSizeStorage.Sizes.at(sizeIterator).ComparePos(GlobalConnectionPos);
 
-	posToCheck.push(ConnectionPos);
+	posToCheck.push(GlobalConnectionPos);
 	do
 	{
-		const POS_2D &curPos = posToCheck.front();
+		const POS_2D &curGlobalPos = posToCheck.front();
 
 		// Check adjacent position
 		for(const auto &navOption : NavigationOptions)
 		{
-			const POS_2D curAdjacentPos = curPos + navOption;
+			const POS_2D curGlobalAdjacentPos = curGlobalPos + navOption;
 
 			// Check if adjacent position is in map and has correct ID
 			ALGORITHM_VORONOI_FIELDS::ID adjacentID;
-			if(IDMap.GetPixel(curAdjacentPos, adjacentID) < 0 || adjacentID != IDToCombine)
+			if(IDMap.GetPixel(curGlobalAdjacentPos+idMapOffset, adjacentID) < 0 || adjacentID != IDToCombine)
 				continue;		// Skip if not in map or not correct ID
 
 			// Set To new ID
-			IDMap.SetPixel(curAdjacentPos, OriginalID);
+			IDMap.SetPixel(curGlobalAdjacentPos+idMapOffset, OriginalID);
 
 			// Enlarge district map if necessary
-			DistrictSizeStorage.Sizes.at(sizeIterator).ComparePos(curAdjacentPos);
+			DistrictSizeStorage.Sizes.at(sizeIterator).ComparePos(curGlobalAdjacentPos);
 
-			posToCheck.push(curAdjacentPos);
+			posToCheck.push(curGlobalAdjacentPos);
 		}
 
 		// Move to next position

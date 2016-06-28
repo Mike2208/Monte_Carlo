@@ -8,6 +8,7 @@
 
 #include "test_map_2d.h"
 #include "test_policy.h"
+#include "test_functions.h"
 
 #include "algorithm_voronoi_fields.h"
 
@@ -21,6 +22,8 @@ int main()
 	OccupancyGridMap testMap;
 	PNGConvertImageToOGM::ConvertPNGToOGM("test.png", testMap);
 
+	testMap.PrintMap("/tmp/testOGM.pgm");
+
 	DistrictMap testDistrict;
 	testDistrict.ResetMap(testMap.GetWidth(), testMap.GetHeight(), DISTRICT_MAP::IN_DISTRICT);
 	testDistrict.SetGlobalMapPosition(POS_2D(0,0));
@@ -28,7 +31,7 @@ int main()
 
 	ALGORITHM_VORONOI_FIELDS::ID nextFreeID = 1;
 	ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE freeDistricts, occupiedDistricts;
-	AlgorithmVoronoiFields<OccupancyGridMap::CELL_TYPE>::CalculateVoronoiField(testMap, testDistrict, occupiedDistricts, freeDistricts, nextFreeID);
+	AlgorithmVoronoiFields<OccupancyGridMap::CELL_TYPE>::CalculateVoronoiField(testMap, 90, testDistrict, occupiedDistricts, freeDistricts, nextFreeID);
 
 	return 1;
 }

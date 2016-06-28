@@ -79,13 +79,15 @@ namespace TEST_FUNCTIONS
 		POS_2D destPos(101,50);
 
 		TestMap2D testMaps;
-		testMaps.CreateMapsFromProbabilityPNGFile("testMap.png");
+		testMaps.CreateMapsFromProbabilityPNGFile("test.png");
+
+		testMaps.GetOGMap().PrintMap("/tmp/tmp.pgm");
 
 		testMaps.ScaleMapsDownByFactor(scale);
 		startPos = POS_2D(startPos.X/scale, startPos.Y/scale);
 		destPos = POS_2D(destPos.X/scale, destPos.Y/scale);
 
-		testMaps.GetOGMap().PrintMap("/tmp.pgm");
+		testMaps.GetOGMap().PrintMap("/tmp/tmp.pgm");
 
 		MonteCarloOption1 testMonteCarlo;
 		testMonteCarlo.PerformMonteCarlo(testMaps.GetOGMap(), startPos, destPos);
