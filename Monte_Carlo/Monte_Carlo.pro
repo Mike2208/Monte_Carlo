@@ -79,6 +79,8 @@ HEADERS += \
     tree_class_permanent_templates.h \
     tree_node_permanent.h \
     tree_node_permanent_templates.h \
-    graph_vertice_templates.h
+    graph_vertice_templates.h \
+    algorithm_voronoi_fields_template.h \
+    map_2d_bool.h
 
 unix:!macx: LIBS += -lpng

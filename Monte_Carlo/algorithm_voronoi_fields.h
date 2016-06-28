@@ -8,38 +8,58 @@
 #include "standard_definitions.h"
 #include "map_2d.h"
 #include "district_map.h"
+#include "algorithm_d_star.h"
 
 #include <vector>
 
 namespace ALGORITHM_VORONOI_FIELDS
 {
-	typedef std::vector<DistrictMap>	DISTRICT_STORAGE;
-
 	typedef DISTRICT_MAP::ID			ID;
 	typedef Map2D<ID>					ID_MAP;
 	const ID INVALID_ID = DISTRICT_MAP::INVALID_DISTRICT_ID;
 
+	typedef D_STAR_DIST_MAP				DIST_MAP;
+	const DIST_MAP::CELL_TYPE			MAX_DIST = GetInfiniteVal<DIST_MAP::CELL_TYPE>();
+
 	typedef Map2D_Discrete				OCCUPATION_MAP;
-	const bool CELL_OCCUPIED = true;
+	const OCCUPATION_MAP::CELL_TYPE CELL_OCCUPIED = true;
 
-	// Struct to temporarily store size of district (Min- and MaxPos form rectangle with all cells in them)
-	struct DISTRICT_SIZE
+	// Storage of districts
+	struct DISTRICT_STORAGE : public std::vector<DistrictMap>
 	{
-		ID DistrictID;		// ID of district
-		POS_2D MinPos;		// Minimum position of cells
-		POS_2D MaxPos;		// Maximum position of cells
-
-		DISTRICT_SIZE(const ID &NewID, const POS_2D &NewPos) : DistrictID(NewID), MinPos(NewPos), MaxPos(NewPos) {}
-		DISTRICT_SIZE() = delete;
-
-		void ComparePos(const POS_2D &Pos);
+		DistrictMap *FindDistrictID(const ID &DistrictID);
+		DISTRICT_STORAGE::size_type FindDistrictIDIterator(const ID &DistrictID);
 	};
 
+	// Keep track of district sizes
+	typedef DISTRICT_MAP::DISTRICT_SIZE DISTRICT_SIZE;
 	struct DISTRICT_SIZE_VECTOR
 	{
-		std::vector<DISTRICT_SIZE> Sizes;
+		typedef std::vector<DISTRICT_SIZE> STORAGE_TYPE;
+		STORAGE_TYPE Sizes;
 
 		DISTRICT_SIZE *FindID(const ID &IDToFind);
+		STORAGE_TYPE::size_type FindIDIterator(const ID &IDToFind);
+	};
+
+	// Struct for storing shortest connection between districts
+	struct SHORTEST_DIST_POS
+	{
+		ID DistrictID1;			// The two connected districtd
+		ID DistrictID2;
+
+		DIST_MAP::CELL_TYPE Distance;		// Distance of this point to districts
+		POS_2D ShortestPosID1;				// Position that is halfway between both points in area of district ID1
+		POS_2D ShortestPosID2;				// Position that is halfway between both points in area of district ID2
+
+		SHORTEST_DIST_POS(const ID &_ID1, const ID &_ID2, const DIST_MAP::CELL_TYPE &_Distance, const POS_2D &_ShortestPosID1, const POS_2D &_ShortestPosID2) : DistrictID1(_ID1), DistrictID2(_ID2), Distance(_Distance), ShortestPosID1(_ShortestPosID1), ShortestPosID2(_ShortestPosID2) {}
+	};
+
+	struct SHORTEST_DIST_POS_VECTOR
+	{
+		std::vector<SHORTEST_DIST_POS> Poses;
+
+		SHORTEST_DIST_POS *FindID(const ID &ID1ToFind, const ID &ID2ToFind);
 	};
 }
 
@@ -48,16 +68,25 @@ class AlgorithmVoronoiFields
 {
 	public:
 
-		static void CalculateVoronoiField(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts);
-		static void CalculateVoronoiField(const Map2D<T> &OriginalMap, const T &CutOffValue, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts);
+		static void CalculateVoronoiField(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID);
+		static void CalculateVoronoiField(const Map2D<T> &OriginalMap, const T &CutOffValue, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID);
 
 	private:
 
 		static T CalculateMapAverage(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData);
-		static void SeparateMapIntoUnconnectedDistricts(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, const T &CutOffValue, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP & OccupationMap);
 
-		static void CombineTwoIDs(const ALGORITHM_VORONOI_FIELDS::ID &OrignalID, const ALGORITHM_VORONOI_FIELDS::ID &IDToCombine, const POS_2D &ConnectionPos, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE &DistrictSize);
+		// Methods for separating map
+		static void SeparateMapIntoUnconnectedDistricts(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, const T &CutOffValue, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP & OccupationMap, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID);
+		static void SeparateByShortestDistance(const DistrictMap &OriginalDistrictMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupatioLevel, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &Districts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap);
+
+		// Extra methods used in SeparateMapIntoUnconnectedDistricts()
+		static void CombineTwoIDs(const ALGORITHM_VORONOI_FIELDS::ID &OrignalID, const ALGORITHM_VORONOI_FIELDS::ID &IDToCombine, const POS_2D &ConnectionPos, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR &DistrictSizeStorage, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &DistrictStorage);
 		static void ExpandDistrict(const ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, const ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE &DistrictSize, DistrictMap &CurDistrict);
+
+		// Extra methods used in SeparateByShortestDistance()
+		static int SetPathToDistrict(const ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, const POS_2D &StartPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, typename AlgorithmDStar<T>::PATH_VECTOR &Path);
 };
+
+#include "algorithm_voronoi_fields_template.h"
 
 #endif // ALGORITHM_VORONOI_FIELDS_H

@@ -5,6 +5,11 @@
 #include "pos_2d.h"
 #include <vector>
 
+namespace MAP_2D
+{
+	typedef float DIST_TYPE;
+}
+
 template<class T>
 class Map2D
 {
@@ -29,11 +34,16 @@ class Map2D
 		const T &GetPixel(const POS_2D &Position) const { return this->_CellData.at(Position.X+this->_Width*Position.Y); }
 		int GetPixel(const POS_2D &Position, T &Value) const;
 
+		void SetPathToValue(const POS_2D &StartPos, const POS_2D &EndPos, const T &Value);		// Set the path from StartPos to EndPod to the given value
+
 		POS_2D_TYPE GetHeight() const { return this->_Height; }
 		POS_2D_TYPE GetWidth() const { return this->_Width; }
 
 		// Gets entire cell storage ( usefull for parsing entire map )
 		const CELL_STORAGE &GetCellStorage() const { return this->_CellData; }
+
+		// Prints map to file
+		void PrintMap(const char *FileName, const T &MaxVal, const T &MinVal) const;
 
 	private:
 
@@ -41,6 +51,8 @@ class Map2D
 		POS_2D_TYPE		_Width;			// Map width
 		CELL_STORAGE	_CellData;		// Data in cells
 };
+
+#include "map_2d_bool.h"
 
 #include "map_2d_templates.h"
 

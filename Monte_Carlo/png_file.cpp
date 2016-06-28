@@ -101,11 +101,11 @@ int PNGFile::ReadImageToArray(std::vector<PIXEL_TYPE> &ImageArray, IMAGE_SIZE_TY
 	rowPointers.resize(ImageHeight);
 	for(size_t i=0; i<rowPointers.size(); ++i)
 	{
-		rowPointers[i] = &(tmpImage[rowbytes*i]);
+		rowPointers.at(i) = &(tmpImage.at(rowbytes*i));
 	}
 
 	// Read image to tmpImage
-	png_read_image(png_ptr, reinterpret_cast<png_bytepp>(&(rowPointers[0])));
+	png_read_image(png_ptr, reinterpret_cast<png_bytepp>(&(rowPointers.at(0))));
 
 	// Clean up
 	png_destroy_read_struct(&png_ptr, &info_ptr, &end_info);

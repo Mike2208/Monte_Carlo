@@ -31,7 +31,7 @@ namespace GRAPH_CLASS
 			GraphEdge &operator=(const GraphEdge &S) = default;
 			GraphEdge &operator=(GraphEdge &&S) = default;
 
-			VERTICE_ID GetConnectedVerticeID(const bool FirstVertice) const		{ return this->_ConnectedVertices[FirstVertice]; }
+			VERTICE_ID GetConnectedVerticeID(const bool FirstVertice) const		{ return this->_ConnectedVertices.at(FirstVertice); }
 
 			const U &GetEdgeData() const	{ return this->_Data; }		// Returns data of this vertice
 			U &GetEdgeDataR() { return this->_Data; }					// Returns reference to data of this vertice

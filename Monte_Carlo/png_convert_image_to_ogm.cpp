@@ -22,7 +22,7 @@ int PNGConvertImageToOGM::ConvertPNGToOGM(const char *PNGFileName, OccupancyGrid
 	{
 		for(unsigned int Y=POS_2D_MIN; Y<height; ++Y)
 		{
-			NewMap.SetPixel(POS_2D(X,Y), PNGConvertImageToOGM::CalculateOGMValue(imageArray[X+width*Y]));
+			NewMap.SetPixel(POS_2D(X,Y), PNGConvertImageToOGM::CalculateOGMValue(imageArray.at(X+width*Y)));
 		}
 	}
 

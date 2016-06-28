@@ -11,7 +11,9 @@ class DistrictMap;
 namespace DISTRICT_MAP_DEFINITIONS
 {
 	typedef std::vector<DistrictMap> 	STORAGE;	// Storage of one district
+
 	typedef STORAGE::size_type			ID;			// ID of one district
+	typedef Map2D<ID>					ID_MAP;		// Map of IDs
 
 	const ID INVALID_DISTRICT_ID = GetInfiniteVal<ID>();		// ID in a cell that is not part of this district
 

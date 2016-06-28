@@ -138,6 +138,47 @@ void AlgorithmDStar<T>::UpdateMap(const Map2D<T> &UpdatedOriginalMap, const std:
 }
 
 template<class T>
+void AlgorithmDStar<T>::FindDStarPath(const DIST_MAP &DistMap, const POS_2D &StartPos, PATH_VECTOR &Path)
+{
+	// Clear path
+	Path.clear();
+
+
+	// Start at beginning
+	POS_2D curPos = StartPos;
+	DIST_MAP_TYPE curDist = DistMap.GetPixel(curPos);
+
+	Path.push_back(curPos);
+
+	// Continue along path until destination is reached
+	while(curDist != 0)
+	{
+		DIST_MAP_TYPE bestDist = GetInfiniteVal<DIST_MAP_TYPE>();
+		POS_2D bestPos;
+
+		for(const auto &navOption : NavigationOptions)
+		{
+			const POS_2D adjacentPos = curPos+navOption;
+			DIST_MAP_TYPE adjacentDist;
+
+			if(DistMap.GetPixel(adjacentPos, adjacentDist) < 0)
+				continue;		// Skip if not on map
+
+			if(adjacentDist <= bestDist)
+			{
+				bestDist = adjacentDist;
+				bestPos = adjacentPos;
+			}
+		}
+
+		// Move to next position and add it to path
+		curPos = bestPos;
+
+		Path.push_back(curPos);
+	}
+}
+
+template<class T>
 void AlgorithmDStar<T>::UpdateMap_Routine(const Map2D<T> &UpdatedOriginalMap, std::queue<POS_2D> &PosToCheck, Map2D<T> &DStarMapToUpdate)
 {
 	// Continue until all values have been updated

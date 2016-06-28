@@ -9,6 +9,8 @@
 #include "test_map_2d.h"
 #include "test_policy.h"
 
+#include "algorithm_voronoi_fields.h"
+
 #include <fstream>
 #include <iostream>
 
@@ -16,31 +18,17 @@ using namespace std;
 
 int main()
 {
-	//OccupancyGridMap curTestMap;
-	//PNGConvertImageToOGM::ConvertPNGToOGM("testMap.png", curTestMap);
+	OccupancyGridMap testMap;
+	PNGConvertImageToOGM::ConvertPNGToOGM("test.png", testMap);
 
-	TestMap2D::SCALING_FACTOR scale = 2;
+	DistrictMap testDistrict;
+	testDistrict.ResetMap(testMap.GetWidth(), testMap.GetHeight(), DISTRICT_MAP::IN_DISTRICT);
+	testDistrict.SetGlobalMapPosition(POS_2D(0,0));
+	testDistrict.SetID(0);
 
-	POS_2D startPos(100,50);
-	POS_2D destPos(101,50);
-
-	TestMap2D testMaps;
-	testMaps.CreateMapsFromProbabilityPNGFile("testMap.png");
-
-	testMaps.ScaleMapsDownByFactor(scale);
-	startPos = POS_2D(startPos.X/scale, startPos.Y/scale);
-	destPos = POS_2D(destPos.X/scale, destPos.Y/scale);
-
-	testMaps.GetOGMap().PrintMap("/tmp.pgm");
-
-	MonteCarloOption1 testMonteCarlo;
-	testMonteCarlo.PerformMonteCarlo(testMaps.GetOGMap(), startPos, destPos);
-
-	PolicyTree testPolicy;
-	PolicyMonteCarloConverter::ConvertMonteCarloToPolicyTree(testMonteCarlo.GetTree(), testPolicy);
-
-	TestPolicy policyTester;
-	policyTester.PerformTest(testPolicy, startPos, destPos, testMaps.GetRealMap());
+	ALGORITHM_VORONOI_FIELDS::ID nextFreeID = 1;
+	ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE freeDistricts, occupiedDistricts;
+	AlgorithmVoronoiFields<OccupancyGridMap::CELL_TYPE>::CalculateVoronoiField(testMap, testDistrict, occupiedDistricts, freeDistricts, nextFreeID);
 
 	return 1;
 }

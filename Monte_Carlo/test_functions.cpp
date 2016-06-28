@@ -70,4 +70,32 @@ namespace TEST_FUNCTIONS
 
 		return 1;
 	}
+
+	int TestPolicy()
+	{
+		TestMap2D::SCALING_FACTOR scale = 2;
+
+		POS_2D startPos(100,50);
+		POS_2D destPos(101,50);
+
+		TestMap2D testMaps;
+		testMaps.CreateMapsFromProbabilityPNGFile("testMap.png");
+
+		testMaps.ScaleMapsDownByFactor(scale);
+		startPos = POS_2D(startPos.X/scale, startPos.Y/scale);
+		destPos = POS_2D(destPos.X/scale, destPos.Y/scale);
+
+		testMaps.GetOGMap().PrintMap("/tmp.pgm");
+
+		MonteCarloOption1 testMonteCarlo;
+		testMonteCarlo.PerformMonteCarlo(testMaps.GetOGMap(), startPos, destPos);
+
+		PolicyTree testPolicy;
+		PolicyMonteCarloConverter::ConvertMonteCarloToPolicyTree(testMonteCarlo.GetTree(), testPolicy);
+
+		class TestPolicy policyTester;
+		policyTester.PerformTest(testPolicy, startPos, destPos, testMaps.GetRealMap());
+
+		return 1;
+	}
 }

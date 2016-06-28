@@ -2,29 +2,6 @@
 #include <cmath>
 #include <fstream>
 
-void OccupancyGridMap::PrintMap(const char *FileName) const
-{
-	std::fstream file;
-	file.open(FileName, std::ios_base::out);
-
-	// Write header with height and width
-	file << "P2" << std::endl;
-	file << this->GetWidth() << " " << this->GetHeight() << std::endl;
-	file << std::to_string(OGM_CELL_MAX) << std::endl;		// Max value
-
-	for(POS_2D_TYPE Y=this->GetHeight()-1; (std::is_signed<POS_2D_TYPE>() ? Y>=POS_2D_MIN : Y<this->GetHeight()); --Y)
-	{
-		for(POS_2D_TYPE X=POS_2D_MIN; X<this->GetWidth(); ++X)
-		{
-			file << std::to_string(this->GetPixel(POS_2D(X,Y))) << " ";
-		}
-
-		file << std::endl;		// Begin new line after every finished image line
-	}
-
-	file.close();		// Close file after finish
-}
-
 OGM_CELL_TYPE OccupancyGridMap::CalculateCellValFromLog(const OGM_LOG_TYPE &Value)
 {
 	return OGM_CELL_MAX-static_cast<OGM_CELL_TYPE>(exp(log(OGM_CELL_MAX)-static_cast<double>(Value)));

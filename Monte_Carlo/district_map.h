@@ -14,7 +14,9 @@
 
 namespace DISTRICT_MAP
 {
-	typedef DISTRICT_MAP_DEFINITIONS::ID	ID;
+	typedef DISTRICT_MAP_DEFINITIONS::ID		ID;
+	typedef DISTRICT_MAP_DEFINITIONS::ID_MAP	ID_MAP;
+
 	typedef bool		MAP_CELL_TYPE;
 	typedef Map2D<MAP_CELL_TYPE>	MAP_TYPE;
 
@@ -22,6 +24,21 @@ namespace DISTRICT_MAP
 
 	const MAP_CELL_TYPE IN_DISTRICT = true;
 	const ID INVALID_DISTRICT_ID = DISTRICT_MAP_DEFINITIONS::INVALID_DISTRICT_ID;
+
+	// Struct to temporarily store size of district (Min- and MaxPos form rectangle with all cells in them)
+	struct DISTRICT_SIZE
+	{
+		ID DistrictID;		// ID of district
+		POS_2D MinPos;		// Minimum position of cells
+		POS_2D MaxPos;		// Maximum position of cells
+
+		DISTRICT_SIZE(const ID &NewID, const POS_2D &NewPos) : DistrictID(NewID), MinPos(NewPos), MaxPos(NewPos) {}
+		DISTRICT_SIZE() = delete;
+
+		void ComparePos(const POS_2D &Pos);
+	};
+
+	typedef std::vector<POS_2D> POS_IN_DISTRICT;
 }
 
 class DistrictMap : public DISTRICT_MAP::MAP_TYPE
@@ -40,11 +57,14 @@ class DistrictMap : public DISTRICT_MAP::MAP_TYPE
 		DistrictMap &operator=(const DistrictMap &S) = default;
 		DistrictMap &operator=(DistrictMap &&S) = default;
 
-		bool IsCellInDistrict(const POS_2D &Position) const;
+		bool IsGlobalCellInDistrict(const POS_2D &GlobalPosition) const;
+
+		// Set District from IDMap
+		void SetDistrictFromIDMap(const DISTRICT_MAP::ID_MAP &IDMap, const POS_2D &PosOfOneID, DISTRICT_MAP::POS_IN_DISTRICT *GlobalPosInDistrict = nullptr);
 
 		// Global pixel data
 		DISTRICT_MAP_CELL_TYPE GetGlobalPixel(const POS_2D &GlobalPosition) const { return this->GetPixel(GlobalPosition-this->_GlobalMapPosition); }
-		bool GetGlobalPixel(const POS_2D &GlobalPosition, DISTRICT_MAP_CELL_TYPE &Value) const { return this->GetPixel(GlobalPosition-this->_GlobalMapPosition, Value); }
+		int GetGlobalPixel(const POS_2D &GlobalPosition, DISTRICT_MAP_CELL_TYPE &Value) const { return this->GetPixel(GlobalPosition-this->_GlobalMapPosition, Value); }
 
 		void SetGlobalPixel(const POS_2D &GlobalPosition, const DISTRICT_MAP_CELL_TYPE &Value) { this->SetPixel(GlobalPosition-this->_GlobalMapPosition, Value); }
 
@@ -57,16 +77,19 @@ class DistrictMap : public DISTRICT_MAP::MAP_TYPE
 		void SetID(const DISTRICT_ID &NewID);
 		const DISTRICT_ID &GetID() const { return this->_ID; }
 
-		void SetParentID(const DISTRICT_ID &ParentID);
-
 		const POS_2D &GetGlobalMapPosition() const { return this->_GlobalMapPosition; }
 		void SetGlobalMapPosition(const POS_2D &GlobalMapPos) { this->_GlobalMapPosition = GlobalMapPos; }
 
+		const POS_2D &GetLocalPosInDistrict() const { return this->_LocalPositionInDistrict; }
+		void SetLocalPosInDistrict(const POS_2D &LocalPosition) { this->_LocalPositionInDistrict = LocalPosition; }
+		const POS_2D &&GetGlobalPosInDistrict() const { return std::move(this->ConvertToGlobalPosition(this->_LocalPositionInDistrict)); }
+
 	private:
 
-		POS_2D					_GlobalMapPosition;	// Position of map in global map
-		DISTRICT_ID				_ID;				// ID of this district
-		CONNECTED_ID_STORAGE	_ConnectedIDs;		// IDs of all surrounding districts that can be reached from this one
+		POS_2D					_GlobalMapPosition;			// Position of map in global map
+		POS_2D					_LocalPositionInDistrict;	// Position of one cell that is in districts
+		DISTRICT_ID				_ID;						// ID of this district
+		CONNECTED_ID_STORAGE	_ConnectedIDs;				// IDs of all surrounding districts that can be reached from this one
 
 		friend class DistrictMapStorage;
 };

@@ -15,6 +15,7 @@ class AlgorithmDStar
 	public:
 		typedef D_STAR_DIST_MAP DIST_MAP;
 		typedef D_STAR_DIST_MAP_TYPE DIST_MAP_TYPE;
+		typedef std::vector<POS_2D> PATH_VECTOR;
 
 		//AlgorithmDStar() = default;
 
@@ -24,6 +25,8 @@ class AlgorithmDStar
 
 		static void UpdateMap_SingleValue(const Map2D<T> &UpdatedMap, const POS_2D &UpdatedPos, Map2D<T> &DStarMapToUpdate);				// Updates D* Map with one new data position
 		static void UpdateMap(const Map2D<T> &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedPos, Map2D<T> &DStarMapToUpdate);				// Update multiple positions at once
+
+		static void FindDStarPath(const DIST_MAP &DistMap, const POS_2D &StartPos, PATH_VECTOR &Path);
 
 	private:
 
