@@ -26,13 +26,17 @@ void AlgorithmVoronoiFields<T>::CalculateVoronoiField(const Map2D<T> &OriginalMa
 	ALGORITHM_VORONOI_FIELDS::ID_MAP idMap;
 	ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP occupationMap;
 
+#ifdef DEBUG	// DEBUG
 	OriginalMap.PrintMap("/tmp/testOriginal.pgm", OGM_CELL_MAX, 0);
+#endif			// ~DEBUG
 
 	// Step 1: Separate map into districts
 	AlgorithmVoronoiFields<T>::SeparateMapIntoUnconnectedDistricts(OriginalMap, OriginalDistrictData, CutOffValue, OccupiedDistricts, FreeDistricts, idMap, occupationMap, NextFreeDistrictID);
 
+#ifdef DEBUG	// DEBUG
 	idMap.PrintMap("/tmp/testID.pgm", NextFreeDistrictID-1, 0);
 	occupationMap.PrintMap("/tmp/testOcc.pgb");
+#endif			// ~DEBUG
 
 	// Step 2.1: Find shortest distances between free districts
 	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, FreeDistricts, NextFreeDistrictID, idMap);
@@ -62,7 +66,7 @@ T AlgorithmVoronoiFields<T>::CalculateMapAverage(const Map2D<T> &OriginalMap, co
 		}
 	}
 
-	if(std::numeric_limits<T>::is_integer())
+	if(std::numeric_limits<T>::is_integer)
 		return static_cast<T>(round(tmpVal/numElements));		// round if integer
 	else
 		return static_cast<T>(tmpVal/numElements);
@@ -128,7 +132,7 @@ void AlgorithmVoronoiFields<T>::SeparateMapIntoUnconnectedDistricts(const Map2D<
 }
 
 template<class T>
-void AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &OriginalDistrictMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupatioLevel, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &Districts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap)
+void AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &OriginalDistrictMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupatiorLevel, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &Districts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap)
 {
 	ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS_VECTOR shortestDistances;
 
@@ -194,7 +198,7 @@ void AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Or
 				// Add adjacent position to ones that need to be checked
 				posToCheck.push(adjacentPos);
 			}
-			else if((r_adjacentID == curID) && (r_adjacentDist >= curDist-1))
+			else if((r_adjacentID != curID) && (r_adjacentDist >= curDist-1))
 			{
 				// if this is an edge between two districts, add it to known edges
 				ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS *shortestDist = shortestDistances.FindID(curID, r_adjacentID);
@@ -241,7 +245,7 @@ void AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Or
 			if(IDMap.GetPixel(adjacentPos, adjacentID) < 0 || adjacentID == ALGORITHM_VORONOI_FIELDS::INVALID_ID)
 				continue;		// Don't use cell on dividing edge
 
-			if(OccupationMap.GetPixel(adjacentPos) != OccupatioLevel)
+			if(OccupationMap.GetPixel(adjacentPos) != OccupatiorLevel)
 				continue;		// Skip if not same occupation level
 
 			DISTRICT_MAP::POS_IN_DISTRICT positionsInDistrict;

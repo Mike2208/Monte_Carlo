@@ -72,7 +72,7 @@ void DistrictMap::SetDistrictFromIDMap(const DISTRICT_MAP::ID_MAP &IDMap, const 
 	while(posToCheck.size() > 0);
 
 	// Resize map and set correct global pos
-	this->ResetMap(size.MaxPos.X-size.MinPos.X, size.MaxPos.Y-size.MinPos.Y, !DISTRICT_MAP::IN_DISTRICT);
+	this->ResetMap(size.MaxPos.X-size.MinPos.X+1, size.MaxPos.Y-size.MinPos.Y+1, !DISTRICT_MAP::IN_DISTRICT);
 	this->SetGlobalMapPosition(size.MinPos);
 
 	// Add cells to district

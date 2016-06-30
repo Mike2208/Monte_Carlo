@@ -82,7 +82,7 @@ class DistrictMap : public DISTRICT_MAP::MAP_TYPE
 
 		const POS_2D &GetLocalPosInDistrict() const { return this->_LocalPositionInDistrict; }
 		void SetLocalPosInDistrict(const POS_2D &LocalPosition) { this->_LocalPositionInDistrict = LocalPosition; }
-		const POS_2D &&GetGlobalPosInDistrict() const { return std::move(this->ConvertToGlobalPosition(this->_LocalPositionInDistrict)); }
+		POS_2D GetGlobalPosInDistrict() const { return this->ConvertToGlobalPosition(this->_LocalPositionInDistrict); }
 
 	private:
 

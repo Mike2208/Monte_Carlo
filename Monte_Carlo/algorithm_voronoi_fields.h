@@ -17,6 +17,7 @@ namespace ALGORITHM_VORONOI_FIELDS
 	typedef DISTRICT_MAP::ID			ID;
 	typedef Map2D<ID>					ID_MAP;
 	const ID INVALID_ID = DISTRICT_MAP::INVALID_DISTRICT_ID;
+	//const ID SEPARATION_ID = INVALID_ID;
 
 	typedef D_STAR_DIST_MAP				DIST_MAP;
 	const DIST_MAP::CELL_TYPE			MAX_DIST = GetInfiniteVal<DIST_MAP::CELL_TYPE>();
@@ -61,6 +62,15 @@ namespace ALGORITHM_VORONOI_FIELDS
 
 		SHORTEST_DIST_POS *FindID(const ID &ID1ToFind, const ID &ID2ToFind);
 	};
+
+	// Keep track of district changes
+//	struct DISTRICT_CHANGE
+//	{
+//		ID OldID;			// ID of old district
+//		ID NewID;			// District data to replace
+//		ID OppositeID;		// ID of district on opposite side of divider
+//		POS_2D ChangePos;
+//	};
 }
 
 template<class T>
@@ -77,7 +87,7 @@ class AlgorithmVoronoiFields
 
 		// Methods for separating map
 		static void SeparateMapIntoUnconnectedDistricts(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, const T &CutOffValue, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP & OccupationMap, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID);
-		static void SeparateByShortestDistance(const DistrictMap &OriginalDistrictMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupatioLevel, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &Districts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap);
+		static void SeparateByShortestDistance(const DistrictMap &OriginalDistrictMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupatiorLevel, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &Districts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap);
 
 		// Extra methods used in SeparateMapIntoUnconnectedDistricts()
 		static void CreateTotalDistrict(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, const POS_2D &GlobalStartPos, const T &CutOffValue, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupationLevel, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE &DistrictSize, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap);
