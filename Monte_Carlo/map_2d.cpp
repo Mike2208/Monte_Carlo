@@ -20,6 +20,13 @@ void Map2D<bool>::ResetMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHe
 }
 
 //template<>
+void Map2D<bool>::SetMapToValue(const bool Value)
+{
+	for(typename CELL_STORAGE::size_type i = 0; i<this->_CellData.size(); ++i)
+		this->_CellData.at(i) = Value;
+}
+
+//template<>
 void Map2D<bool>::SetPixel(const POS_2D &Position, const bool &Value)
 {
 	this->_CellData.at(Position.X+this->_Width*Position.Y) = Value;

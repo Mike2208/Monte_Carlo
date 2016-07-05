@@ -21,6 +21,7 @@ class Map2D<bool>
 		void ResizeMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight);
 		void ResetMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight, const bool &DefaultCellValue);
 
+		void SetMapToValue(const bool Value);
 		void SetPixel(const POS_2D &Position, const bool &Value);
 
 		//bool &GetPixelR(const POS_2D &Position);

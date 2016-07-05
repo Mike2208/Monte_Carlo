@@ -39,10 +39,10 @@ void AlgorithmVoronoiFields<T>::CalculateVoronoiField(const Map2D<T> &OriginalMa
 #endif			// ~DEBUG
 
 	// Step 2.1: Find shortest distances between free districts
-	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, FreeDistricts, NextFreeDistrictID, idMap);
+	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, FreeDistricts, OccupiedDistricts, NextFreeDistrictID, idMap);
 
 	// Step 2.2: Find shortest distances between occupied districts
-	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, OccupiedDistricts, NextFreeDistrictID, idMap);
+	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, OccupiedDistricts, FreeDistricts, NextFreeDistrictID, idMap);
 }
 
 template<class T>
@@ -106,7 +106,7 @@ void AlgorithmVoronoiFields<T>::SeparateMapIntoUnconnectedDistricts(const Map2D<
 				// Create new district
 				r_cellID = NextFreeID;
 				// Create new size and create new district in correct vector (occupied or unoccupied)
-				districtSizes.Sizes.push_back(ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE(r_cellID, curLocalPos));
+				districtSizes.push_back(ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE(r_cellID, curLocalPos));
 				if(occupationLevel == ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED)
 				{
 					OccupiedDistricts.push_back(DistrictMap(r_cellID, curLocalPos, 0, 0, DISTRICT_MAP::IN_DISTRICT));
@@ -119,7 +119,7 @@ void AlgorithmVoronoiFields<T>::SeparateMapIntoUnconnectedDistricts(const Map2D<
 				NextFreeID++;		// Move to next free ID
 
 				// Check all surrounding positions and add them to this district if possible
-				AlgorithmVoronoiFields<T>::CreateTotalDistrict(OriginalMap, OriginalDistrictData, globalPos, CutOffValue, occupationLevel, districtSizes.Sizes.back(), IDMap, OccupationMap);
+				AlgorithmVoronoiFields<T>::CreateTotalDistrict(OriginalMap, OriginalDistrictData, globalPos, CutOffValue, occupationLevel, districtSizes.back(), IDMap, OccupationMap);
 			}
 		}
 	}
@@ -132,25 +132,25 @@ void AlgorithmVoronoiFields<T>::SeparateMapIntoUnconnectedDistricts(const Map2D<
 }
 
 template<class T>
-void AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &OriginalDistrictMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupatiorLevel, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &Districts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap)
+int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &OriginalDistrictMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupationLevelOfDistrictsToDivide, const ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OuterDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &DistrictsToDivide, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap)
 {
 	ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS_VECTOR shortestDistances;
 
 	// Create map with all IDs and map with all distances
 	ALGORITHM_VORONOI_FIELDS::ID_MAP districtIDMap;			// Map with IDs of closest district
-	ALGORITHM_VORONOI_FIELDS::DIST_MAP districtDistMap;		// Map with distance to closest ID
+	ALGORITHM_VORONOI_FIELDS::DIST_MAP skeletonDistMap;		// Map with distance to closest ID
 
 	districtIDMap.ResetMap(OriginalDistrictMap.GetWidth(), OriginalDistrictMap.GetHeight(), ALGORITHM_VORONOI_FIELDS::INVALID_ID);
-	districtDistMap.ResetMap(OriginalDistrictMap.GetWidth(), OriginalDistrictMap.GetHeight(), ALGORITHM_VORONOI_FIELDS::MAX_DIST);
+	skeletonDistMap.ResetMap(OriginalDistrictMap.GetWidth(), OriginalDistrictMap.GetHeight(), ALGORITHM_VORONOI_FIELDS::MAX_DIST);
 
 	// Add all positions in district to queue
 	std::queue<POS_2D> posToCheck;
-	for(const auto &curDistrict : Districts)
+	for(const auto &curDistrict : OuterDistricts)
 	{
 		const POS_2D globalPosInDistrict = curDistrict.GetGlobalPosInDistrict();
 
 		// Set distance of this position to zero and idMap to correct ID
-		districtDistMap.SetPixel(globalPosInDistrict, 0);
+		skeletonDistMap.SetPixel(globalPosInDistrict, 0);
 		districtIDMap.SetPixel(globalPosInDistrict, curDistrict.GetID());
 
 		posToCheck.push(curDistrict.GetGlobalPosInDistrict());
@@ -161,7 +161,7 @@ void AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Or
 		const POS_2D &curPos = posToCheck.front();
 
 		// Get distance and ID of this pos
-		const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &curDist = districtDistMap.GetPixel(curPos);
+		const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &curDist = skeletonDistMap.GetPixel(curPos);
 		const ALGORITHM_VORONOI_FIELDS::ID_MAP::CELL_TYPE &curID = districtIDMap.GetPixel(curPos);
 
 		// Check all surrounding cells
@@ -175,7 +175,7 @@ void AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Or
 				continue;			// Skip if not in district
 
 			// Get adjacent ID and district
-			ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &r_adjacentDist = districtDistMap.GetPixelR(adjacentPos);
+			ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &r_adjacentDist = skeletonDistMap.GetPixelR(adjacentPos);
 			ALGORITHM_VORONOI_FIELDS::ID_MAP::CELL_TYPE &r_adjacentID = districtIDMap.GetPixelR(adjacentPos);
 
 			// Check if better dist is available
@@ -226,58 +226,126 @@ void AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Or
 	}
 	while(posToCheck.size() > 0);
 
-	// Separate along the given lines
+	// Reset ID map for next step
+	ALGORITHM_VORONOI_FIELDS::DIST_MAP districtDistMap;
+	districtIDMap = IDMap;
+	districtDistMap.ResetMap(IDMap.GetWidth(), IDMap.GetHeight(), ALGORITHM_VORONOI_FIELDS::MAX_DIST);
+
+	// Set outer districts to unknown ID
+	POS_2D curPos;
+	for(curPos.X = 0; curPos.X < IDMap.GetWidth(); ++curPos.X)
+	{
+		for(curPos.Y = 0; curPos.Y < IDMap.GetHeight(); ++curPos.Y)
+		{
+			if(OccupationMap.GetPixel(curPos) != OccupationLevelOfDistrictsToDivide)
+				IDMap.SetPixel(curPos, ALGORITHM_VORONOI_FIELDS::INVALID_ID);
+		}
+	}
+
+	// Store district changes
+	ALGORITHM_VORONOI_FIELDS::DISTRICT_CHANGE_VECTOR districtChanges;		// Stores changes that will later be applied
+
+	// Separate along the given lines and store new separation positions
 	for(const auto &curShortestPos : shortestDistances.Poses)
 	{
-		const ALGORITHM_VORONOI_FIELDS::ID oldID = IDMap.GetPixel(curShortestPos.ShortestPosID1);
+		ALGORITHM_VORONOI_FIELDS::DISTRICT_CHANGE changeData;
+		changeData.OldID = IDMap.GetPixel(curShortestPos.ShortestPosID1);
 
-		// Divide district along path from shortest positions to district, and set path to an invalid id (this separates the old and new district)
-		typename AlgorithmDStar<T>::PATH_VECTOR path1, path2;
-		AlgorithmVoronoiFields<T>::SetPathToDistrict(districtDistMap, curShortestPos.ShortestPosID1, ALGORITHM_VORONOI_FIELDS::INVALID_ID, IDMap, path1);
-		AlgorithmVoronoiFields<T>::SetPathToDistrict(districtDistMap, curShortestPos.ShortestPosID2, ALGORITHM_VORONOI_FIELDS::INVALID_ID, IDMap, path2);
+		// Create new ID
+		changeData.ChangeNewIDPos = curShortestPos.ShortestPosID1;
+		changeData.NewID = NextFreeID;
 
-		// Create new districts
-		bool newDistrictCreated = false;
+		// Divide district along path from shortest positions to district, and set path to new id (this separates the old and new district)
+		AlgorithmVoronoiFields<T>::SetWholePathToDistrict(skeletonDistMap, curShortestPos, changeData.NewID, districtIDMap, districtDistMap);
+
+		// Find an adjacent position to create a parallel path
+		bool parallelPosFound = false;
 		for(const auto &navOption : NavigationOptions)
 		{
-			const POS_2D &adjacentPos = curShortestPos.ShortestPosID1+navOption;
+			const POS_2D adjacentPos = changeData.ChangeNewIDPos+navOption;
 			ALGORITHM_VORONOI_FIELDS::ID adjacentID;
-			if(IDMap.GetPixel(adjacentPos, adjacentID) < 0 || adjacentID == ALGORITHM_VORONOI_FIELDS::INVALID_ID)
-				continue;		// Don't use cell on dividing edge
+			if(IDMap.GetPixel(adjacentPos, adjacentID) < 0 || adjacentID != changeData.OldID)
+				continue;		// Don't use this cell
 
-			if(OccupationMap.GetPixel(adjacentPos) != OccupatiorLevel)
-				continue;		// Skip if not same occupation level
-
-			DISTRICT_MAP::POS_IN_DISTRICT positionsInDistrict;
-			DistrictMap newDistrict;
-			newDistrict.SetDistrictFromIDMap(IDMap, adjacentPos, &positionsInDistrict);
-
-			// Create new ID for this map
-			newDistrict.SetID(NextFreeID);
-			for(const auto &curPos : positionsInDistrict)		// Change IDs of global map
-				IDMap.SetPixel(curPos, newDistrict.GetID());
-
-			// Add new district to map
-			Districts.push_back(std::move(newDistrict));
-
-			NextFreeID++;
-			newDistrictCreated = true;
+			changeData.ChangeOldIDPos = adjacentPos;
+			parallelPosFound = false;
 			break;
 		}
 
-		// Set path back to original value
-		for(const auto &curPathPos : path1)
-			IDMap.SetPixel(curPathPos, oldID);
-		for(const auto &curPathPos : path2)
-			IDMap.SetPixel(curPathPos, oldID);
+		if(!parallelPosFound)
+			return -1;
 
-		// Resize original district if necessary
-		if(newDistrictCreated)
+		// Create the parallel path from the found position
+		AlgorithmVoronoiFields<T>::CreateParellelPath(changeData.ChangeOldIDPos, changeData.OldID, changeData.OldID, IDMap, districtDistMap);
+
+		// Save data for later, first separate all districts
+		districtChanges.push_back(changeData);
+
+		NextFreeID += 1;
+	}
+
+	// Add all change positions to queue
+	for(const auto &curChange : districtChanges)
+	{
+		posToCheck.push(curChange.ChangeOldIDPos);
+		posToCheck.push(curChange.ChangeNewIDPos);
+	}
+
+	// Enlarge districts
+	while(posToCheck.size() > 0)
+	{
+		// Get Values of current position
+		const POS_2D &curPos = posToCheck.front();
+		const ALGORITHM_VORONOI_FIELDS::ID &curID = IDMap.GetPixel(curPos);
+		const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &curDist = districtDistMap.GetPixel(curPos);
+
+		// Compare to adjacent positions
+		for(const auto &navOption : NavigationOptions)
 		{
-			DistrictMap *const oldDistrict = Districts.FindDistrictID(oldID);
-			oldDistrict->SetDistrictFromIDMap(IDMap, curShortestPos.ShortestPosID1);
+			const POS_2D adjacentPos = curPos+navOption;
+
+			DISTRICT_MAP::MAP_CELL_TYPE inDistrict;
+			if(OriginalDistrictMap.GetPixel(adjacentPos, inDistrict) < 0 || inDistrict != DISTRICT_MAP::IN_DISTRICT)
+				continue;		// Skip if outside of district
+
+			ALGORITHM_VORONOI_FIELDS::ID &r_adjacentID = IDMap.GetPixelR(adjacentPos);
+
+			if(r_adjacentID == ALGORITHM_VORONOI_FIELDS::INVALID_ID)
+				continue;		// Skip if outer district
+
+			ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &r_adjacentDist = districtDistMap.GetPixelR(adjacentPos);
+
+			// Compare to curPos
+			if(r_adjacentDist > curDist+1)
+			{
+				// If better dist is available, update
+				r_adjacentDist = curDist+1;
+				r_adjacentID = curID;
+			}
+			else if(r_adjacentDist >= curDist-1)
+			{
+				// If this is a border,
+			}
 		}
 	}
+
+	// Go through map and get district sizes
+	ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR districtSizes;
+	DistrictMap::GetAllDistrictSizesOfIDMap(districtIDMap, districtSizes);
+
+	// Save all new districts
+	DistrictsToDivide.clear();
+
+	for(const auto &curSize : districtSizes)
+	{
+		DistrictsToDivide.push_back(DistrictMap(curSize));
+
+		// Store all values in district
+		DistrictMap &curDistrict = DistrictsToDivide.back();
+		curDistrict.SetDistrictFromIDMap(districtIDMap, curSize.PosInDistrict, nullptr);
+	}
+
+	return 1;
 }
 
 template<class T>
@@ -331,7 +399,7 @@ void AlgorithmVoronoiFields<T>::CombineTwoIDs(const ALGORITHM_VORONOI_FIELDS::ID
 	// Set To new ID
 	IDMap.SetPixel(IDMapConnectionPos, OriginalID);
 	// Enlarge district map if necessary
-	DistrictSizeStorage.Sizes.at(sizeIterator).ComparePos(GlobalConnectionPos);
+	DistrictSizeStorage.at(sizeIterator).ComparePos(GlobalConnectionPos);
 
 	posToCheck.push(GlobalConnectionPos);
 	do
@@ -352,7 +420,7 @@ void AlgorithmVoronoiFields<T>::CombineTwoIDs(const ALGORITHM_VORONOI_FIELDS::ID
 			IDMap.SetPixel(curGlobalAdjacentPos+idMapOffset, OriginalID);
 
 			// Enlarge district map if necessary
-			DistrictSizeStorage.Sizes.at(sizeIterator).ComparePos(curGlobalAdjacentPos);
+			DistrictSizeStorage.at(sizeIterator).ComparePos(curGlobalAdjacentPos);
 
 			posToCheck.push(curGlobalAdjacentPos);
 		}
@@ -370,7 +438,7 @@ void AlgorithmVoronoiFields<T>::CombineTwoIDs(const ALGORITHM_VORONOI_FIELDS::ID
 
 	// Remove unnecessary ID from storage
 	DistrictStorage.erase(DistrictStorage.begin()+static_cast<ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE::difference_type>(DistrictStorage.FindDistrictIDIterator(IDToCombine)));
-	DistrictSizeStorage.Sizes.erase(DistrictSizeStorage.Sizes.begin() + static_cast<ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR::STORAGE_TYPE::difference_type>(DistrictSizeStorage.FindIDIterator(IDToCombine)));
+	DistrictSizeStorage.erase(DistrictSizeStorage.begin() + static_cast<ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR::STORAGE_TYPE::difference_type>(DistrictSizeStorage.FindIDIterator(IDToCombine)));
 }
 
 template<class T>
@@ -404,18 +472,18 @@ void AlgorithmVoronoiFields<T>::ExpandDistrict(const ALGORITHM_VORONOI_FIELDS::I
 }
 
 template<class T>
-int AlgorithmVoronoiFields<T>::SetPathToDistrict(const ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, const POS_2D &StartPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, typename AlgorithmDStar<T>::PATH_VECTOR &Path)
+int AlgorithmVoronoiFields<T>::SetPathToDistrict(const ALGORITHM_VORONOI_FIELDS::DIST_MAP &SkelDistMap, const POS_2D &StartPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *DistrictSize, typename AlgorithmDStar<T>::PATH_VECTOR *Path)
 {
-	// Clear path
-	Path.clear();
+	typename AlgorithmDStar<T>::PATH_VECTOR tmpPath;
+	ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE tmpDistrictSize(IDToSetPathTo, StartPos);
 
 	// Start at beginning
 	POS_2D curPos = StartPos;
-	ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE curDist = DistMap.GetPixel(curPos);
+	ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE curDist = SkelDistMap.GetPixel(curPos);
 	const ALGORITHM_VORONOI_FIELDS::ID &idOfDistrict = IDMap.GetPixel(curPos);
 
 	IDMap.SetPixel(curPos, IDToSetPathTo);
-	Path.push_back(curPos);
+	tmpPath.push_back(curPos);
 
 	// Continue along path until destination is reached
 	while(curDist != 0)
@@ -428,7 +496,7 @@ int AlgorithmVoronoiFields<T>::SetPathToDistrict(const ALGORITHM_VORONOI_FIELDS:
 			const POS_2D adjacentPos = curPos+navOption;
 			ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE adjacentDist;
 
-			if(DistMap.GetPixel(adjacentPos, adjacentDist) < 0)
+			if(SkelDistMap.GetPixel(adjacentPos, adjacentDist) < 0)
 				continue;		// Skip if not on map
 
 			if(adjacentDist <= bestDist)
@@ -449,10 +517,126 @@ int AlgorithmVoronoiFields<T>::SetPathToDistrict(const ALGORITHM_VORONOI_FIELDS:
 		curPos = bestPos;
 
 		IDMap.SetPixel(curPos, IDToSetPathTo);
-		Path.push_back(curPos);
+		DistMap.SetPixel(curPos, 0);		// Set distance to zero
+		tmpPath.push_back(curPos);
+		tmpDistrictSize.ComparePos(curPos);		// Adjust size
 	}
+
+	// Move data if requested
+	if(Path != nullptr)
+		*Path = std::move(tmpPath);
+
+	if(DistrictSize != nullptr)
+		*DistrictSize = std::move(tmpDistrictSize);
 
 	return 1;
 }
+
+template<class T>
+int AlgorithmVoronoiFields<T>::SetWholePathToDistrict(const ALGORITHM_VORONOI_FIELDS::DIST_MAP &SkelDistMap, const ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS &ShortestDistPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *DistrictSize, typename AlgorithmDStar<T>::PATH_VECTOR *Path)
+{
+	int tmp1, tmp2;
+	ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE tmpDistrict1(IDToSetPathTo, ShortestDistPos.ShortestPosID1);
+	ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE tmpDistrict2(tmpDistrict1);
+	typename AlgorithmDStar<T>::PATH_VECTOR tmpPath1, tmpPath2;
+
+	// Divide district along path from shortest positions to district, and set path to an invalid id (this separates the old and new district)
+	tmp1 = AlgorithmVoronoiFields<T>::SetPathToDistrict(SkelDistMap, ShortestDistPos.ShortestPosID1, IDToSetPathTo, IDMap, DistMap, &tmpDistrict1, &tmpPath1);
+	tmp2 = AlgorithmVoronoiFields<T>::SetPathToDistrict(SkelDistMap, ShortestDistPos.ShortestPosID2, IDToSetPathTo, IDMap, DistMap, &tmpDistrict2, &tmpPath2);
+
+	// Combine both districts
+	tmpDistrict1.ComparePos(tmpDistrict2.MinPos);
+	tmpDistrict1.ComparePos(tmpDistrict2.MaxPos);
+
+	// Combine both paths
+	for(const auto &curPathPos : tmpPath2)
+		tmpPath1.push_back(curPathPos);
+
+	// Propagate data upwards
+	if(DistrictSize != nullptr)
+		*DistrictSize = std::move(tmpDistrict1);
+
+	if(Path != nullptr)
+		*Path = std::move(tmpPath1);
+
+	if(tmp1 < 0 || tmp2 < 0)
+		return -1;
+
+	return 1;
+}
+
+template<class T>
+int AlgorithmVoronoiFields<T>::CreateParellelPath(const POS_2D &StartPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, const ALGORITHM_VORONOI_FIELDS::ID &ParallelID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *DistrictSize, typename AlgorithmDStar<T>::PATH_VECTOR *Path)
+{
+	std::queue<POS_2D> posToCheck;
+	const ALGORITHM_VORONOI_FIELDS::ID oldID = IDMap.GetPixel(StartPos);
+	std::vector<POS_2D> adjacentPoses;
+	adjacentPoses.reserve(NumNavigationOptions);
+
+	typename AlgorithmDStar<T>::PATH_VECTOR tmpPath;
+	ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE tmpDistrictSize(IDToSetPathTo, StartPos);
+
+	// Start at beginning
+	posToCheck.push(StartPos);
+	do
+	{
+		const POS_2D &curPos = posToCheck.front();
+		ALGORITHM_VORONOI_FIELDS::ID &r_curID = IDMap.GetPixelR(curPos);
+
+		// Get all connecting positions
+		adjacentPoses.resize(0);
+		bool posIsParallel = false;
+		for(const auto &navOption : NavigationOptions)
+		{
+			const POS_2D adjacentPos = curPos+navOption;
+			ALGORITHM_VORONOI_FIELDS::ID adjacentID;
+
+			if(IDMap.GetPixel(adjacentPos, adjacentID) < 0)
+				continue;		// Skip if outside of map
+
+			if(adjacentID == ParallelID)
+			{
+				posIsParallel = true;
+			}
+			else if(adjacentID == oldID)
+			{
+				adjacentPoses.push_back(adjacentPos);		// Position needs to be checked later
+			}
+		}
+
+		// If this position is parallel, set it to correct value and add to path
+		if(posIsParallel)
+		{
+			r_curID = IDToSetPathTo;
+			DistMap.SetPixel(curPos, 0);		// Set start distance to zero
+			tmpPath.push_back(curPos);
+			tmpDistrictSize.ComparePos(curPos);
+
+			// Add all adjacent poses that haven't been checked yet to check queue
+			for(const auto &curAdjacentPos : adjacentPoses)
+			{
+				if(DistMap.GetPixel(curAdjacentPos) != 0)
+					posToCheck.push(curAdjacentPos);
+			}
+		}
+
+		posToCheck.pop();
+	}
+	while(posToCheck.size() > 0);
+
+	// Save path if requested
+	if(Path != nullptr)
+		*Path = std::move(tmpPath);
+
+	// Save size if requested
+	if(DistrictSize != nullptr)
+		*DistrictSize = std::move(tmpDistrictSize);
+
+	if(Path->size() == 0)
+		return -1;		// return error if no pixels where set
+
+	return 1;
+}
+
 
 #endif // ALGORITHM_VORONOI_FIELDS_TEMPLATE_H

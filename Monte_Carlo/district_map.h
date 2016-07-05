@@ -28,14 +28,28 @@ namespace DISTRICT_MAP
 	// Struct to temporarily store size of district (Min- and MaxPos form rectangle with all cells in them)
 	struct DISTRICT_SIZE
 	{
-		ID DistrictID;		// ID of district
-		POS_2D MinPos;		// Minimum position of cells
-		POS_2D MaxPos;		// Maximum position of cells
+		ID DistrictID;			// ID of district
+		POS_2D MinPos;			// Minimum position of cells
+		POS_2D MaxPos;			// Maximum position of cells
+		POS_2D PosInDistrict;	// Position with districtID
 
-		DISTRICT_SIZE(const ID &NewID, const POS_2D &NewPos) : DistrictID(NewID), MinPos(NewPos), MaxPos(NewPos) {}
+		DISTRICT_SIZE(const ID &NewID, const POS_2D &NewPos) : DistrictID(NewID), MinPos(NewPos), MaxPos(NewPos), PosInDistrict(NewPos) {}
 		DISTRICT_SIZE() = delete;
+		DISTRICT_SIZE(const DISTRICT_SIZE &S) = default;
+		DISTRICT_SIZE(DISTRICT_SIZE &&S) = default;
+		DISTRICT_SIZE &operator=(const DISTRICT_SIZE &S) = default;
+		DISTRICT_SIZE &operator=(DISTRICT_SIZE &&S) = default;
 
 		void ComparePos(const POS_2D &Pos);
+	};
+
+	typedef std::vector<DISTRICT_SIZE> DISTRICT_SIZE_VECTOR_STORAGE_TYPE;
+	struct DISTRICT_SIZE_VECTOR : public DISTRICT_SIZE_VECTOR_STORAGE_TYPE
+	{
+		typedef DISTRICT_SIZE_VECTOR_STORAGE_TYPE STORAGE_TYPE;
+
+		DISTRICT_SIZE *FindID(const ID &IDToFind);
+		STORAGE_TYPE::size_type FindIDIterator(const ID &IDToFind);
 	};
 
 	typedef std::vector<POS_2D> POS_IN_DISTRICT;
@@ -50,12 +64,16 @@ class DistrictMap : public DISTRICT_MAP::MAP_TYPE
 		typedef DISTRICT_MAP::CONNECTED_ID_STORAGE	CONNECTED_ID_STORAGE;
 
 		DistrictMap(const DISTRICT_ID &DistrictID, const POS_2D &GlobalMapPosition, const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight, const DISTRICT_MAP_CELL_TYPE &DefaultCellValue) : DISTRICT_MAP::MAP_TYPE(NewWidth, NewHeight, DefaultCellValue), _GlobalMapPosition(GlobalMapPosition), _ID(DistrictID) {}
+		DistrictMap(const DISTRICT_MAP::DISTRICT_SIZE &Size) : DISTRICT_MAP::MAP_TYPE(Size.MaxPos.X-Size.MinPos.X+1, Size.MaxPos.Y-Size.MinPos.Y+1, !DISTRICT_MAP::IN_DISTRICT), _GlobalMapPosition(Size.MinPos), _ID(Size.DistrictID) {}
 
 		DistrictMap() = default;
 		DistrictMap(const DistrictMap &S) = default;
 		DistrictMap(DistrictMap &&S) = default;
 		DistrictMap &operator=(const DistrictMap &S) = default;
 		DistrictMap &operator=(DistrictMap &&S) = default;
+
+		// Get sizes of all IDs in Map
+		static void GetAllDistrictSizesOfIDMap(const DISTRICT_MAP::ID_MAP &IDMap, DISTRICT_MAP::DISTRICT_SIZE_VECTOR &DistrictSizes);
 
 		bool IsGlobalCellInDistrict(const POS_2D &GlobalPosition) const;
 

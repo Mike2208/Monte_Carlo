@@ -16,6 +16,30 @@ void DISTRICT_MAP::DISTRICT_SIZE::ComparePos(const POS_2D &Pos)
 		MaxPos.Y = Pos.Y;
 }
 
+DISTRICT_MAP::DISTRICT_SIZE *DISTRICT_MAP::DISTRICT_SIZE_VECTOR::FindID(const ID &IDToFind)
+{
+	for(auto &curDS : *this)
+	{
+		if(IDToFind == curDS.DistrictID)
+		{
+			return &curDS;
+		}
+	}
+
+	return nullptr;
+}
+
+std::vector<DISTRICT_MAP::DISTRICT_SIZE>::size_type DISTRICT_MAP::DISTRICT_SIZE_VECTOR::FindIDIterator(const ID &IDToFind)
+{
+	for(std::vector<DISTRICT_SIZE>::size_type i=0; i<this->size(); ++i)
+	{
+		if(IDToFind == this->at(i).DistrictID)
+			return i;
+	}
+
+	return this->size();
+}
+
 void DistrictMap::SetDistrictMap(const DISTRICT_MAP_TYPE &NewMapData, const POS_2D &NewMapPos)
 {
 	*(static_cast<DISTRICT_MAP_TYPE *>(this)) = NewMapData;
@@ -25,6 +49,30 @@ void DistrictMap::SetDistrictMap(const DISTRICT_MAP_TYPE &NewMapData, const POS_
 void DistrictMap::SetID(const DISTRICT_ID &NewID)
 {
 	this->_ID = NewID;
+}
+
+void DistrictMap::GetAllDistrictSizesOfIDMap(const DISTRICT_MAP::ID_MAP &IDMap, DISTRICT_MAP::DISTRICT_SIZE_VECTOR &DistrictSizes)
+{
+	DistrictSizes.clear();
+	DISTRICT_MAP::DISTRICT_SIZE *pCurSize;
+
+	POS_2D curPos;
+	for(curPos.X = 0; curPos.X < IDMap.GetWidth(); ++curPos.X)
+	{
+		for(curPos.Y = 0; curPos.Y < IDMap.GetHeight(); ++curPos.Y)
+		{
+			const DISTRICT_ID curID = IDMap.GetPixel(curPos);
+			if(curID == DISTRICT_MAP::INVALID_DISTRICT_ID)
+				continue;		// Skip if invalid ID
+
+			// Check if current ID is already recorded
+			pCurSize = DistrictSizes.FindID(curID);
+			if(pCurSize == nullptr)
+				DistrictSizes.push_back(DISTRICT_MAP::DISTRICT_SIZE(curID, curPos));		// Create size if it doesn't exist
+			else
+				pCurSize->ComparePos(curPos);			// Check if curPos is already in size
+		}
+	}
 }
 
 bool DistrictMap::IsGlobalCellInDistrict(const POS_2D &GlobalPosition) const

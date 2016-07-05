@@ -22,30 +22,6 @@ ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE::size_type ALGORITHM_VORONOI_FIELDS::
 	return this->size();
 }
 
-ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR::FindID(const ID &IDToFind)
-{
-	for(auto &curDS : this->Sizes)
-	{
-		if(IDToFind == curDS.DistrictID)
-		{
-			return &curDS;
-		}
-	}
-
-	return nullptr;
-}
-
-std::vector<ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE>::size_type ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE_VECTOR::FindIDIterator(const ID &IDToFind)
-{
-	for(std::vector<DISTRICT_SIZE>::size_type i=0; i<this->Sizes.size(); ++i)
-	{
-		if(IDToFind == this->Sizes.at(i).DistrictID)
-			return i;
-	}
-
-	return this->Sizes.size();
-}
-
 ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS *ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS_VECTOR::FindID(const ID &ID1ToFind, const ID &ID2ToFind)
 {
 	for(auto &curSDP : this->Poses)

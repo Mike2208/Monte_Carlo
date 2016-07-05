@@ -27,6 +27,13 @@ void Map2D<T>::ResetMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeigh
 }
 
 template<class T>
+void Map2D<T>::SetMapToValue(const T &Value)
+{
+	for(auto &cellValue : this->_CellData)
+		cellValue = Value;
+}
+
+template<class T>
 int Map2D<T>::GetPixel(const POS_2D &Position, T &Value) const
 {
 	if(Position.X >= this->_Width || Position.Y >= this->_Height

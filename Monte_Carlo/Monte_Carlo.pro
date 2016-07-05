@@ -33,7 +33,8 @@ SOURCES += main.cpp \
     district_tree.cpp \
     district_graph.cpp \
     tree_class_permanent.cpp \
-    tree_node_permanent.cpp
+    tree_node_permanent.cpp \
+    algorithm_voronoi_fields_template.cpp
 
 HEADERS += \
     map_2d.h \
@@ -80,7 +81,6 @@ HEADERS += \
     tree_node_permanent.h \
     tree_node_permanent_templates.h \
     graph_vertice_templates.h \
-    algorithm_voronoi_fields_template.h \
     map_2d_bool.h
 
 unix:!macx: LIBS += -lpng

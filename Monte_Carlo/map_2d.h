@@ -28,6 +28,7 @@ class Map2D
 		void ResizeMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight);
 		void ResetMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight, const T &DefaultCellValue);
 
+		void SetMapToValue(const T &Value);
 		void SetPixel(const POS_2D &Position, const T &Value) { this->_CellData.at(Position.X+this->_Width*Position.Y) = Value; }
 
 		T &GetPixelR(const POS_2D &Position) { return this->_CellData.at(Position.X+this->_Width*Position.Y); }
