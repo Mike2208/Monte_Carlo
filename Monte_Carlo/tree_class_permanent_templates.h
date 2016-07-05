@@ -4,11 +4,13 @@
 #include "standard_definitions.h"
 #include "tree_class_permanent.h"
 
+#ifndef DEBUG
 template<class T>
 TreeClassPermanent<T>::TreeClassPermanent()
 {
 	this->Reset();
 }
+#endif
 
 template<class T>
 void TreeClassPermanent<T>::Reset()
@@ -31,11 +33,13 @@ void TreeClassPermanent<T>::PrintTree_BreadthFirst()
 
 	while(nextBranchToPrint.size() > 0)
 	{
-		nextBranchToPrint.front()->PrintNode();
+		const TreeNodePermanent<T> *const pCurNode = nextBranchToPrint.front();
+		pCurNode->PrintNode();
 
-		for(typename TreeNodePermanent<T>::CHILD_ID i = 0; i<nextBranchToPrint.front()->GetNumChildren(); ++i)
+		for(typename TreeNodePermanent<T>::ID i = 0; i<pCurNode->GetNumChildren(); ++i)
 		{
-			nextBranchToPrint.push(nextBranchToPrint.front()->GetChild(i));
+			const typename TreeNodePermanent<T>::ID childID = pCurNode->GetChildID(i);
+			nextBranchToPrint.push(&(this->_NodeStorage.at(childID)));
 		}
 
 		nextBranchToPrint.pop();
@@ -43,20 +47,20 @@ void TreeClassPermanent<T>::PrintTree_BreadthFirst()
 }
 
 template<class T>
-void TreeClass<T>::PrintTree_DepthFirst()
+void TreeClassPermanent<T>::PrintTree_DepthFirst()
 {
-	TreeClass<T>::PrintTree_DepthFirst_Step(this->_Root);
+	TreeClassPermanent<T>::PrintTree_DepthFirst_Step(this->GetRoot());
 }
 
 template<class T>
-void TreeClass<T>::PrintTree_DepthFirst_Step(const TreeNodePermanent<T> &CurNode)
+void TreeClassPermanent<T>::PrintTree_DepthFirst_Step(const TreeNodePermanent<T> &CurNode)
 {
 	CurNode.PrintNode();
 
-	for(const auto &childNode : CurNode.GetStorage())
+	for(const auto &childID : CurNode.GetStorage())
 	{
-		TreeClass<T>::PrintTree_DepthFirst_Step(childNode);
-		if(childNode.GetParent() != &CurNode)
+		TreeClassPermanent<T>::PrintTree_DepthFirst_Step(this->_NodeStorage.at(childID));
+		if(this->_NodeStorage.at(childID).GetParentID() != CurNode._NodeID)
 			std::cout << "ERRRRRRRRRRRRRRRRRRRRRRRRROR";
 	}
 }

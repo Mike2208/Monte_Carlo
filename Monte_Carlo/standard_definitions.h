@@ -2,8 +2,8 @@
 #define STANDARD_DEFINITIONS_H
 
 #ifndef DEBUG
-//#define DEBUG
-//#include <iostream>
+#define DEBUG
+#include <iostream>
 #endif
 
 #include <iostream>
@@ -44,16 +44,7 @@ inline T GetMinIncrementedValue(const T &Value)		// Returns next higher represen
 }
 
 #ifdef DEBUG	// DEBUG
-static std::string PrintTabs(const unsigned int &NumTabs)
-{
-	std::string curString;
-	for(unsigned int i = 0; i<NumTabs; ++i)
-	{
-		curString.append("\t");
-	}
-
-	return curString;
-}
+extern std::string PrintTabs(const unsigned int &NumTabs);
 #endif			// ~DEBUG
 
 #endif // STANDARD_DEFINITIONS_H

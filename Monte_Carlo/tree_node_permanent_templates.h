@@ -8,10 +8,10 @@ template<class T>
 TreeNodePermanent<T>::TreeNodePermanent(const ID NodeID, const ID &ParentID, const T &NewData, TreeClassPermanent<T> &StorageClass) : _ParentID(ParentID), _ChildIDs(), _Data(NewData), _NodeID(NodeID), _StorageClass(StorageClass)
 {
 #ifdef DEBUG	// DEBUG
-	if(Parent == nullptr)
+	if(this->_ParentID == TREE_NODE_PERMANENT::INVALID_ID)
 		this->_NodeDepth = 0;
 	else
-		this->_NodeDepth = Parent->_NodeDepth+1;
+		this->_NodeDepth = StorageClass._NodeStorage.at(ParentID)._NodeDepth+1;
 #endif			// ~DEBUG
 }
 
@@ -45,9 +45,9 @@ TREE_NODE_PERMANENT::ID TreeNodePermanent<T>::AddChild(const T &NewData)
 template<class T>
 void TreeNodePermanent<T>::PrintNode() const
 {
-	std::cout << PrintTabs(this->_NodeDepth) << "Node Address: " << this << std::endl;
-	std::cout << PrintTabs(this->_NodeDepth) << "Node Parent: " << this->_Parent << std::endl;
-	std::cout << PrintTabs(this->_NodeDepth) << "Num Children: " << this->_Children.size() << std::endl;
+	std::cout << PrintTabs(this->_NodeDepth) << "Node ID: " << this->_NodeID << std::endl;
+	std::cout << PrintTabs(this->_NodeDepth) << "Node Parent ID: " << this->_ParentID << std::endl;
+	std::cout << PrintTabs(this->_NodeDepth) << "Num Children: " << this->_ChildIDs.size() << std::endl;
 	std::cout << PrintTabs(this->_NodeDepth) << "Node Depth: " << this->_NodeDepth <<std::endl;
 	std::cout << PrintTabs(this->_NodeDepth) << "Node Data: " << std::endl;
 	this->_Data.PrintNodeData(this->_NodeDepth);

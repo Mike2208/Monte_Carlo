@@ -47,11 +47,13 @@ class TreeNodePermanent
 		void SetData(const T &NewData) { this->_Data = NewData; }
 
 		ID GetNumChildren() const  { return this->_ChildIDs.size(); }
-		ID GetChildID(const ID &ChildNumber)  { return this->_ChildIDs.at(ChildNumber); }
+		ID GetChildID(const ID &ChildNumber) const { return this->_ChildIDs.at(ChildNumber); }
 
 		ID AddChild(const T &NewChildData);
 
 		bool IsLeaf() const;		// Returns whether node is leaf ( no children )
+
+		const std::vector<ID> &GetStorage() const { return this->_ChildIDs; }
 
 #ifdef DEBUG	// DEBUG
 		unsigned int _NodeDepth;

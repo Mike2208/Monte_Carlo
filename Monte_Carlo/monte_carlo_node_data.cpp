@@ -25,18 +25,6 @@ void MonteCarloNodeData::SetToDeadEnd()
 }
 
 #ifdef DEBUG	// DEBUG
-std::ostream& MONTE_CARLO_NODE_DATA::NODE_ACTION::PrintAction(std::ostream& os) const
-{
-	if(this->IsMoveAction())
-		return (os << "Move Action");
-	else if(this->IsObserveAction())
-		return (os << "Observe Action");
-	else if(this->IsCellFree())
-		return (os << "Free Cell");
-	else
-		return (os << "Occupied Cell");
-}
-
 void MonteCarloNodeData::PrintNodeData(const unsigned int &NodeDepth) const
 {
 	std::cout << PrintTabs(NodeDepth) << " " << "Node Cell: " << this->NewCell << std::endl;

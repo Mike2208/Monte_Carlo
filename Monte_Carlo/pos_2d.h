@@ -25,10 +25,7 @@ struct POS_2D
 };
 
 #ifdef DEBUG	// DEBUG
-static std::ostream& operator<<(std::ostream& os, const POS_2D &obj)
-{
-	return (os << "X: " << obj.X << "\tY: " << obj.Y);
-}
+extern std::ostream& operator<<(std::ostream& os, const POS_2D &obj);
 #endif			// ~DEBUG
 
 #endif // POS_2D_H

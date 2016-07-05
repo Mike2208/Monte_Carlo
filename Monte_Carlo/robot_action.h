@@ -1,6 +1,8 @@
 #ifndef ROBOT_ACTION_H
 #define ROBOT_ACTION_H
 
+#include "standard_definitions.h"
+
 namespace ROBOT_ACTION
 {
 	typedef char ACTION_TYPE;
@@ -45,5 +47,8 @@ class RobotAction
 		ROBOT_ACTION::ACTION_TYPE _Action;
 };
 
+#ifdef DEBUG	// DEBUG
+	extern std::ostream& operator<<(std::ostream& os, const RobotAction &obj);
+#endif			// ~DEBUG
 
 #endif // ROBOT_ACTION_H

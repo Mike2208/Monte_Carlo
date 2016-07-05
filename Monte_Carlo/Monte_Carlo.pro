@@ -34,7 +34,9 @@ SOURCES += main.cpp \
     district_graph.cpp \
     tree_class_permanent.cpp \
     tree_node_permanent.cpp \
-    algorithm_voronoi_fields_template.cpp
+    algorithm_voronoi_fields_template.cpp \
+    pos_2d.cpp \
+    standard_definitions.cpp
 
 HEADERS += \
     map_2d.h \

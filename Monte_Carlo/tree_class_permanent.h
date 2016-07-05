@@ -11,7 +11,7 @@ class TreeClassPermanent
 		typedef TreeNodePermanent<T> TREE_NODE;
 		typedef T	TREE_NODE_DATA;
 #ifdef DEBUG
-		TreeClassPermanent() : _Root() { this->_Root._NodeDepth = 0; }
+		TreeClassPermanent() : _NodeStorage() { this->_NodeStorage.push_back(TreeNodePermanent<T>(0, TREE_NODE_PERMANENT::INVALID_ID, T(), *this)); }
 #else
 		TreeClassPermanent();
 #endif
@@ -21,10 +21,12 @@ class TreeClassPermanent
 		TreeNodePermanent<T> &GetRoot() { return this->_NodeStorage.at(0); }
 		const TreeNodePermanent<T> &GetRoot() const { return this->_NodeStorage.at(0); }
 
+		const typename TreeNodePermanent<T>::STORAGE &GetStorage() const { return this->_NodeStorage; }
+
 #ifdef DEBUG	// DEBUG
 		void PrintTree_BreadthFirst();
 		void PrintTree_DepthFirst();
-		static void PrintTree_DepthFirst_Step(const TreeNodePermanent<T> &CurNode);
+		void PrintTree_DepthFirst_Step(const TreeNodePermanent<T> &CurNode);
 #endif			// ~DEBUG
 
 	private:

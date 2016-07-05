@@ -15,9 +15,9 @@ namespace MONTE_CARLO_NODE_DATA
 
 	typedef float COST_TYPE;
 
-#ifdef DEBUG	// DEBUG
-		static std::ostream& operator<<(std::ostream& os, const NODE_ACTION& obj) { return obj.PrintAction(os); }
-#endif			// ~DEBUG
+//#ifdef DEBUG	// DEBUG
+//	static std::ostream& operator<<(std::ostream& os, const RobotAction& obj) { return obj.PrintAction(os); }
+//#endif			// ~DEBUG
 }
 
 class MonteCarloNodeData

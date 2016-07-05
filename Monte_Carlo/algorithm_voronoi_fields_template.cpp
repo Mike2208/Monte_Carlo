@@ -201,8 +201,8 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 			else if((r_adjacentID != curID) && (r_adjacentDist >= curDist-1))
 			{
 				// if this is an edge between two districts, add it to known edges
-				ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS *shortestDist = shortestDistances.FindID(curID, r_adjacentID);
-				if(shortestDist == nullptr)
+				ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS *pShortestDist = shortestDistances.FindID(curID, r_adjacentID);
+				if(pShortestDist == nullptr)
 				{
 					// If this dist does not exist yet, add it
 					shortestDistances.Poses.push_back(ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS(curID, r_adjacentID, curDist, curPos, adjacentPos));
@@ -210,13 +210,13 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 				else
 				{
 					// Compare distances and change if better dist is better
-					if(curDist <  shortestDist->Distance)
+					if(curDist <  pShortestDist->Distance)
 					{
-						shortestDist->DistrictID1 = curID;
-						shortestDist->DistrictID2 = r_adjacentID;
-						shortestDist->Distance = curDist;
-						shortestDist->ShortestPosID1 = curPos;
-						shortestDist->ShortestPosID2 = adjacentPos;
+						pShortestDist->DistrictID1 = curID;
+						pShortestDist->DistrictID2 = r_adjacentID;
+						pShortestDist->Distance = curDist;
+						pShortestDist->ShortestPosID1 = curPos;
+						pShortestDist->ShortestPosID2 = adjacentPos;
 					}
 				}
 			}
@@ -233,12 +233,12 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 
 	// Set outer districts to unknown ID
 	POS_2D curPos;
-	for(curPos.X = 0; curPos.X < IDMap.GetWidth(); ++curPos.X)
+	for(curPos.X = 0; curPos.X < districtIDMap.GetWidth(); ++curPos.X)
 	{
-		for(curPos.Y = 0; curPos.Y < IDMap.GetHeight(); ++curPos.Y)
+		for(curPos.Y = 0; curPos.Y < districtIDMap.GetHeight(); ++curPos.Y)
 		{
 			if(OccupationMap.GetPixel(curPos) != OccupationLevelOfDistrictsToDivide)
-				IDMap.SetPixel(curPos, ALGORITHM_VORONOI_FIELDS::INVALID_ID);
+				districtIDMap.SetPixel(curPos, ALGORITHM_VORONOI_FIELDS::INVALID_ID);
 		}
 	}
 
@@ -249,7 +249,7 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 	for(const auto &curShortestPos : shortestDistances.Poses)
 	{
 		ALGORITHM_VORONOI_FIELDS::DISTRICT_CHANGE changeData;
-		changeData.OldID = IDMap.GetPixel(curShortestPos.ShortestPosID1);
+		changeData.OldID = districtIDMap.GetPixel(curShortestPos.ShortestPosID1);
 
 		// Create new ID
 		changeData.ChangeNewIDPos = curShortestPos.ShortestPosID1;
@@ -264,7 +264,7 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 		{
 			const POS_2D adjacentPos = changeData.ChangeNewIDPos+navOption;
 			ALGORITHM_VORONOI_FIELDS::ID adjacentID;
-			if(IDMap.GetPixel(adjacentPos, adjacentID) < 0 || adjacentID != changeData.OldID)
+			if(districtIDMap.GetPixel(adjacentPos, adjacentID) < 0 || adjacentID != changeData.OldID)
 				continue;		// Don't use this cell
 
 			changeData.ChangeOldIDPos = adjacentPos;
@@ -296,7 +296,7 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 	{
 		// Get Values of current position
 		const POS_2D &curPos = posToCheck.front();
-		const ALGORITHM_VORONOI_FIELDS::ID &curID = IDMap.GetPixel(curPos);
+		const ALGORITHM_VORONOI_FIELDS::ID &curID = districtIDMap.GetPixel(curPos);
 		const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &curDist = districtDistMap.GetPixel(curPos);
 
 		// Compare to adjacent positions
@@ -308,7 +308,7 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 			if(OriginalDistrictMap.GetPixel(adjacentPos, inDistrict) < 0 || inDistrict != DISTRICT_MAP::IN_DISTRICT)
 				continue;		// Skip if outside of district
 
-			ALGORITHM_VORONOI_FIELDS::ID &r_adjacentID = IDMap.GetPixelR(adjacentPos);
+			ALGORITHM_VORONOI_FIELDS::ID &r_adjacentID = districtIDMap.GetPixelR(adjacentPos);
 
 			if(r_adjacentID == ALGORITHM_VORONOI_FIELDS::INVALID_ID)
 				continue;		// Skip if outer district
@@ -343,6 +343,19 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 		// Store all values in district
 		DistrictMap &curDistrict = DistrictsToDivide.back();
 		curDistrict.SetDistrictFromIDMap(districtIDMap, curSize.PosInDistrict, nullptr);
+	}
+
+	// Move new data to IDMap
+	for(curPos.X = 0; curPos.X < IDMap.GetWidth(); ++curPos.X)
+	{
+		for(curPos.Y = 0; curPos.Y < IDMap.GetHeight(); ++curPos.Y)
+		{
+			const ALGORITHM_VORONOI_FIELDS::ID &curID = districtIDMap.GetPixel(curPos);
+
+			// Only override data of Districts To Divide
+			if(curID != ALGORITHM_VORONOI_FIELDS::INVALID_ID)
+				IDMap.SetPixel(curPos, curID);
+		}
 	}
 
 	return 1;
