@@ -33,6 +33,6 @@ class AlgorithmDStar
 		static void UpdateMap_Routine(const Map2D<T> &UpdatedOriginalMap, std::queue<POS_2D> &PosToCheck, Map2D<T> &DStarMapToUpdate);		// Routine that runs to update a map
 };
 
-#include "algorithm_d_star_templates.h"
+#include "algorithm_d_star_templates.cpp"
 
 #endif // ALGORITHM_D_STAR_H

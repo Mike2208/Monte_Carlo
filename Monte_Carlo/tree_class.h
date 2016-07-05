@@ -30,6 +30,6 @@ class TreeClass
 		TreeNode<T> _Root;		// Root node of tree
 };
 
-#include "tree_class_templates.h"
+#include "tree_class_templates.cpp"
 
 #endif // TREE_CLASS_H

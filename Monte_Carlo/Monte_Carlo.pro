@@ -36,16 +36,23 @@ SOURCES += main.cpp \
     tree_node_permanent.cpp \
     algorithm_voronoi_fields_template.cpp \
     pos_2d.cpp \
-    standard_definitions.cpp
+    standard_definitions.cpp \
+    algorithm_d_star_templates.cpp \
+    d_star_map_templates.cpp \
+    graph_class_templates.cpp \
+    graph_vertice_templates.cpp \
+    map_2d_templates.cpp \
+    tree_class_permanent_templates.cpp \
+    tree_node_permanent_templates.cpp \
+    tree_node_templates.cpp \
+    tree_class_templates.cpp
 
 HEADERS += \
     map_2d.h \
     pos_2d.h \
-    map_2d_templates.h \
     occupancy_grid_map.h \
     standard_definitions.h \
     algorithm_d_star.h \
-    algorithm_d_star_templates.h \
     robot_navigation.h \
     monte_carlo_option1.h \
     tree_node.h \
@@ -54,9 +61,6 @@ HEADERS += \
     monte_carlo_definitions.h \
     monte_carlo_node_data.h \
     d_star_map.h \
-    tree_node_templates.h \
-    d_star_map_templates.h \
-    tree_class_templates.h \
     png_file.h \
     png_convert_image_to_ogm.h \
     ogm_divider.h \
@@ -77,12 +81,8 @@ HEADERS += \
     district_tree.h \
     district_graph.h \
     district_map_definitions.h \
-    graph_class_templates.h \
     tree_class_permanent.h \
-    tree_class_permanent_templates.h \
     tree_node_permanent.h \
-    tree_node_permanent_templates.h \
-    graph_vertice_templates.h \
     map_2d_bool.h
 
 unix:!macx: LIBS += -lpng

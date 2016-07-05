@@ -59,6 +59,6 @@ class TreeNode
 		void ResetChildPointersRecursive() noexcept;		// Resets child pointers to parent ( done after copy )
 };
 
-#include "tree_node_templates.h"
+#include "tree_node_templates.cpp"
 
 #endif // TREE_NODE_H

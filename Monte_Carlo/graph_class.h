@@ -61,7 +61,7 @@ class GraphClass
 		friend class GraphNode;
 };
 
-#include "graph_class_templates.h"
+#include "graph_class_templates.cpp"
 
 #include "graph_node.h"
 

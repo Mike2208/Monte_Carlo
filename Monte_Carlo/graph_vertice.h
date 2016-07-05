@@ -58,6 +58,6 @@ namespace GRAPH_CLASS
 	};
 }
 
-#include "graph_vertice_templates.h"
+#include "graph_vertice_templates.cpp"
 
 #endif // GRAPH_VERTICE_H

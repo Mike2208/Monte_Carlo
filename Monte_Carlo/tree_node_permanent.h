@@ -72,6 +72,6 @@ class TreeNodePermanent
 		friend class TreeClassPermanent;
 };
 
-#include "tree_node_permanent_templates.h"
+#include "tree_node_permanent_templates.cpp"
 
 #endif // TREE_NODE_PERMANENT_H

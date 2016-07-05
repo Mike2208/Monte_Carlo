@@ -55,7 +55,7 @@ class Map2D
 
 #include "map_2d_bool.h"
 
-#include "map_2d_templates.h"
+#include "map_2d_templates.cpp"
 
 typedef bool OGM_DISCRETE_TYPE;
 const OGM_DISCRETE_TYPE OGM_DISCRETE_FULL = 1;

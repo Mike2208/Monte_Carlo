@@ -34,6 +34,6 @@ class DStarMap
 
 };
 
-#include "d_star_map_templates.h"
+#include "d_star_map_templates.cpp"
 
 #endif // D_STAR_MAP_H
