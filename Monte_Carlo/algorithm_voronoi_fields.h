@@ -36,6 +36,10 @@ namespace ALGORITHM_VORONOI_FIELDS
 	typedef DISTRICT_MAP::DISTRICT_SIZE DISTRICT_SIZE;
 	typedef DISTRICT_MAP::DISTRICT_SIZE_VECTOR DISTRICT_SIZE_VECTOR;
 
+	// Keep track of connected districts
+	typedef DISTRICT_MAP::ID_CONNECTION ID_CONNECTION;
+	typedef DISTRICT_MAP::ID_CONNECTION_VECTOR ID_CONNECTION_VECTOR;
+
 	// Struct for storing shortest connection between districts
 	struct SHORTEST_DIST_POS
 	{
@@ -71,6 +75,8 @@ namespace ALGORITHM_VORONOI_FIELDS
 	struct DISTRICT_CHANGE_VECTOR : public std::vector<DISTRICT_CHANGE>
 	{
 		DISTRICT_CHANGE_VECTOR() = default;
+
+		bool AreChangedIDs(const ID &DistrictID1, const ID &DistrictID2) const;
 	};
 }
 
@@ -79,8 +85,8 @@ class AlgorithmVoronoiFields
 {
 	public:
 
-		static void CalculateVoronoiField(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID);
-		static void CalculateVoronoiField(const Map2D<T> &OriginalMap, const T &CutOffValue, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID);
+		static void CalculateVoronoiField(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID, ALGORITHM_VORONOI_FIELDS::ID_MAP *IDMap = nullptr);
+		static void CalculateVoronoiField(const Map2D<T> &OriginalMap, const T &CutOffValue, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID, ALGORITHM_VORONOI_FIELDS::ID_MAP *IDMap = nullptr);
 
 	private:
 
@@ -96,9 +102,10 @@ class AlgorithmVoronoiFields
 		static void ExpandDistrict(const ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, const ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE &DistrictSize, DistrictMap &CurDistrict);
 
 		// Extra methods used in SeparateByShortestDistance()
-		static int SetPathToDistrict(const ALGORITHM_VORONOI_FIELDS::DIST_MAP &SkelDistMap, const POS_2D &StartPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *DistrictSize = nullptr, typename AlgorithmDStar<T>::PATH_VECTOR *Path = nullptr);
-		static int SetWholePathToDistrict(const ALGORITHM_VORONOI_FIELDS::DIST_MAP &SkelDistMap, const ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS &ShortestDistPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *DistrictSize = nullptr, typename AlgorithmDStar<T>::PATH_VECTOR *Path = nullptr);
+		static int SetPathToDistrict(const ALGORITHM_VORONOI_FIELDS::DIST_MAP &SkelDistMap, const POS_2D &StartPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &DistToSetTo, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *DistrictSize = nullptr, typename AlgorithmDStar<T>::PATH_VECTOR *Path = nullptr);
+		static int SetWholePathToDistrict(const ALGORITHM_VORONOI_FIELDS::DIST_MAP &SkelDistMap, const ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS &ShortestDistPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &DistToSetTo, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *DistrictSize = nullptr, typename AlgorithmDStar<T>::PATH_VECTOR *Path = nullptr);
 		static int CreateParellelPath(const POS_2D &StartPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, const ALGORITHM_VORONOI_FIELDS::ID &ParallelID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *DistrictSize = nullptr, typename AlgorithmDStar<T>::PATH_VECTOR *Path = nullptr);
+		static void CombineTwoIDs(const ALGORITHM_VORONOI_FIELDS::ID &OrignalID, const ALGORITHM_VORONOI_FIELDS::ID &ReplacementID, const POS_2D &ConnectionPos, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap);
 
 		static ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE IsOccupiedCell(const T &CellValue, const T &CutOffValue)  { return (CellValue > CutOffValue ? ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED : !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED); }
 };

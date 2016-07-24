@@ -1,5 +1,17 @@
 #include "algorithm_voronoi_fields.h"
 
+bool ALGORITHM_VORONOI_FIELDS::DISTRICT_CHANGE_VECTOR::AreChangedIDs(const ID &DistrictID1, const ID &DistrictID2) const
+{
+	for(const auto &curChange : *this)
+	{
+		if((curChange.OldID == DistrictID1 && curChange.NewID == DistrictID2) ||
+				(curChange.OldID == DistrictID2 && curChange.NewID == DistrictID1))
+			return true;
+	}
+
+	return false;
+}
+
 DistrictMap *ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE::FindDistrictID(const ID &DistrictID)
 {
 	for(DISTRICT_STORAGE::size_type i=0; i<this->size(); ++i)

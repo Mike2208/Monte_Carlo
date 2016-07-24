@@ -22,6 +22,7 @@ class TreeClassPermanent
 		const TreeNodePermanent<T> &GetRoot() const { return this->_NodeStorage.at(0); }
 
 		const typename TreeNodePermanent<T>::STORAGE &GetStorage() const { return this->_NodeStorage; }
+		typename TreeNodePermanent<T>::STORAGE &GetStorage() { return this->_NodeStorage; }
 
 #ifdef DEBUG	// DEBUG
 		void PrintTree_BreadthFirst();

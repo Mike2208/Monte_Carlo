@@ -45,7 +45,9 @@ SOURCES += main.cpp \
     tree_class_permanent_templates.cpp \
     tree_node_permanent_templates.cpp \
     tree_node_templates.cpp \
-    tree_class_templates.cpp
+    tree_class_templates.cpp \
+    monte_carlo_option2.cpp \
+    robot_data.cpp
 
 HEADERS += \
     map_2d.h \
@@ -83,6 +85,8 @@ HEADERS += \
     district_map_definitions.h \
     tree_class_permanent.h \
     tree_node_permanent.h \
-    map_2d_bool.h
+    map_2d_bool.h \
+    monte_carlo_option2.h \
+    robot_data.h
 
 unix:!macx: LIBS += -lpng

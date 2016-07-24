@@ -14,11 +14,14 @@ namespace DISTRICT_TREE
 	struct NODE_DATA
 	{
 		DISTRICT_MAP_DEFINITIONS::ID	ID;		// ID of district
-		unsigned int					Depth;	// Depth of current node
+
+		NODE_DATA(const DISTRICT_MAP_DEFINITIONS::ID &_ID) : ID(_ID) {}
 	};
 
 	typedef TreeClassPermanent<NODE_DATA>	TREE_CLASS;
 	typedef TREE_CLASS::TREE_NODE	TREE_NODE;
+
+	const TREE_NODE::ID INVALID_ID = GetInfiniteVal<TREE_NODE::ID>();
 }
 
 class DistrictTree : public DISTRICT_TREE::TREE_CLASS

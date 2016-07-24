@@ -20,14 +20,19 @@ using namespace std;
 int main()
 {
 	OccupancyGridMap testMap;
-	PNGConvertImageToOGM::ConvertPNGToOGM("test.png", testMap);
+	testMap.ResetMap(10,10, 0);
+	testMap.SetPixel(POS_2D(2,2), OGM_CELL_MAX);
+	testMap.SetPixel(POS_2D(7,7), OGM_CELL_MAX);
+	testMap.SetPixel(POS_2D(2,7), OGM_CELL_MAX);
+	testMap.SetPixel(POS_2D(7,2), OGM_CELL_MAX);
+	//PNGConvertImageToOGM::ConvertPNGToOGM("test.png", testMap);
 
 	testMap.PrintMap("/tmp/testOGM.pgm");
 
 	DistrictMap testDistrict;
-	testDistrict.ResetMap(testMap.GetWidth(), testMap.GetHeight(), DISTRICT_MAP::IN_DISTRICT);
-	testDistrict.SetGlobalMapPosition(POS_2D(0,0));
-	testDistrict.SetID(0);
+	testDistrict.SetFreeDistrict(testMap.GetWidth(), testMap.GetHeight(), 0);
+	//testDistrict.SetGlobalMapPosition(POS_2D(0,0));
+	//testDistrict.SetID(0);
 
 	ALGORITHM_VORONOI_FIELDS::ID nextFreeID = 1;
 	ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE freeDistricts, occupiedDistricts;

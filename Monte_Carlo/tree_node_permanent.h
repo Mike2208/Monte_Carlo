@@ -54,6 +54,7 @@ class TreeNodePermanent
 		bool IsLeaf() const;		// Returns whether node is leaf ( no children )
 
 		const std::vector<ID> &GetStorage() const { return this->_ChildIDs; }
+		std::vector<ID> &GetStorage() { return this->_ChildIDs; }
 
 #ifdef DEBUG	// DEBUG
 		unsigned int _NodeDepth;
