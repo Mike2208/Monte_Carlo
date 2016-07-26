@@ -50,10 +50,13 @@ class DistrictMapStorage
 		int DivideMap(const DISTRICT_ID &DistrictToDivide, const Map2D<T> &OriginalMap, const T &CutOffValue);		// Divide given map into smaller areas (use CutOffValue to separate district)
 
 		// Access data
-		void GetDistrictAtGlobalPos(const POS_2D &Position, const DistrictMap *District) const;
+		void GetDistrictAtGlobalPos(const POS_2D &Position, const DistrictMap **District) const;
 		DISTRICT_ID GetDistrictIDAtGlobalPos(const POS_2D &Position) const;
 
 		const DistrictGraph &GetDistrictGraph() const { return this->_DistrictGraph; }
+
+		// Access District Map
+		const DistrictMap &GetDistrict(const DISTRICT_ID &DistrictID) const;
 
 		// Total Map Navigation
 		void ResetTotalMap();			// Resets total map

@@ -9,6 +9,7 @@
 #include "district_map_storage.h"
 #include "tree_class.h"
 #include "occupancy_grid_map.h"
+#include "robot_data.h"
 
 namespace MONTE_CARLO_OPTION2
 {
@@ -36,6 +37,7 @@ namespace MONTE_CARLO_OPTION2
 			void SetAction(const NODE_ACTION_DATA_TYPE Action) { this->_Action = Action; }
 
 			NODE_ACTION(const NODE_ACTION_DATA_TYPE Action) : _Action(Action) {}
+			NODE_ACTION() = default;
 
 		private:
 			NODE_ACTION_DATA_TYPE _Action;			// Stores the action that will be taken in this node
@@ -96,14 +98,28 @@ namespace MONTE_CARLO_OPTION2
 
 	struct CONNECTION_STORAGE : public std::vector<CONNECTION_DATA>
 	{
-		typedef CONNECTION_DATA CONNECTION_DATA;
+		typedef CONNECTION_DATA CONNECTION_DAT;
+	};
+
+	// Data of previously traversed path
+	struct TRAVERSED_PATH_SINGLE : public std::array<POS_2D,2>
+	{
+		bool IsBidirectionalPath(const POS_2D &Pos1, const POS_2D &Pos2) const;
+	};
+	struct TRAVERSED_PATH : public std::vector<TRAVERSED_PATH_SINGLE>
+	{
+		bool PathContainsBidirectionalMove(const POS_2D &Pos1, const POS_2D &Pos2) const;
 	};
 
 	// Data of current branch
-	typedef OccupancyGridMap		OGM_MAP;
-	typedef OGM_LOG_MAP_TYPE		LOG_MAP;
-	typedef Map2D<NUM_VISIT_TYPE>	NUM_VISIT_MAP;
-	typedef DistrictMapStorage		DISTRICT_STORAGE;
+	typedef OccupancyGridMap				OGM_MAP;
+	typedef OGM_LOG_MAP_TYPE				LOG_MAP;
+	typedef Map2D<NUM_VISIT_TYPE>			NUM_VISIT_MAP;
+	typedef DistrictMap						DISTRICT;
+	typedef DistrictMapStorage				DISTRICT_STORAGE;
+	typedef std::vector<DISTRICT_ID>		VISITED_DISTRICTS;
+	typedef VISITED_DISTRICTS::size_type	VISITED_DISTRICTS_ID;
+	typedef RobotData						ROBOT_POSITION_DATA;
 	struct BRANCH_DATA
 	{
 		const OGM_MAP *pOriginalMap;				// Original Map
@@ -117,12 +133,22 @@ namespace MONTE_CARLO_OPTION2
 		LOG_MAP				CurLogData;				// Current Map (in log form) after branch operations have been executed
 		NUM_VISIT_MAP		VisitMap;				// Counter for number of visits to positions in map
 
+		ROBOT_POSITION_DATA	CurBotData;				// Current robot pose
+
 		CONNECTION_STORAGE	AdjacentDistricts;		// Stores all adjacent districts
+
+		VISITED_DISTRICTS		VisitedDistricts;			// Previously visited districs
+		VISITED_DISTRICTS_ID	DistrictAfterObservation;	// First district after last observation
+
+		TRAVERSED_PATH		PrevPath;				// Robot path that was taken in this branch
+
+		const DISTRICT &GetCurDistrict() const;		// Returns current district
+		DISTRICT_ID GetCurDistrictID() const;		// Returns current district ID
 
 		void StepDownOneNode(const TREE_NODE::CHILD_ID &ChildID);
 		void StepUpOneNode();
 
-		void Init(const OGM_MAP &OriginalMap, const POS_2D &Destination, TREE_CLASS &TreeData, const DISTRICT_STORAGE &DistrictStorage);
+		void Init(const OGM_MAP &OriginalMap, const POS_2D &Start, const POS_2D &Destination, TREE_CLASS &TreeData, const DISTRICT_STORAGE &DistrictStorage);
 
 		private:
 
@@ -140,7 +166,7 @@ class MonteCarloOption2
 		typedef MONTE_CARLO_OPTION2::BRANCH_DATA		BRANCH_DATA;
 		typedef MONTE_CARLO_OPTION2::DISTRICT_ID		DISTRICT_ID;
 		typedef MONTE_CARLO_OPTION2::CONNECTION_STORAGE	CONNECTION_STORAGE;
-		typedef CONNECTION_STORAGE::CONNECTION_DATA		CONNECTION_DATA;
+		typedef CONNECTION_STORAGE::CONNECTION_DAT		CONNECTION_DATA;
 	public:
 		MonteCarloOption2();
 

@@ -6,8 +6,8 @@
 template<>
 class Map2D<bool>
 {
-		typedef std::vector<bool> CELL_STORAGE;
 	public:
+		typedef std::vector<bool> CELL_STORAGE;
 		typedef bool CELL_TYPE;
 
 		Map2D(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight, const bool &DefaultCellValue) : _Height(NewHeight), _Width(NewWidth), _CellData(NewHeight*NewWidth) { this->ResetMap(NewWidth, NewHeight, DefaultCellValue); }

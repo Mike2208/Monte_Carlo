@@ -12,6 +12,124 @@ bool ALGORITHM_VORONOI_FIELDS::DISTRICT_CHANGE_VECTOR::AreChangedIDs(const ID &D
 	return false;
 }
 
+ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS::ConvertToShortestDistPos(const ID_MAP &IDMap, const DIST_MAP &DistMap) const
+{
+	ID curID = IDMap.GetPixel(this->Position);			// The two connected districts
+	ID adjacentID;
+
+	// Find second position
+	for(const auto navOption : NavigationOptions)
+	{
+		const POS_2D adjacentPos = this->Position+navOption;
+
+		if(IDMap.GetPixel(adjacentPos, adjacentID) < 0)
+			continue; // Skip if not in map
+
+		if(adjacentID == curID)
+			continue; // Same district, skip
+
+		const DIST_MAP::CELL_TYPE adjacentDist = DistMap.GetPixel(adjacentPos);
+		const MOVE_DIST_TYPE moveCost = GetMovementCost(this->Position, adjacentPos);
+		if(adjacentDist <= this->Distance+moveCost && adjacentDist+moveCost >= this->Distance)
+		{
+			// Found adjacent position, create shortestDistPos
+			return ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS(curID, adjacentID, this->Distance, this->Position, adjacentPos);
+		}
+	}
+
+	// Return error value (shouldn't happen)
+	return ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS(curID, curID, this->Distance, this->Position, this->Position);
+}
+
+ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR::FindClosestDist(const SKEL_MAP_SHORTEST_DIST_POS &CurDist, ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &Distance) const
+{
+	ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE backDist = 0;
+	const ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *pBackDist = nullptr;
+	if(CurDist.PrevElementID != ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
+	{
+		// Continue backtracking until a valid position is found
+		pBackDist = &CurDist;
+
+		do
+		{
+			backDist += pBackDist->DistToPrevElement;
+			pBackDist = &(this->at(pBackDist->PrevElementID));
+		}
+		while(pBackDist->PrevElementID != ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID
+			  && !pBackDist->ValidElement);
+
+		if(pBackDist == nullptr)
+			backDist = ALGORITHM_VORONOI_FIELDS::MAX_DIST;
+	}
+
+	ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE frontDist = 0;
+	const ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *pFrontDist = this->FindClosestDistForward(CurDist, frontDist);
+
+	// If no other pos was found, just return nothing
+	if(pBackDist == nullptr && pFrontDist == nullptr)
+	{
+		Distance = ALGORITHM_VORONOI_FIELDS::MAX_DIST;
+		return nullptr;
+	}
+
+	// Return smaller distance
+	if(backDist <= frontDist)
+	{
+		Distance = backDist;
+		return const_cast<ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *>(pBackDist);
+	}
+
+	Distance = frontDist;
+	return const_cast<ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *>(pFrontDist);
+}
+
+ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR::FindClosestDistForward(const SKEL_MAP_SHORTEST_DIST_POS &CurDist, ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &Distance) const
+{
+	ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE bestDist = ALGORITHM_VORONOI_FIELDS::MAX_DIST;
+	const ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *pBestDist = nullptr;
+
+	if(CurDist.NextElementIDs.size() == 0)
+	{
+		Distance = ALGORITHM_VORONOI_FIELDS::MAX_DIST;
+		return nullptr;
+	}
+
+	// Go through all following distances
+	for(const auto &curForwardDistID : CurDist.NextElementIDs)
+	{
+		const ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *pCurForwardDist = &(this->at(curForwardDistID));
+
+		// If this element was not erased
+		if(pCurForwardDist->ValidElement)
+		{
+			// Check if this is best position
+			if(pCurForwardDist->DistToPrevElement <= bestDist)
+			{
+				bestDist = pCurForwardDist->DistToPrevElement;
+				pBestDist = pCurForwardDist;
+			}
+		}
+		else
+		{
+			// Recursvely calculate shortest distance if this element was erased
+			ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE curDist = 0;
+			const ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *pClosestDist = this->FindClosestDistForward(*pCurForwardDist, curDist);
+			curDist += pCurForwardDist->DistToPrevElement;
+
+			// Check if this is best position
+			if(curDist <= bestDist && pClosestDist != nullptr)
+			{
+				bestDist = curDist;
+				pBestDist = pClosestDist;
+			}
+		}
+	}
+
+	// Return results
+	Distance = bestDist;
+	return const_cast<ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *>(pBestDist);
+}
+
 DistrictMap *ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE::FindDistrictID(const ID &DistrictID)
 {
 	for(DISTRICT_STORAGE::size_type i=0; i<this->size(); ++i)

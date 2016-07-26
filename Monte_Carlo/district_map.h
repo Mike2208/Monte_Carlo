@@ -88,10 +88,8 @@ namespace DISTRICT_MAP
 		ADJACENT_DISTRICT(const ID &_AdjacentDistrictID, const CONNECTED_POS_VECTOR &_ConnectionPositions) : AdjacentDistrictID(_AdjacentDistrictID), ConnectionPositions(_ConnectionPositions) {}
 	};
 
-	struct ADJACENT_DISTRICT_VECTOR
+	struct ADJACENT_DISTRICT_VECTOR : public std::vector<ADJACENT_DISTRICT>
 	{
-		std::vector<ADJACENT_DISTRICT>	AdjacentDistricts;
-
 		void AddConnection(const ID &AdjacentID, const POS_2D &OriginalDistrictPos, const POS_2D &AdjacentDistrictPos);
 		void GetConnectionData(const ID &AdjacentID, CONNECTED_POS_VECTOR &Connections) const;
 
@@ -146,6 +144,8 @@ class DistrictMap : public DISTRICT_MAP::MAP_TYPE
 		const POS_2D &GetGlobalMapPosition() const { return this->_GlobalMapPosition; }
 		const POS_2D &GetLocalPosInDistrict() const { return this->_LocalPositionInDistrict; }
 		POS_2D GetGlobalPosInDistrict() const { return this->ConvertToGlobalPosition(this->_LocalPositionInDistrict); }
+
+		const ADJACENT_DISTRICT_VECTOR &GetAdjacentConnections() const { return this->_AdjacentDistricts; }
 
 	private:
 

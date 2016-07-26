@@ -13,8 +13,9 @@ namespace MAP_2D
 template<class T>
 class Map2D
 {
-		typedef std::vector<T> CELL_STORAGE;
 	public:
+		typedef std::vector<T> CELL_STORAGE;
+		typedef typename std::vector<T>::size_type CELL_STORAGE_ITERATOR;
 		typedef T CELL_TYPE;
 
 		Map2D(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight, const T &DefaultCellValue) : _Height(NewHeight), _Width(NewWidth), _CellData(NewHeight*NewWidth) { this->ResetMap(NewWidth, NewHeight, DefaultCellValue); }
@@ -39,6 +40,10 @@ class Map2D
 
 		POS_2D_TYPE GetHeight() const { return this->_Height; }
 		POS_2D_TYPE GetWidth() const { return this->_Width; }
+
+		// Iterator access
+		const CELL_STORAGE_ITERATOR GetElementPosInStorage(const POS_2D &Position) const { return Position.X+this->_Width*Position.Y; }
+		const T &GetPixelFromStorage(const CELL_STORAGE_ITERATOR &ElementPosition) const { return this->_CellData.at(ElementPosition); }
 
 		// Gets entire cell storage ( usefull for parsing entire map )
 		const CELL_STORAGE &GetCellStorage() const { return this->_CellData; }

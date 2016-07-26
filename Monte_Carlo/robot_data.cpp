@@ -1,6 +1,6 @@
 #include "robot_data.h"
 
-RobotData::RobotData()
+POS_2D RobotData::GetGlobalBotPosition() const
 {
-
+	return this->_PositionData;
 }

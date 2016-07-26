@@ -3,11 +3,11 @@
 
 namespace MONTE_CARLO_OPTION2
 {
-	NODE_DATA::NODE_DATA() : NodeData(nullptr), NodeDataSize(0)
+	NODE_DATA::NODE_DATA() : Action(NODE_ACTION_ERROR), NodeData(nullptr), NodeDataSize(0)
 	{
 	}
 
-	NODE_DATA::NODE_DATA(const NODE_DATA &S) noexcept
+	NODE_DATA::NODE_DATA(const NODE_DATA &S) noexcept : Action(NODE_ACTION_ERROR)
 	{
 		// Copy everything first
 		std::memcpy(this, &S, sizeof(NODE_DATA));
@@ -17,7 +17,7 @@ namespace MONTE_CARLO_OPTION2
 		std::memcpy(this->NodeData, S.NodeData, S.NodeDataSize);
 	}
 
-	NODE_DATA::NODE_DATA(NODE_DATA &&S) noexcept
+	NODE_DATA::NODE_DATA(NODE_DATA &&S) noexcept : Action(NODE_ACTION_ERROR)
 	{
 		// Copy everything first
 		std::memcpy(this, &S, sizeof(NODE_DATA));
@@ -55,6 +55,36 @@ namespace MONTE_CARLO_OPTION2
 	{
 		if(this->NodeData != nullptr)
 			delete[] static_cast<char*>(this->NodeData);
+	}
+
+	bool TRAVERSED_PATH_SINGLE::IsBidirectionalPath(const POS_2D &Pos1, const POS_2D &Pos2) const
+	{
+		if( ((*this)[0] == Pos1 && (*this)[1] == Pos2) ||
+				((*this)[1] == Pos1 && (*this)[0] == Pos2))
+			return true;
+
+		return false;
+	}
+
+	bool TRAVERSED_PATH::PathContainsBidirectionalMove(const POS_2D &Pos1, const POS_2D &Pos2) const
+	{
+		for(const auto &curMove : (*this))
+		{
+			if(curMove.IsBidirectionalPath(Pos1, Pos2))
+				return true;
+		}
+
+		return false;
+	}
+
+	const DISTRICT &BRANCH_DATA::GetCurDistrict() const
+	{
+		return this->pDistrictStorage->GetDistrict(this->GetCurDistrictID());
+	}
+
+	DISTRICT_ID BRANCH_DATA::GetCurDistrictID() const
+	{
+		return this->pDistrictStorage->GetDistrictIDAtGlobalPos(this->CurBotData.GetGlobalBotPosition());
 	}
 }
 
@@ -98,16 +128,29 @@ int MonteCarloOption2::Selection()
 		}
 
 		// Move down to selected branch
-		this->_Branch.StepDownOneNode(bestChildID);
+//		this->_Branch.StepDownOneNode(bestChildID);
 	}
 
 	return 1;
 }
 
 
-void Expansion()
+void MonteCarloOption2::Expansion()
 {
+	TREE_NODE *&ppCurNode = this->_Branch.pCurNode;
+	const DistrictMap &curDistrict = this->_Branch.GetCurDistrict();
 
+	// Look at all connections around current node
+	const POS_2D curBotPos = this->_Branch.CurBotData.GetGlobalBotPosition();
+	for(const auto &curIDConnection : curDistrict.GetAdjacentConnections())
+	{
+		//if()
+		for(const auto &curConnectionPos : curIDConnection.ConnectionPositions)
+		{
+			if(curBotPos == curConnectionPos[0])
+				continue;			// Skip if we are at this position
+		}
+	}
 }
 
 void Simulation();

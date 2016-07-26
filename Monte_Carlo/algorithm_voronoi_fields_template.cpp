@@ -9,16 +9,16 @@
 #include <queue>
 
 template<class T>
-void AlgorithmVoronoiFields<T>::CalculateVoronoiField(const Map2D<T> &OriginalMap, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID, ALGORITHM_VORONOI_FIELDS::ID_MAP *IDMap)
+void AlgorithmVoronoiFields<T>::CalculateVoronoiField(const Map2D<T> &OriginalMap, const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &MinDistBetweenDistricts, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID, ALGORITHM_VORONOI_FIELDS::ID_MAP *IDMap)
 {
 	const T cutOffValue = AlgorithmVoronoiFields<T>::CalculateMapAverage(OriginalMap, OriginalDistrictData);
 
-	return AlgorithmVoronoiFields<T>::CalculateVoronoiField(OriginalMap, cutOffValue, OriginalDistrictData, OccupiedDistricts, FreeDistricts, NextFreeDistrictID, IDMap);
+	return AlgorithmVoronoiFields<T>::CalculateVoronoiField(OriginalMap, cutOffValue, MinDistBetweenDistricts, OriginalDistrictData, OccupiedDistricts, FreeDistricts, NextFreeDistrictID, IDMap);
 }
 
 
 template<class T>
-void AlgorithmVoronoiFields<T>::CalculateVoronoiField(const Map2D<T> &OriginalMap, const T &CutOffValue, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID, ALGORITHM_VORONOI_FIELDS::ID_MAP *IDMap)
+void AlgorithmVoronoiFields<T>::CalculateVoronoiField(const Map2D<T> &OriginalMap, const T &CutOffValue, const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &MinDistBetweenDistricts, const DistrictMap &OriginalDistrictData, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OccupiedDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &FreeDistricts, ALGORITHM_VORONOI_FIELDS::ID &NextFreeDistrictID, ALGORITHM_VORONOI_FIELDS::ID_MAP *IDMap)
 {
 	FreeDistricts.clear();
 	OccupiedDistricts.clear();
@@ -39,7 +39,7 @@ void AlgorithmVoronoiFields<T>::CalculateVoronoiField(const Map2D<T> &OriginalMa
 #endif			// ~DEBUG
 
 	// Step 2.1: Find shortest distances between free districts
-	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, OccupiedDistricts, FreeDistricts, NextFreeDistrictID, idMap);
+	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, MinDistBetweenDistricts, OccupiedDistricts, FreeDistricts, NextFreeDistrictID, idMap);
 
 #ifdef DEBUG	// DEBUG
 	idMap.PrintMap("/tmp/testID2.pgm", NextFreeDistrictID-1, 0);
@@ -47,7 +47,7 @@ void AlgorithmVoronoiFields<T>::CalculateVoronoiField(const Map2D<T> &OriginalMa
 #endif			// ~DEBUG
 
 	// Step 2.2: Find shortest distances between occupied districts
-	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, FreeDistricts, OccupiedDistricts, NextFreeDistrictID, idMap);
+	AlgorithmVoronoiFields<T>::SeparateByShortestDistance(OriginalDistrictData, occupationMap, ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED, MinDistBetweenDistricts, FreeDistricts, OccupiedDistricts, NextFreeDistrictID, idMap);
 
 #ifdef DEBUG	// DEBUG
 	idMap.PrintMap("/tmp/testID3.pgm", NextFreeDistrictID-1, 0);
@@ -146,16 +146,18 @@ void AlgorithmVoronoiFields<T>::SeparateMapIntoUnconnectedDistricts(const Map2D<
 }
 
 template<class T>
-int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &OriginalDistrictMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupationLevelOfDistrictsToDivide, const ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OuterDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &DistrictsToDivide, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap)
+int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &OriginalDistrictMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP &OccupationMap, const ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE &OccupationLevelOfDistrictsToDivide, const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &MinDistBetweenDistricts, const ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &OuterDistricts, ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE &DistrictsToDivide, ALGORITHM_VORONOI_FIELDS::ID &NextFreeID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap)
 {
 	ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS_VECTOR shortestDistances;
 
 	// Create map with all IDs and map with all distances
 	ALGORITHM_VORONOI_FIELDS::ID_MAP districtIDMap;			// Map with IDs of closest district
 	ALGORITHM_VORONOI_FIELDS::DIST_MAP skeletonDistMap;		// Map with distance to closest ID
+	ALGORITHM_VORONOI_FIELDS::DIST_MAP completeSkelMap;		// Finished skeleton map
 
 	districtIDMap.ResetMap(OriginalDistrictMap.GetWidth(), OriginalDistrictMap.GetHeight(), ALGORITHM_VORONOI_FIELDS::INVALID_ID);
 	skeletonDistMap.ResetMap(OriginalDistrictMap.GetWidth(), OriginalDistrictMap.GetHeight(), ALGORITHM_VORONOI_FIELDS::MAX_DIST);
+	completeSkelMap.ResetMap(OriginalDistrictMap.GetWidth(), OriginalDistrictMap.GetHeight(), ALGORITHM_VORONOI_FIELDS::MAX_DIST);
 
 	// Add all positions in district to queue
 	std::queue<POS_2D> posToCheck;
@@ -214,25 +216,9 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 			}
 			else if((r_adjacentID != curID) && (r_adjacentDist >= curDist-1))
 			{
-				// if this is an edge between two districts, add it to known edges
-				ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS *pShortestDist = shortestDistances.FindID(curID, r_adjacentID);
-				if(pShortestDist == nullptr)
-				{
-					// If this dist does not exist yet, add it
-					shortestDistances.Poses.push_back(ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS(curID, r_adjacentID, curDist, curPos, adjacentPos));
-				}
-				else
-				{
-					// Compare distances and change if better dist is better
-					if(curDist <  pShortestDist->Distance)
-					{
-						pShortestDist->DistrictID1 = curID;
-						pShortestDist->DistrictID2 = r_adjacentID;
-						pShortestDist->Distance = curDist;
-						pShortestDist->ShortestPosID1 = curPos;
-						pShortestDist->ShortestPosID2 = adjacentPos;
-					}
-				}
+				// if this is an edge between two districts, add it to complete skeleton map
+				completeSkelMap.SetPixel(curPos, curDist);
+				completeSkelMap.SetPixel(adjacentPos, r_adjacentDist);
 			}
 		}
 
@@ -240,13 +226,30 @@ int AlgorithmVoronoiFields<T>::SeparateByShortestDistance(const DistrictMap &Ori
 	}
 	while(posToCheck.size() > 0);
 
+	// Find all shortest distances from skeleton map
+	ALGORITHM_VORONOI_FIELDS::CHECKED_POSITIONS_MAP posChecked(completeSkelMap.GetWidth(), completeSkelMap.GetHeight(), ALGORITHM_VORONOI_FIELDS::INVALID_ID);			// Map to log which positions have already been checked
+	ALGORITHM_VORONOI_FIELDS::CHECKED_POSITIONS_MAP::CELL_TYPE nextSkeletonTypeID = 0;
+	POS_2D tmpCurPos;
+	for(tmpCurPos.X = 0; tmpCurPos.X < districtIDMap.GetWidth(); ++tmpCurPos.X)
+	{
+		for(tmpCurPos.Y = 0; tmpCurPos.Y < districtIDMap.GetHeight(); ++tmpCurPos.Y)
+		{
+			if(posChecked.GetPixel(tmpCurPos) != ALGORITHM_VORONOI_FIELDS::INVALID_ID)
+				continue;			// Skip if position has already been checked
+
+			// Check if this position is on the skeleton map, then get all shortest distances on this part of the skeleton
+			GetShortestDistPoses(completeSkelMap, tmpCurPos, MinDistBetweenDistricts, districtIDMap, skeletonDistMap, posChecked, nextSkeletonTypeID, shortestDistances);
+
+			nextSkeletonTypeID++;
+		}
+	}
+
 	// Reset ID map for next step
 	ALGORITHM_VORONOI_FIELDS::DIST_MAP districtDistMap;
 	districtIDMap = IDMap;
 	districtDistMap.ResetMap(IDMap.GetWidth(), IDMap.GetHeight(), ALGORITHM_VORONOI_FIELDS::MAX_DIST);
 
 	// Set outer districts to unknown ID
-	POS_2D tmpCurPos;
 	for(tmpCurPos.X = 0; tmpCurPos.X < districtIDMap.GetWidth(); ++tmpCurPos.X)
 	{
 		for(tmpCurPos.Y = 0; tmpCurPos.Y < districtIDMap.GetHeight(); ++tmpCurPos.Y)
@@ -547,6 +550,149 @@ void AlgorithmVoronoiFields<T>::ExpandDistrict(const ALGORITHM_VORONOI_FIELDS::I
 //				CurDistrict.SetPixel(localPos, !DISTRICT_MAP::IN_DISTRICT);
 //		}
 //	}
+}
+
+template<class T>
+int AlgorithmVoronoiFields<T>::GetShortestDistPoses(const ALGORITHM_VORONOI_FIELDS::DIST_MAP &CompleteSkelMap, const POS_2D &StartPos, const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &MinDist, const ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, const ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::CHECKED_POSITIONS_MAP &PositionsChecked, ALGORITHM_VORONOI_FIELDS::CHECKED_POSITIONS_MAP::CELL_TYPE &NextFreeID, ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS_VECTOR &ShortestDistPoses)
+{
+	ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE curDist = CompleteSkelMap.GetPixel(StartPos);
+	if(curDist == ALGORITHM_VORONOI_FIELDS::MAX_DIST)
+		return 0;		// Start Position is not on Skeleton Map, nothing to do
+
+	// Add StartPos to shortest dit array
+	SKEL_MAP_SHORTEST_DIST_POS tmpShortestDist;
+	tmpShortestDist.Position = StartPos;
+	tmpShortestDist.Distance = curDist;
+	tmpShortestDist.DistToPrevElement = ALGORITHM_VORONOI_FIELDS::MAX_DIST;
+	tmpShortestDist.PrevElementID = ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID;
+	ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR newShortestDistances;
+	newShortestDistances.push_back(tmpShortestDist);
+
+	// Go through skeleton and find all minimum positions
+	std::vector<POS_2D> nextAdjacentPositions;
+	std::queue<SKEL_MAP_POS_DATA> posToCheck;
+	posToCheck.push(SKEL_MAP_POS_DATA(StartPos, 0, 0));
+	do
+	{
+		nextAdjacentPositions.clear();
+		const SKEL_MAP_POS_DATA &curPosData = posToCheck.front();;
+		const POS_2D &curPos = curPosData;
+
+		// Get current distance
+		curDist = CompleteSkelMap.GetPixel(curPos);
+
+		// Set position as checked
+		PositionsChecked.SetPixel(curPos, NextFreeID);
+
+		// Find first adjacent positions
+		bool isSmallestDist = false;		// Check if a smaller dist exists
+		unsigned char numNewSameDists = 0;		// number of same distances adjacent to current pos
+		unsigned char numOldSameDists = 0;		// number of same distances adjacent to current pos
+		for(const auto &navOption : NavigationOptions)
+		{
+			const POS_2D adjacentPos = curPos+navOption;
+
+			ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE adjacentDist;
+			if(CompleteSkelMap.GetPixel(adjacentPos, adjacentDist) < 0)
+				continue; // Not on map, skip
+
+			if(adjacentDist == ALGORITHM_VORONOI_FIELDS::MAX_DIST)
+				continue;	// Not on skeleton map, skip
+
+			const ALGORITHM_VORONOI_FIELDS::ID adjacentPosChecked = PositionsChecked.GetPixel(adjacentPos);
+
+			if(adjacentDist == curDist)
+			{
+				if(adjacentPosChecked == NextFreeID)
+					numOldSameDists++;
+				else if(adjacentPosChecked == ALGORITHM_VORONOI_FIELDS::INVALID_ID)
+					numNewSameDists++;
+			}
+			else if(adjacentDist < curDist)
+			{
+				isSmallestDist = false;
+			}
+
+			if(adjacentPosChecked != NextFreeID)
+				nextAdjacentPositions.push_back(adjacentPos);		// Check adjacent position next
+		}
+
+		// Check if this position warrants a new shortest dist entry
+		if(isSmallestDist || (numOldSameDists == 0 && numNewSameDists != 0) || (numOldSameDists != 0 && numNewSameDists == 0))
+		{
+			// Add this position to array
+			tmpShortestDist.Position = curPos;
+			tmpShortestDist.Distance = curDist;
+			tmpShortestDist.DistToPrevElement = curPosData.DistToPrevElement;
+			tmpShortestDist.PrevElementID = curPosData.PrevElementID;
+			newShortestDistances.push_back(tmpShortestDist);
+
+			// Add all adjacent positions
+			for(const auto &curAdjacentPosition : nextAdjacentPositions)
+				posToCheck.push(SKEL_MAP_POS_DATA(curAdjacentPosition, static_cast<ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE>(GetMovementCost(curPos, curAdjacentPosition)), newShortestDistances.size()-1));
+		}
+		else
+		{
+			// Add all adjacent positions
+			for(const auto &curAdjacentPosition : nextAdjacentPositions)
+				posToCheck.push(SKEL_MAP_POS_DATA(curAdjacentPosition, curPosData.DistToPrevElement+static_cast<ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE>(GetMovementCost(curPos, curAdjacentPosition)), curPosData.PrevElementID));
+		}
+
+		// Element checked, remove it
+		posToCheck.pop();
+	}
+	while(posToCheck.size() > 0);
+
+	// After all elements have been found, remove those that are too close to another one
+	std::queue<SKEL_MAP_SHORTEST_DIST_POS*> distsToCheck;
+	distsToCheck.push(&newShortestDistances.at(0));
+	do
+	{
+		SKEL_MAP_SHORTEST_DIST_POS &curDist = *(distsToCheck.front());
+
+		// Get closest distances and remove those that are too close to each other
+		if(curDist.ValidElement == true)
+		{
+			while(1)
+			{
+				ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE distance;
+				SKEL_MAP_SHORTEST_DIST_POS *pClosestDist = newShortestDistances.FindClosestDist(curDist, distance);
+
+				if(distance < MinDist)
+				{
+					// If distance is too small, remove the one with the larger inter-obstacle distance
+					if(pClosestDist->Distance < curDist.Distance)
+					{
+						curDist.ValidElement = false;
+						break;		// STOP, if this element is no longer valid
+					}
+					else
+						pClosestDist->ValidElement = false;
+				}
+				else
+					break;		// STOP, if the closest element is far enough away
+			}
+		}
+
+		// Now add all following elements to array
+		for(auto &nextElement : curDist.NextElementIDs)
+			distsToCheck.push(&newShortestDistances.at(nextElement));
+
+		// Remove current element from buffer
+		distsToCheck.pop();
+	}
+	while(distsToCheck.size() > 0);
+
+	// Now add all remaining distances to buffer
+	for(const auto &curDist : newShortestDistances)
+	{
+		if(curDist.ValidElement)
+		{
+			ShortestDistPoses.Poses.push_back(curDist.ConvertToShortestDistPos(IDMap, DistMap));
+		}
+	}
+
+	return 1;
 }
 
 template<class T>

@@ -66,7 +66,7 @@ bool DISTRICT_MAP::ADJACENT_DISTRICT::IsConnectedToAdjacentDistrict(const POS_2D
 void DISTRICT_MAP::ADJACENT_DISTRICT_VECTOR::AddConnection(const ID &AdjacentID, const POS_2D &OriginalDistrictPos, const POS_2D &AdjacentDistrictPos)
 {
 	// Check if district is already stored
-	for(auto &adjacentDistrict : this->AdjacentDistricts)
+	for(auto &adjacentDistrict : (*this))
 	{
 		// Add to district
 		if(adjacentDistrict.AdjacentDistrictID == AdjacentID)
@@ -79,13 +79,13 @@ void DISTRICT_MAP::ADJACENT_DISTRICT_VECTOR::AddConnection(const ID &AdjacentID,
 	// Create and add new connection
 	DISTRICT_MAP::ADJACENT_DISTRICT newDistrictConnection(AdjacentID);
 	newDistrictConnection.AddPosition(OriginalDistrictPos, AdjacentDistrictPos);
-	this->AdjacentDistricts.push_back(std::move(newDistrictConnection));
+	this->push_back(std::move(newDistrictConnection));
 }
 
 void DISTRICT_MAP::ADJACENT_DISTRICT_VECTOR::GetConnectionData(const ID &AdjacentID, CONNECTED_POS_VECTOR &Connections) const
 {
 	// Check if district is already stored
-	for(auto &adjacentDistrict : this->AdjacentDistricts)
+	for(auto &adjacentDistrict : *this)
 	{
 		// Copy district data
 		if(adjacentDistrict.AdjacentDistrictID == AdjacentID)
