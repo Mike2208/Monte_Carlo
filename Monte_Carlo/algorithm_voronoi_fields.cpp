@@ -41,6 +41,44 @@ ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS ALGORITHM_VORONOI_FIELDS::SKEL_MAP_S
 	return ALGORITHM_VORONOI_FIELDS::SHORTEST_DIST_POS(curID, curID, this->Distance, this->Position, this->Position);
 }
 
+ALGORITHM_VORONOI_FIELDS::SKEL_MAP_DATA::SKEL_MAP_DATA(const DIST_MAP::CELL_TYPE &_DistToPrevElement, const SKEL_MAP_SHORTEST_DIST_POS_ID &_PrevElementID) : DistToPrevElement(_DistToPrevElement), PrevElementID(_PrevElementID)
+{
+}
+
+ALGORITHM_VORONOI_FIELDS::SKEL_MAP_POS_DATA::SKEL_MAP_POS_DATA(const POS_2D &_Pos, const SKEL_MAP_DATA &_SkelMapData) : POS_2D(_Pos), SKEL_MAP_DATA(_SkelMapData)
+{
+}
+
+ALGORITHM_VORONOI_FIELDS::SKEL_MAP_POS_DATA::SKEL_MAP_POS_DATA(const POS_2D &_Pos, const DIST_MAP::CELL_TYPE &_DistToPrevElement, const SKEL_MAP_SHORTEST_DIST_POS_ID &_PrevElementID) : POS_2D(_Pos), SKEL_MAP_DATA(_DistToPrevElement, _PrevElementID)
+{
+}
+
+void ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR::push_back(const value_type &element)
+{
+	// If a previous element is listed, add this to list of next elements
+	if(element.PrevElementID != ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
+	{
+		const size_type newElementID = this->size();
+		this->at(element.PrevElementID).NextElementIDs.push_back(newElementID);
+	}
+
+	// Add element regularly
+	static_cast<std::vector<SKEL_MAP_SHORTEST_DIST_POS>*>(this)->push_back(element);
+}
+
+void ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR::push_back(value_type &&element)
+{
+	// If a previous element is listed, add this to list of next elements
+	if(element.PrevElementID != ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
+	{
+		const size_type newElementID = this->size();
+		this->at(element.PrevElementID).NextElementIDs.push_back(newElementID);
+	}
+
+	// Add element regularly
+	static_cast<std::vector<SKEL_MAP_SHORTEST_DIST_POS>*>(this)->push_back(element);
+}
+
 ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR::FindClosestDist(const SKEL_MAP_SHORTEST_DIST_POS &CurDist, ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &Distance) const
 {
 	ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE backDist = 0;
@@ -61,9 +99,15 @@ ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *ALGORITHM_VORONOI_FIELDS::
 		if(pBackDist == nullptr)
 			backDist = ALGORITHM_VORONOI_FIELDS::MAX_DIST;
 	}
+	else
+	{
+		backDist = ALGORITHM_VORONOI_FIELDS::MAX_DIST;
+	}
 
-	ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE frontDist = 0;
+	ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE frontDist;
 	const ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *pFrontDist = this->FindClosestDistForward(CurDist, frontDist);
+	if(pFrontDist == nullptr)
+		frontDist = ALGORITHM_VORONOI_FIELDS::MAX_DIST;		// Resize to prevent errors if no front distance was found
 
 	// If no other pos was found, just return nothing
 	if(pBackDist == nullptr && pFrontDist == nullptr)

@@ -36,7 +36,7 @@ int main()
 
 	ALGORITHM_VORONOI_FIELDS::ID nextFreeID = 1;
 	ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE freeDistricts, occupiedDistricts;
-	AlgorithmVoronoiFields<OccupancyGridMap::CELL_TYPE>::CalculateVoronoiField(testMap, 90, testDistrict, occupiedDistricts, freeDistricts, nextFreeID);
+	AlgorithmVoronoiFields<OccupancyGridMap::CELL_TYPE>::CalculateVoronoiField(testMap, 90, 0, testDistrict, occupiedDistricts, freeDistricts, nextFreeID);
 
 	return 1;
 }

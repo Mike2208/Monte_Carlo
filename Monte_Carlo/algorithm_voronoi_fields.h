@@ -85,6 +85,9 @@ namespace ALGORITHM_VORONOI_FIELDS
 	struct SKEL_MAP_SHORTEST_DIST_POS;
 	struct SKEL_MAP_SHORTEST_DIST_POS_VECTOR : public std::vector<SKEL_MAP_SHORTEST_DIST_POS>
 	{
+		void push_back(const value_type &element);
+		void push_back(value_type &&element);
+
 		SKEL_MAP_SHORTEST_DIST_POS *FindClosestDist(const SKEL_MAP_SHORTEST_DIST_POS &CurDist, ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &Distance) const;
 		SKEL_MAP_SHORTEST_DIST_POS *FindClosestDistForward(const SKEL_MAP_SHORTEST_DIST_POS &CurDist, ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &Distance) const;
 	};
@@ -102,18 +105,26 @@ namespace ALGORITHM_VORONOI_FIELDS
 		SHORTEST_DIST_POS ConvertToShortestDistPos(const ID_MAP &IDMap, const DIST_MAP &DistMap) const;
 	};
 
-	struct SKEL_MAP_POS_DATA : public POS_2D
+	struct SKEL_MAP_DATA
 	{
 		DIST_MAP::CELL_TYPE DistToPrevElement;
 		SKEL_MAP_SHORTEST_DIST_POS_ID PrevElementID;
 
-		SKEL_MAP_POS_DATA(const POS_2D &_Pos, const DIST_MAP::CELL_TYPE &_DistToPrevElement, const SKEL_MAP_SHORTEST_DIST_POS_ID &_PrevElementID) : POS_2D(_Pos), DistToPrevElement(_DistToPrevElement), PrevElementID(_PrevElementID) {}
+		SKEL_MAP_DATA() = default;
+		SKEL_MAP_DATA(const DIST_MAP::CELL_TYPE &_DistToPrevElement, const SKEL_MAP_SHORTEST_DIST_POS_ID &_PrevElementID);
+	};
+
+	struct SKEL_MAP_POS_DATA : public POS_2D, public SKEL_MAP_DATA
+	{
+		SKEL_MAP_POS_DATA(const POS_2D &_Pos, const SKEL_MAP_DATA &_SkelMapData);
+		SKEL_MAP_POS_DATA(const POS_2D &_Pos, const DIST_MAP::CELL_TYPE &_DistToPrevElement, const SKEL_MAP_SHORTEST_DIST_POS_ID &_PrevElementID);
 	};
 }
 
 template<class T>
 class AlgorithmVoronoiFields
 {
+		typedef ALGORITHM_VORONOI_FIELDS::SKEL_MAP_DATA					SKEL_MAP_DATA;
 		typedef ALGORITHM_VORONOI_FIELDS::SKEL_MAP_POS_DATA				SKEL_MAP_POS_DATA;
 		typedef ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS	SKEL_MAP_SHORTEST_DIST_POS;
 	public:

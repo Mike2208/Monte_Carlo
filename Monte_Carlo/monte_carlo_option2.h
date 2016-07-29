@@ -10,10 +10,12 @@
 #include "tree_class.h"
 #include "occupancy_grid_map.h"
 #include "robot_data.h"
+#include "policy_tree.h"
 
 namespace MONTE_CARLO_OPTION2
 {
 	typedef DISTRICT_MAP::ID	DISTRICT_ID;
+	typedef PolicyTree			POLICY_DATA_TYPE;
 
 	// Action that a robot can take at a node
 	typedef unsigned char NODE_ACTION_DATA_TYPE;			// Data type used in node action
@@ -27,6 +29,7 @@ namespace MONTE_CARLO_OPTION2
 	{
 		public:
 			bool IsMovementAction() const	{ return (this->_Action &  0b00000010 ? 1 : 0); }
+			bool IsCompleteMove() const		{ return (this->_Action == 0b00000010 ? 1 : 0); }
 			bool IsIncompleteMove() const	{ return (this->_Action == 0b00000011 ? 1 : 0); }
 			bool IsObserveAction() const	{ return (this->_Action == 0b00000100 ? 1 : 0); }
 
@@ -35,13 +38,24 @@ namespace MONTE_CARLO_OPTION2
 			bool IsOccupiedResult() const	{ return (this->_Action == 0b00001001 ? 1 : 0); }
 
 			void SetAction(const NODE_ACTION_DATA_TYPE Action) { this->_Action = Action; }
+			NODE_ACTION_DATA_TYPE GetAction() const { return this->_Action; }
 
 			NODE_ACTION(const NODE_ACTION_DATA_TYPE Action) : _Action(Action) {}
 			NODE_ACTION() = default;
+			NODE_ACTION &operator=(const NODE_ACTION_DATA_TYPE Action) { this->_Action = Action; return *this; }
+
+			bool operator==(const NODE_ACTION &S)const { return (this->_Action == S._Action); }
+			bool operator!=(const NODE_ACTION &S)const { return (this->_Action != S._Action); }
 
 		private:
 			NODE_ACTION_DATA_TYPE _Action;			// Stores the action that will be taken in this node
 	};
+
+	// Extra data of nodes
+	struct NODE_EXTRA_DATA_MOVE;
+	struct NODE_EXTRA_DATA_JUMP;
+	struct NODE_EXTRA_DATA_OBSERVATION;
+	struct NODE_EXTRA_DATA_RESULT;
 
 	// All data stored in one node
 	typedef float NODE_VALUE_TYPE;
@@ -54,8 +68,6 @@ namespace MONTE_CARLO_OPTION2
 	{
 			NODE_VALUE_TYPE	Value;				// Value of this node (used during selection phase)
 
-			NODE_ACTION	Action;				// Action/Result of this node
-
 			void		*NodeData;					// Extra Node Data stored here
 			unsigned int NodeDataSize;		// Size of extra node data
 
@@ -65,23 +77,79 @@ namespace MONTE_CARLO_OPTION2
 			COST_TYPE		ExpectedCost;	// Cost to reach dest from here
 			NUM_VISIT_TYPE	NumVisits;
 
+			POS_2D			Position;		// Position this node is referring to
+
 			bool	IsDone;										// Have all possible variations beneath this node been checked?
 
 			bool IsDeadEnd() const;		// Returns whether this node is a dead end
 			void SetToDeadEnd();		// Sets node to dead end
 
+			void SetAction(const NODE_ACTION _Action);
+			NODE_ACTION GetAction() const { return this->Action; }
+
+			NODE_EXTRA_DATA_MOVE *GetExtraMoveData();
+			NODE_EXTRA_DATA_JUMP *GetExtraJumpData();
+			NODE_EXTRA_DATA_OBSERVATION *GetExtraObservationData();
+			NODE_EXTRA_DATA_RESULT *GetExtraResultData();
+
+			int SetExtraMoveData(const NODE_EXTRA_DATA_MOVE &ExtraData);
+			int SetExtraJumpData(const NODE_EXTRA_DATA_JUMP &ExtraData);
+			int SetExtraObservationData(const NODE_EXTRA_DATA_OBSERVATION &ExtraData);
+			int SetExtraResultData(const NODE_EXTRA_DATA_RESULT &ExtraData);
+
 #ifdef DEBUG	// DEBUG
 			void PrintNodeData(const unsigned int &NodeDepth) const;
 #endif			// ~DEBUG
 
-			// Custom constructors due to NodeData
+			// Custom constructors due to NodeData memory allocation
 			NODE_DATA();
 			NODE_DATA(const NODE_DATA &S) noexcept;
 			NODE_DATA(NODE_DATA &&S) noexcept;
 			NODE_DATA &operator=(const NODE_DATA &S) noexcept;
 			NODE_DATA &operator=(NODE_DATA &&S) noexcept;
 			~NODE_DATA() noexcept;
+
+		private:
+			void DeleteExtraData();
+
+			NODE_ACTION	Action;				// Action/Result of this node
 	};
+
+	// Data in nodes
+	struct NODE_EXTRA_DATA_MOVE
+	{
+		POS_2D NextStep;		// The next step that should be taken (set to invalid pos to ignore)
+
+		NODE_EXTRA_DATA_MOVE() = default;
+		NODE_EXTRA_DATA_MOVE(const POS_2D &_NextStep) : NextStep(_NextStep) {}
+	};
+
+	struct NODE_EXTRA_DATA_JUMP : public NODE_EXTRA_DATA_MOVE
+	{
+		EXPECTED_LENGTH_TYPE	JumpLength;
+		CERTAINTY_TYPE			JumpCertainty;
+
+		POLICY_DATA_TYPE *JumpPolicy;			// Extra jump policy
+
+		NODE_EXTRA_DATA_JUMP();
+		NODE_EXTRA_DATA_JUMP(const POS_2D &_NextStep);
+		NODE_EXTRA_DATA_JUMP(const NODE_EXTRA_DATA_JUMP &S) noexcept;
+		NODE_EXTRA_DATA_JUMP(NODE_EXTRA_DATA_JUMP &&S) noexcept;
+		NODE_EXTRA_DATA_JUMP &operator=(const NODE_EXTRA_DATA_JUMP &S) noexcept;
+		NODE_EXTRA_DATA_JUMP &operator=(NODE_EXTRA_DATA_JUMP &&S) noexcept;
+		~NODE_EXTRA_DATA_JUMP() noexcept;
+	};
+
+	struct NODE_EXTRA_DATA_OBSERVATION
+	{
+		// Placeholder for later
+	};
+
+	struct NODE_EXTRA_DATA_RESULT
+	{
+		// Placeholder for later
+	};
+
 
 	// Tree used to store nodes
 	typedef TreeClass<NODE_DATA>	TREE_CLASS;
@@ -108,6 +176,7 @@ namespace MONTE_CARLO_OPTION2
 	};
 	struct TRAVERSED_PATH : public std::vector<TRAVERSED_PATH_SINGLE>
 	{
+		typedef TRAVERSED_PATH::size_type ID;
 		bool PathContainsBidirectionalMove(const POS_2D &Pos1, const POS_2D &Pos2) const;
 	};
 
@@ -141,6 +210,7 @@ namespace MONTE_CARLO_OPTION2
 		VISITED_DISTRICTS_ID	DistrictAfterObservation;	// First district after last observation
 
 		TRAVERSED_PATH		PrevPath;				// Robot path that was taken in this branch
+		TRAVERSED_PATH::ID	PathsAfterObservation;	// First path after last observation
 
 		const DISTRICT &GetCurDistrict() const;		// Returns current district
 		DISTRICT_ID GetCurDistrictID() const;		// Returns current district ID
