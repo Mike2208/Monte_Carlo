@@ -22,3 +22,8 @@ namespace ALGORITHM_A_STAR
 		this->push_back(Element);
 	}
 }
+
+AlgorithmAStar::DISTANCE_TYPE AlgorithmAStar::ApproximateDistToGoal(const POS_2D &CurPos, const POS_2D &Destination)
+{
+	return std::abs(static_cast<int>(CurPos.X-Destination.X))+std::abs(static_cast<int>(CurPos.Y-Destination.Y));
+}

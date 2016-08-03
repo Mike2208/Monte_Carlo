@@ -119,6 +119,12 @@ const std::vector<bool> &Map2D<bool>::GetCellStorage() const
 }
 
 //template<>
+std::vector<bool> &Map2D<bool>::GetCellStorageR()
+{
+	return this->_CellData;
+}
+
+//template<>
 void Map2D<bool>::PrintMap(const char *FileName) const
 {
 	std::fstream file;

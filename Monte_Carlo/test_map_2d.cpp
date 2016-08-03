@@ -47,7 +47,47 @@ void TestMap2D::EstimateRealMapFromOGM()
 	}
 }
 
-void TestMap2D::ScaleMapsDownByFactor(const unsigned int &DownScaleFactor)
+void TestMap2D::RandomizeData(const RANDOMIZE_FACTOR_TYPE &RandomizeFactor, const OGM_CELL_TYPE MinValueToRandomize, const OGM_CELL_TYPE MaxValueToRandomize)
+{
+	// Seed randomizer
+#ifdef DEBUG		// DEBUG
+	std::cout << "Randomizer set to 0, will be repeatable" << std::endl;
+	srand(0);	// Make it repeatable during debug
+#else				// ~DEBUG
+	srand(static_cast<unsigned int>(time(NULL)));
+#endif
+
+	// Change all cell values in valid range
+	for(auto &curCell : this->_InitialMap.GetCellStorageR())
+	{
+		if(curCell >= MinValueToRandomize && curCell <= MaxValueToRandomize)
+		{
+			// Calculate random value
+			OGM_CELL_TYPE randValue = rand()%RandomizeFactor;
+
+			// Decide whether to add/subtract value and make sure values don't exceed minimum/maximum
+			if(rand()%2)
+			{
+				if(curCell < randValue+OGM_CELL_MIN)
+					curCell = OGM_CELL_MIN;
+				else
+					curCell -= randValue;
+			}
+			else
+			{
+				if(curCell > OGM_CELL_MAX-randValue)
+					curCell = OGM_CELL_MAX;
+				else
+					curCell += randValue;
+			}
+		}
+	}
+
+	// Re-estimate real map
+	this->EstimateRealMapFromOGM();
+}
+
+void TestMap2D::ScaleMapsDownByFactor(const SCALING_FACTOR_TYPE &DownScaleFactor)
 {
 	Map2D_Discrete newRealMap;
 	OccupancyGridMap newInitialMap;
@@ -76,14 +116,14 @@ void TestMap2D::ScaleMapsDownByFactor(const unsigned int &DownScaleFactor)
 	this->_RealMap = std::move(newRealMap);
 }
 
-OGM_CELL_TYPE TestMap2D::CalculateOGMScaledDownCell(const POS_2D &OldCellPos, const SCALING_FACTOR &Scale) const
+OGM_CELL_TYPE TestMap2D::CalculateOGMScaledDownCell(const POS_2D &OldCellPos, const SCALING_FACTOR_TYPE &Scale) const
 {
 	OGM_LOG_TYPE curLogProbability = 0;
 
 	// Go through values that should be integrated into one
-	for(SCALING_FACTOR curValX = 0; curValX < Scale; ++curValX)
+	for(SCALING_FACTOR_TYPE curValX = 0; curValX < Scale; ++curValX)
 	{
-		for(SCALING_FACTOR curValY = 0; curValY < Scale; ++curValY)
+		for(SCALING_FACTOR_TYPE curValY = 0; curValY < Scale; ++curValY)
 		{
 			const POS_2D curPos = OldCellPos + POS_2D(curValX, curValY);
 
@@ -98,14 +138,14 @@ OGM_CELL_TYPE TestMap2D::CalculateOGMScaledDownCell(const POS_2D &OldCellPos, co
 	return OGM_CELL_MAX - OccupancyGridMap::CalculateCellValFromLog(curLogProbability);
 }
 
-OGM_DISCRETE_TYPE TestMap2D::CalculateRealMapScaledDownCell(const POS_2D &OldCellPos, const SCALING_FACTOR &Scale) const
+OGM_DISCRETE_TYPE TestMap2D::CalculateRealMapScaledDownCell(const POS_2D &OldCellPos, const SCALING_FACTOR_TYPE &Scale) const
 {
 	OGM_DISCRETE_TYPE curVal;
 
 	// Go through values that should be integrated into one
-	for(SCALING_FACTOR curValX = 0; curValX < Scale; ++curValX)
+	for(SCALING_FACTOR_TYPE curValX = 0; curValX < Scale; ++curValX)
 	{
-		for(SCALING_FACTOR curValY = 0; curValY < Scale; ++curValY)
+		for(SCALING_FACTOR_TYPE curValY = 0; curValY < Scale; ++curValY)
 		{
 			const POS_2D curPos = OldCellPos + POS_2D(curValX, curValY);
 			if(this->_RealMap.GetPixel(curPos, curVal) < 0)

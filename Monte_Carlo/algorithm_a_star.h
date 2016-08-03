@@ -53,4 +53,8 @@ class AlgorithmAStar
 
 };
 
+
+// Add templates
+#include "algorithm_a_star_templates.cpp"
+
 #endif // ALGORITHM_A_STAR_H

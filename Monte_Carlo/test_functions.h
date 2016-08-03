@@ -13,6 +13,7 @@
 #include "test_map_2d.h"
 #include "test_policy.h"
 #include "policy_monte_carlo_converter.h"
+#include "algorithm_voronoi_fields.h"
 
 #include <fstream>
 #include <iostream>
@@ -25,6 +26,8 @@ namespace TEST_FUNCTIONS
 	int TestMonteCarlo1();
 
 	int TestPolicy();
+
+	int TestVoronoiField();
 }
 
 

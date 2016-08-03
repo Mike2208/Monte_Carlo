@@ -8,7 +8,7 @@ template<class T>
 bool AlgorithmAStar::StaticCalculatePath(const Map2D<T> &Map, const T &CutOffValue, const POS_2D &StartPos, const POS_2D &Destination, const DistrictMap *const DistrictData, PATH_DATA *const Path, DISTANCE_TYPE *const Distance)
 {
 	AlgorithmAStar tmpStar;
-	tmpStar.CalculatePath<T>(Map, CutOffValue, StartPos, Destination, DistrictData, Path, Distance);
+	return tmpStar.CalculatePath<T>(Map, CutOffValue, StartPos, Destination, DistrictData, Path, Distance);
 }
 
 template<class T>
@@ -37,12 +37,12 @@ bool AlgorithmAStar::CalculatePath(const Map2D<T> &Map, const T &CutOffValue, co
 			const POS_2D adjacentPos = curPos+navOption;
 
 			T adjacentVal;
-			if(Map.GetPixel(curPos, adjacentVal) < 0 || adjacentVal >= CutOffValue)
+			if(Map.GetPixel(adjacentPos, adjacentVal) < 0 || adjacentVal >= CutOffValue)
 				continue;			// Skip if not part of map
 
 			if(DistrictData != nullptr)
 			{
-				if(DistrictData->GetGlobalPixel(curPos) != DISTRICT_MAP::IN_DISTRICT)
+				if(DistrictData->GetGlobalPixel(adjacentPos) != DISTRICT_MAP::IN_DISTRICT)
 					continue;		// Skip if not in district
 			}
 
@@ -58,6 +58,8 @@ bool AlgorithmAStar::CalculatePath(const Map2D<T> &Map, const T &CutOffValue, co
 					posToCheck.AddElement(POS_DIST(adjacentPos, r_adjacentDistance+AlgorithmAStar::ApproximateDistToGoal(adjacentPos, Destination)));
 			}
 		}
+
+		posToCheck.pop_front();
 	}
 	while(!posToCheck.empty());
 
@@ -116,11 +118,6 @@ bool AlgorithmAStar::CalculatePath(const Map2D<T> &Map, const T &CutOffValue, co
 
 	// No path found
 	return false;
-}
-
-AlgorithmAStar::DISTANCE_TYPE AlgorithmAStar::ApproximateDistToGoal(const POS_2D &CurPos, const POS_2D &Destination)
-{
-	return std::abs(static_cast<int>(CurPos.X-Destination.X))+std::abs(static_cast<int>(CurPos.Y-Destination.Y));
 }
 
 #endif

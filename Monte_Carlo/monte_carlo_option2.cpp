@@ -448,7 +448,7 @@ namespace MONTE_CARLO_OPTION2
 		{
 			// If this node is a move action, update robot position
 			const NODE_EXTRA_DATA_MOVE *pMoveData = nextData.GetExtraMoveData();
-			if(pMoveData == nullptr)
+			if(pMoveData != nullptr)
 			{
 				for(const auto &curPos : *pMoveData)
 				{
@@ -527,7 +527,7 @@ namespace MONTE_CARLO_OPTION2
 		{
 			// If this node is a move action, update robot position
 			const NODE_EXTRA_DATA_MOVE *pMoveData = curData.GetExtraMoveData();
-			if(pMoveData == nullptr)
+			if(pMoveData != nullptr)
 			{
 				for(const auto &curPos : *pMoveData)
 				{
@@ -781,11 +781,11 @@ void MonteCarloOption2::Expansion()
 						if(tmpLeafData.PathStorage->IsFreeSpaceAvailable(&freeID))
 						{
 							PATH_DATA tmpPath;
-							CalculatePath(this->_Branch, curBotPos, pLeafData->TargetPosition, &tmpPath, nullptr, nullptr, nullptr);
+							CalculatePath(this->_Branch, curBotPos, tmpLeafData.TargetPosition, &tmpPath, nullptr, nullptr, nullptr);
 							tmpLeafData.PathStorage->SetPath(freeID, std::move(tmpPath));
 						}
 						else
-							CalculatePath(this->_Branch, curBotPos, pLeafData->TargetPosition, nullptr, nullptr, nullptr, nullptr);
+							CalculatePath(this->_Branch, curBotPos, tmpLeafData.TargetPosition, nullptr, nullptr, nullptr, nullptr);
 
 						// Create new child
 						TREE_NODE *pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_JUMP, curConnectionPos.at(1), std::move(tmpLeafData)));
@@ -929,7 +929,7 @@ void MonteCarloOption2::Backtrack_Step()
 int MonteCarloOption2::CalculatePath(const BRANCH_DATA &BranchData, const POS_2D &StartPos, const POS_2D &Destination, PATH_DATA *const PathTaken, EXPECTED_LENGTH_TYPE *const ExpectedLength, CERTAINTY_TYPE *const Certainty, COST_TYPE *const Cost)
 {
 	PATH_DATA tmpPath;
-	if(!const_cast<BRANCH_DATA &>(BranchData).AStarMap.CalculatePath<MONTE_CARLO_OPTION2::PROB_MAP::CELL_TYPE>(BranchData.CurMapData, MONTE_CARLO_OPTION2::MAX_CERTAINTY, StartPos, Destination, &(BranchData.pDistrictStorage->GetDistrict(BranchData.GetDistrictIDAtPos(Destination))), &tmpPath, ExpectedLength))
+	if(!const_cast<BRANCH_DATA &>(BranchData).AStarMap.CalculatePath(BranchData.CurMapData, MONTE_CARLO_OPTION2::MAX_CERTAINTY, StartPos, Destination, &(BranchData.pDistrictStorage->GetDistrict(BranchData.GetDistrictIDAtPos(Destination))), &tmpPath, ExpectedLength))
 		return -1;		// return error
 
 	// Calculate Cost or certainty if requested
@@ -958,7 +958,12 @@ int MonteCarloOption2::CalculatePath(const BRANCH_DATA &BranchData, const POS_2D
 
 int MonteCarloOption2::FollowPathUntilObstacle(const BRANCH_DATA &BranchData, const PATH_DATA &PathToTake, const CERTAINTY_TYPE &MinCertainty, const EXPECTED_LENGTH_TYPE &MinLength, CERTAINTY_TYPE *const PathCertainty, EXPECTED_LENGTH_TYPE *const PathLength, PATH_DATA::ID *const EndPosID, POS_2D *const ObstaclePos)
 {
+	return -1;
+}
 
+MonteCarloOption2::NODE_EXTRA_DATA_OBSTACLE MonteCarloOption2::CreateObstacleAtPos(const POS_2D &ObstaclePosition, const POS_2D &BotPosition, const EXPECTED_LENGTH_TYPE &ObstacleLength, const EXPECTED_LENGTH_TYPE &ObstacleHeight, const CERTAINTY_TYPE &MinObstacleCertainty, const CERTAINTY_TYPE &MaxObstacleCertainty)
+{
+	return NODE_EXTRA_DATA_OBSTACLE();
 }
 
 void MonteCarloOption2::RunSimulation(const POS_2D &BotPos, const POS_2D &Destination, const BRANCH_DATA &MapData, const NUM_VISITS_TYPE &NumParentsVisit, NODE_DATA &Result)

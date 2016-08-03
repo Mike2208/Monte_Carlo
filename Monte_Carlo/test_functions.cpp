@@ -73,7 +73,7 @@ namespace TEST_FUNCTIONS
 
 	int TestPolicy()
 	{
-		TestMap2D::SCALING_FACTOR scale = 2;
+		TestMap2D::SCALING_FACTOR_TYPE scale = 2;
 
 		POS_2D startPos(100,50);
 		POS_2D destPos(101,50);
@@ -97,6 +97,30 @@ namespace TEST_FUNCTIONS
 
 		class TestPolicy policyTester;
 		policyTester.PerformTest(testPolicy, startPos, destPos, testMaps.GetRealMap());
+
+		return 1;
+	}
+
+	int TestVoronoiField()
+	{
+		OccupancyGridMap testMap;
+		testMap.ResetMap(10,10, 0);
+		testMap.SetPixel(POS_2D(2,2), OGM_CELL_MAX);
+		testMap.SetPixel(POS_2D(7,7), OGM_CELL_MAX);
+		testMap.SetPixel(POS_2D(2,7), OGM_CELL_MAX);
+		testMap.SetPixel(POS_2D(7,2), OGM_CELL_MAX);
+		//PNGConvertImageToOGM::ConvertPNGToOGM("test.png", testMap);
+
+		testMap.PrintMap("/tmp/testOGM.pgm");
+
+		DistrictMap testDistrict;
+		testDistrict.SetFreeDistrict(testMap.GetWidth(), testMap.GetHeight(), 0);
+		//testDistrict.SetGlobalMapPosition(POS_2D(0,0));
+		//testDistrict.SetID(0);
+
+		ALGORITHM_VORONOI_FIELDS::ID nextFreeID = 1;
+		ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE freeDistricts, occupiedDistricts;
+		AlgorithmVoronoiFields<OccupancyGridMap::CELL_TYPE>::CalculateVoronoiField(testMap, 90, 0, testDistrict, occupiedDistricts, freeDistricts, nextFreeID);
 
 		return 1;
 	}

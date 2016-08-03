@@ -35,6 +35,7 @@ class Map2D<bool>
 
 		// Gets entire cell storage ( usefull for parsing entire map )
 		const CELL_STORAGE &GetCellStorage() const;
+		CELL_STORAGE &GetCellStorageR();
 
 		void PrintMap(const char *FileName) const;
 
