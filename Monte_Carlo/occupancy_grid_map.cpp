@@ -59,6 +59,12 @@ OGM_ENTROPY_TYPE OccupancyGridMap::CalculateEntropyFromCell(const OGM_CELL_TYPE 
 	return static_cast<OGM_ENTROPY_TYPE>(-(log2(prob)*prob+log2(invertedProb)*invertedProb));
 }
 
+OGM_ENTROPY_TYPE OccupancyGridMap::CalculateEntropyFromProb(const OGM_PROB_TYPE &Value)
+{
+	const OGM_PROB_TYPE invertedVal = OGM_PROB_MAX - Value;
+	return static_cast<OGM_ENTROPY_TYPE>(-(log2(Value)*Value+log2(invertedVal)*invertedVal));
+}
+
 OGM_ENTROPY_TYPE OccupancyGridMap::CalculateEntropyFromMap(const OGM_MAP_TYPE &Map)
 {
 	// Add together all cell entropy values

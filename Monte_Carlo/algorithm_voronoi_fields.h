@@ -93,17 +93,6 @@ namespace ALGORITHM_VORONOI_FIELDS
 	};
 	typedef SKEL_MAP_SHORTEST_DIST_POS_VECTOR::size_type SKEL_MAP_SHORTEST_DIST_POS_ID;
 	const SKEL_MAP_SHORTEST_DIST_POS_ID SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID = GetInfiniteVal<SKEL_MAP_SHORTEST_DIST_POS_ID>();
-	struct SKEL_MAP_SHORTEST_DIST_POS
-	{
-		POS_2D Position;
-		DIST_MAP::CELL_TYPE Distance;
-		DIST_MAP::CELL_TYPE DistToPrevElement;
-		SKEL_MAP_SHORTEST_DIST_POS_ID PrevElementID;
-		std::vector<SKEL_MAP_SHORTEST_DIST_POS_ID> NextElementIDs;
-		bool ValidElement = true;
-
-		SHORTEST_DIST_POS ConvertToShortestDistPos(const ID_MAP &IDMap, const DIST_MAP &DistMap) const;
-	};
 
 	struct SKEL_MAP_DATA
 	{
@@ -118,6 +107,16 @@ namespace ALGORITHM_VORONOI_FIELDS
 	{
 		SKEL_MAP_POS_DATA(const POS_2D &_Pos, const SKEL_MAP_DATA &_SkelMapData);
 		SKEL_MAP_POS_DATA(const POS_2D &_Pos, const DIST_MAP::CELL_TYPE &_DistToPrevElement, const SKEL_MAP_SHORTEST_DIST_POS_ID &_PrevElementID);
+	};
+
+	struct SKEL_MAP_SHORTEST_DIST_POS : public SKEL_MAP_DATA
+	{
+		POS_2D Position;
+		DIST_MAP::CELL_TYPE Distance;
+		std::vector<SKEL_MAP_SHORTEST_DIST_POS_ID> NextElementIDs;
+		bool ValidElement = true;
+
+		SHORTEST_DIST_POS ConvertToShortestDistPos(const ID_MAP &IDMap, const DIST_MAP &DistMap) const;
 	};
 }
 

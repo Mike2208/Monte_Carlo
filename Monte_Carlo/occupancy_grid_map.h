@@ -43,6 +43,7 @@ class OccupancyGridMap : public OGM_MAP_TYPE
 		static OGM_PROB_TYPE CalculateCertaintyFromLog(const OGM_LOG_TYPE &Value);		// Log -> Certainty (inverse prob)
 
 		static OGM_ENTROPY_TYPE CalculateEntropyFromCell(const OGM_CELL_TYPE &Value);	// Cell -> Entropy
+		static OGM_ENTROPY_TYPE CalculateEntropyFromProb(const OGM_PROB_TYPE &Value);	// Prob -> Entropy
 
 		static OGM_ENTROPY_TYPE CalculateEntropyFromMap(const OGM_MAP_TYPE &Map);		// Cellmap -> Entropy
 };

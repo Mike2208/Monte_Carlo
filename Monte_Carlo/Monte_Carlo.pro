@@ -47,7 +47,10 @@ SOURCES += main.cpp \
     tree_node_templates.cpp \
     tree_class_templates.cpp \
     monte_carlo_option2.cpp \
-    robot_data.cpp
+    robot_data.cpp \
+    mc_path_storage.cpp \
+    algorithm_a_star.cpp \
+    algorithm_a_star_templates.cpp
 
 HEADERS += \
     map_2d.h \
@@ -87,6 +90,8 @@ HEADERS += \
     tree_node_permanent.h \
     map_2d_bool.h \
     monte_carlo_option2.h \
-    robot_data.h
+    robot_data.h \
+    mc_path_storage.h \
+    algorithm_a_star.h
 
 unix:!macx: LIBS += -lpng

@@ -565,22 +565,14 @@ int AlgorithmVoronoiFields<T>::GetShortestDistPoses(const ALGORITHM_VORONOI_FIEL
 	if(curDist == ALGORITHM_VORONOI_FIELDS::MAX_DIST)
 		return 0;		// Start Position is not on Skeleton Map, nothing to do
 
-	SKEL_MAP_SHORTEST_DIST_POS tmpShortestDist;
-	ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR newShortestDistances;
-//	// Add StartPos to shortest dist array
-//	tmpShortestDist.Position = StartPos;
-//	tmpShortestDist.Distance = curDist;
-//	tmpShortestDist.DistToPrevElement = ALGORITHM_VORONOI_FIELDS::MAX_DIST;
-//	tmpShortestDist.PrevElementID = ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID;
-//	newShortestDistances.push_back(tmpShortestDist);
-
 	std::vector<POS_2D> nextAdjacentPositions;
 
 	// Map to store shortest dist data
+	std::vector<POS_2D> minPosesFound;
 	Map2D<SKEL_MAP_DATA> tmpMapPosData(CompleteSkelMap.GetWidth(), CompleteSkelMap.GetHeight(), SKEL_MAP_DATA(ALGORITHM_VORONOI_FIELDS::MAX_DIST, ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID));
 
 	// Go through skeleton and find all minimum positions
-	std::vector<SKEL_MAP_POS_DATA> posToCheck;
+	std::vector<POS_2D> posToCheck;
 	posToCheck.push_back(SKEL_MAP_POS_DATA(StartPos, ALGORITHM_VORONOI_FIELDS::MAX_DIST, ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID));
 	do
 	{
@@ -588,122 +580,116 @@ int AlgorithmVoronoiFields<T>::GetShortestDistPoses(const ALGORITHM_VORONOI_FIEL
 		nextAdjacentPositions.clear();
 
 		// Make access easier
-		const SKEL_MAP_DATA *pCurPosData = static_cast<SKEL_MAP_DATA*>(&posToCheck.back());
-		const POS_2D curPos = static_cast<POS_2D>(posToCheck.back());
+		const POS_2D &curPos = posToCheck.back();
 
-		// Check if this position has already been checked
+		// Get position data
+		SKEL_MAP_DATA &r_curPosMapData = tmpMapPosData.GetPixelR(curPos);
+
+		// Get checked state
 		ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_ID &r_curPosChecked = PositionsChecked.GetPixelR(curPos);
 
-		// Check if this position has already been checked
-		if(r_curPosChecked == ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
+		// Get distance data
+		const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &curSkelDist = CompleteSkelMap.GetPixel(curPos);
+
+		// Minimum adjacent position
+		bool isSmallestDist = true;				// Check if a smaller dist exists
+		bool newSameDistAdjacent = false;		// number of same distances adjacent to current pos
+		bool oldSameDistAdjacent = false;		// number of same distances adjacent to current pos
+
+		// Compare to adjacent positions
+		for(const auto &navOption : NavigationOptions)
 		{
-			// If not, set position as checked
-			r_curPosChecked = NextFreeID;
+			const POS_2D adjacentPos = curPos+navOption;
 
-			// Compare to stored map data and store the smaller one
-			SKEL_MAP_DATA &r_mapData = tmpMapPosData.GetPixelR(curPos);
-			if(r_mapData.PrevElementID != ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID && pCurPosData->DistToPrevElement > r_mapData.DistToPrevElement)
-				pCurPosData = &r_mapData;
-			else
-				r_mapData = *pCurPosData;
+			//Check if this position is part of skel map
+			ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE adjacentSkelDist;
+			if(CompleteSkelMap.GetPixel(adjacentPos, adjacentSkelDist) < 0 || adjacentSkelDist == ALGORITHM_VORONOI_FIELDS::MAX_DIST)
+				continue;	// Not part of skel map, skip
 
-			// Get current distance
-			curDist = CompleteSkelMap.GetPixel(curPos);
+			const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE movementCost = static_cast<ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE>(GetMovementCost(curPos, adjacentPos));
 
-			// Find minimum adjacent position
-			bool isSmallestDist = true;				// Check if a smaller dist exists
-			bool newSameDistAdjacent = false;		// number of same distances adjacent to current pos
-			bool oldSameDistAdjacent = false;		// number of same distances adjacent to current pos
-			for(const auto &navOption : NavigationOptions)
+			const ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_ID *pAdjacentPosChecked = nullptr;
+
+			// Compare position data and chek if better data exists
+			if(r_curPosMapData.PrevElementID != ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
 			{
-				const POS_2D adjacentPos = curPos+navOption;
-
-				ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE adjacentDist;
-				if(CompleteSkelMap.GetPixel(adjacentPos, adjacentDist) < 0)
-					continue; // Not on map, skip
-
-				if(adjacentDist == ALGORITHM_VORONOI_FIELDS::MAX_DIST)
-					continue;	// Not on skeleton map, skip
-
-				// see if adjacent position has already been checked or whether it is part of different skel map (this shouldn't happen)
-				const ALGORITHM_VORONOI_FIELDS::ID adjacentPosChecked = PositionsChecked.GetPixel(adjacentPos);
-				if(adjacentPosChecked == NextFreeID || adjacentPosChecked == ALGORITHM_VORONOI_FIELDS::INVALID_ID)
+				SKEL_MAP_DATA &r_adjacentPosMapData = tmpMapPosData.GetPixelR(adjacentPos);
+				if(r_adjacentPosMapData.PrevElementID == ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID ||
+						r_curPosMapData.DistToPrevElement + movementCost < r_adjacentPosMapData.DistToPrevElement)
 				{
-					// compare current distance with adjacent distances
-					if(adjacentDist == curDist)
-					{
-						// if they are the same, record whether adjacent position has already been checked
-						if(adjacentPosChecked == NextFreeID)
-							oldSameDistAdjacent = true;
-						else
-							newSameDistAdjacent = true;
-					}
-					else if(adjacentDist < curDist)
-					{
-						isSmallestDist = false;
-					}
+					r_adjacentPosMapData = SKEL_MAP_DATA(r_curPosMapData.DistToPrevElement+movementCost, r_curPosMapData.PrevElementID);
+
+					nextAdjacentPositions.push_back(adjacentPos);		// Check this position next
 				}
-
-				if(adjacentPosChecked != NextFreeID)
-				{
-					nextAdjacentPositions.push_back(adjacentPos);		// Check adjacent position next
-
-					// Check if a better distance is available
-					SKEL_MAP_DATA &r_adjacentMapData = tmpMapPosData.GetPixelR(adjacentPos);
-					if(pCurPosData->PrevElementID != ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID &&
-							pCurPosData->DistToPrevElement+static_cast<ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE>(GetMovementCost(curPos, adjacentPos)) < r_adjacentMapData.DistToPrevElement)
-					{
-						r_adjacentMapData = *pCurPosData;
-					}
-				}
-			}
-
-			// Check if this position warrants a new shortest dist entry
-			// Add entry if this position is part of a local minimum (checked by isSmallestDist)
-			//		AND if it is beginning/end of said minimum (this avoids the entire minimum being added and having to be removed later)
-			if(isSmallestDist &&
-				!(newSameDistAdjacent & oldSameDistAdjacent))
-			{
-				// Add this position to array
-				tmpShortestDist.Position = curPos;
-				tmpShortestDist.Distance = curDist;
-				tmpShortestDist.DistToPrevElement = pCurPosData->DistToPrevElement;
-				tmpShortestDist.PrevElementID = pCurPosData->PrevElementID;
-				tmpShortestDist.NextElementIDs.clear();
-				newShortestDistances.push_back(std::move(tmpShortestDist));
-
-				// Element checked, remove it
-				posToCheck.erase(posToCheck.end()-1);
-
-				// Add all adjacent positions
-				for(const auto &curAdjacentPosition : nextAdjacentPositions)
-					posToCheck.push_back(SKEL_MAP_POS_DATA(curAdjacentPosition, static_cast<ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE>(GetMovementCost(curPos, curAdjacentPosition)), newShortestDistances.size()-1));
 			}
 			else
 			{
-				// Element checked, remove it
-				posToCheck.erase(posToCheck.end()-1);
+				// To make sure that all positions are checked, make sure that adjacent position is accessed at least once
+				pAdjacentPosChecked = &PositionsChecked.GetPixel(adjacentPos);
 
-				// Add all adjacent positions (also make sure that DistToPreviousElement doesn't overflow)
-				if(pCurPosData->DistToPrevElement < ALGORITHM_VORONOI_FIELDS::MAX_DIST)
+				if(*pAdjacentPosChecked == ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
+					nextAdjacentPositions.push_back(adjacentPos);		// Check this position next
+			}
+
+			// Compare with adjacent data to find minimum positions
+			if(r_curPosChecked == ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
+			{
+				// Compare distances to find minimas
+				if(adjacentSkelDist < curSkelDist)
+					isSmallestDist = false;
+				else if(adjacentSkelDist == curSkelDist)
 				{
-					for(const auto &curAdjacentPosition : nextAdjacentPositions)
-						posToCheck.push_back(SKEL_MAP_POS_DATA(curAdjacentPosition, pCurPosData->DistToPrevElement+static_cast<ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE>(GetMovementCost(curPos, curAdjacentPosition)), pCurPosData->PrevElementID));
-				}
-				else
-				{
-					for(const auto &curAdjacentPosition : nextAdjacentPositions)
-						posToCheck.push_back(SKEL_MAP_POS_DATA(curAdjacentPosition, ALGORITHM_VORONOI_FIELDS::MAX_DIST, pCurPosData->PrevElementID));
+					// Check adjacent checked state
+					if(pAdjacentPosChecked == nullptr)
+						pAdjacentPosChecked = &PositionsChecked.GetPixel(adjacentPos);
+
+					if(*pAdjacentPosChecked == ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
+						newSameDistAdjacent = true;
+					else
+						oldSameDistAdjacent = true;
 				}
 			}
 		}
-		else
+
+		// Check if this is a minimum position that hasn't been checked yet and save it if true
+		if(r_curPosChecked == ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID && isSmallestDist && !(newSameDistAdjacent & oldSameDistAdjacent))
 		{
-			// Remove element
-			posToCheck.erase(posToCheck.end()-1);
+			minPosesFound.push_back(curPos);
+
+			// Set adjacent position data to new value
+			for(const auto &nextPos : nextAdjacentPositions)
+			{
+				SKEL_MAP_DATA &r_nextPosMapData = tmpMapPosData.GetPixelR(nextPos);
+				const ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE movementCost = static_cast<ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE>(GetMovementCost(curPos, nextPos));
+				if(r_nextPosMapData.PrevElementID == ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
+					r_nextPosMapData = SKEL_MAP_DATA(movementCost, minPosesFound.size()-1);
+			}
 		}
+
+		// Set as checked
+		r_curPosChecked = NextFreeID;
+
+		// Erase current position from posToCheck, then add next positions
+		posToCheck.erase(posToCheck.end()-1);
+		for(const auto &nextPos : nextAdjacentPositions)
+			posToCheck.push_back(nextPos);
 	}
 	while(posToCheck.size() > 0);
+
+	// Convert found positions to SKEL_MAP_SHORTEST_DIST_POS
+	ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR newShortestDistances;
+	newShortestDistances.resize(minPosesFound.size(), ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS());
+	for(unsigned int curMinPosID = 0; curMinPosID < minPosesFound.size(); ++curMinPosID)
+	{
+		ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS &curShortestDist = newShortestDistances.at(curMinPosID);
+		const POS_2D &curPos = minPosesFound.at(curMinPosID);
+		curShortestDist.Position = curPos;
+		curShortestDist.Distance = CompleteSkelMap.GetPixel(curPos);
+		*(static_cast<ALGORITHM_VORONOI_FIELDS::SKEL_MAP_DATA*>(&curShortestDist)) = tmpMapPosData.GetPixel(curPos);
+		if(curShortestDist.PrevElementID != ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_INVALID_ID)
+			newShortestDistances.at(curShortestDist.PrevElementID).NextElementIDs.push_back(curMinPosID);
+		curShortestDist.ValidElement = true;
+	}
 
 	// After all elements have been found, remove those that are too close to another one
 	std::queue<SKEL_MAP_SHORTEST_DIST_POS*> distsToCheck;

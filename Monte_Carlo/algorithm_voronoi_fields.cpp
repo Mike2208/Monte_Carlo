@@ -76,7 +76,7 @@ void ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR::push_back(valu
 	}
 
 	// Add element regularly
-	static_cast<std::vector<SKEL_MAP_SHORTEST_DIST_POS>*>(this)->push_back(element);
+	static_cast<std::vector<SKEL_MAP_SHORTEST_DIST_POS>*>(this)->push_back(std::move(element));
 }
 
 ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS *ALGORITHM_VORONOI_FIELDS::SKEL_MAP_SHORTEST_DIST_POS_VECTOR::FindClosestDist(const SKEL_MAP_SHORTEST_DIST_POS &CurDist, ALGORITHM_VORONOI_FIELDS::DIST_MAP::CELL_TYPE &Distance) const
