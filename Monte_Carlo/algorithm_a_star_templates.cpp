@@ -25,7 +25,7 @@ bool AlgorithmAStar::CalculatePath(const Map2D<T> &Map, const T &CutOffValue, co
 
 	do
 	{
-		const POS_DIST &curPos = posToCheck.front();
+		const POS_DIST &curPos = posToCheck.back();
 
 		if(curPos.Distance > bestDist)
 			break;		// Stop if no shorter distance was found
@@ -37,8 +37,11 @@ bool AlgorithmAStar::CalculatePath(const Map2D<T> &Map, const T &CutOffValue, co
 			const POS_2D adjacentPos = curPos+navOption;
 
 			T adjacentVal;
-			if(Map.GetPixel(adjacentPos, adjacentVal) < 0 || adjacentVal >= CutOffValue)
+			if(Map.GetPixel(adjacentPos, adjacentVal) < 0)
 				continue;			// Skip if not part of map
+
+			if(adjacentVal >= CutOffValue)
+				continue;			// Skip if value too large
 
 			if(DistrictData != nullptr)
 			{
@@ -59,7 +62,7 @@ bool AlgorithmAStar::CalculatePath(const Map2D<T> &Map, const T &CutOffValue, co
 			}
 		}
 
-		posToCheck.pop_front();
+		posToCheck.pop_back();
 	}
 	while(!posToCheck.empty());
 

@@ -1,6 +1,8 @@
 #ifndef STANDARD_DEFINITIONS_H
 #define STANDARD_DEFINITIONS_H
 
+#define ADVANCED_MOVE
+
 #ifndef DEBUG
 #define DEBUG
 #include <iostream>

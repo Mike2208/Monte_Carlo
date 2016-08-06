@@ -13,17 +13,41 @@
 
 using namespace std;
 
+template<class T>
+void PrintPath(const AlgorithmAStar::PATH_DATA &Path, const T &ValueToSet, Map2D<T> &Map)
+{
+	for(const auto &curPos : Path)
+	{
+		Map.SetPixel(curPos, ValueToSet);
+	}
+}
+
 int main()
 {
-	TestMap2D testMap;
+	TestMap2D testMap(0, 100, 10);
 	testMap.CreateMapsFromProbabilityPNGFile("test.png");
 
-	testMap.GetOGMap().PrintMap("/tmp/testOGM.pgm");
+	unsigned int numCells = 0;
+	for(const auto curData : testMap.GetOGMap().GetCellStorage())
+	{
+		if(curData != OGM_CELL_MIN && curData != OGM_CELL_MAX && curData != 10)
+		{
+			std::cout << std::to_string(curData) << std::endl;
+			numCells++;
+		}
+	}
+
+	//testMap.GetOGMap().PrintMap("/tmp/testOGM.pgm");
+	testMap.GetRealMap().PrintMap("/tmp/testREAL.pbm");
 
 	AlgorithmAStar tmpAStar;
 	AlgorithmAStar::PATH_DATA tmpPath;
 	AlgorithmAStar::DISTANCE_TYPE tmpDist;
-	tmpAStar.CalculatePath(testMap.GetOGMap(), OGM_CELL_MAX, POS_2D(0,0), POS_2D(0,2), nullptr, &tmpPath, &tmpDist);
+	tmpAStar.CalculatePath(testMap.GetRealMap(), true, POS_2D(836,testMap.GetOGMap().GetHeight()-1-491), POS_2D(950,testMap.GetOGMap().GetHeight()-1-490), nullptr, &tmpPath, &tmpDist);
+
+	PrintPath(tmpPath, true, testMap.GetRealMapR());
+
+	testMap.GetRealMap().PrintMap("/tmp/testREAL_Path.pbm");
 
 	return 1;
 }

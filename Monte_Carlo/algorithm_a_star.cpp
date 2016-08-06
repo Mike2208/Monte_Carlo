@@ -10,7 +10,7 @@ namespace ALGORITHM_A_STAR
 	{
 		for(POSTOCHECK::iterator curPos = this->begin(); curPos != this->end(); ++curPos)
 		{
-			if(Element.Distance < curPos->Distance)
+			if(Element.Distance > curPos->Distance)
 			{
 				this->insert(curPos, Element);			// Add element at correct position
 
@@ -25,5 +25,9 @@ namespace ALGORITHM_A_STAR
 
 AlgorithmAStar::DISTANCE_TYPE AlgorithmAStar::ApproximateDistToGoal(const POS_2D &CurPos, const POS_2D &Destination)
 {
+#ifndef ADVANCED_MOVE
 	return std::abs(static_cast<int>(CurPos.X-Destination.X))+std::abs(static_cast<int>(CurPos.Y-Destination.Y));
+#else
+	return std::sqrt(std::pow(static_cast<double>(static_cast<int>(CurPos.X-Destination.X)),2)+std::pow(static_cast<double>(static_cast<int>(CurPos.Y-Destination.Y)),2));
+#endif
 }

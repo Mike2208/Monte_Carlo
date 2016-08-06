@@ -31,5 +31,5 @@ int PNGConvertImageToOGM::ConvertPNGToOGM(const char *PNGFileName, OccupancyGrid
 
 OGM_CELL_TYPE PNGConvertImageToOGM::CalculateOGMValue(const PNGFile::PIXEL_TYPE &Value)
 {
-	return static_cast<OGM_CELL_TYPE>(static_cast<double>(Value)/static_cast<double>(std::numeric_limits<PNGFile::PIXEL_TYPE>::max())*static_cast<double>(OGM_CELL_MAX));
+	return OGM_CELL_MAX - static_cast<OGM_CELL_TYPE>(static_cast<double>(Value)/static_cast<double>(std::numeric_limits<PNGFile::PIXEL_TYPE>::max())*static_cast<double>(OGM_CELL_MAX));
 }

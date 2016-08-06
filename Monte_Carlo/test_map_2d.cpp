@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <time.h>
 
+TestMap2D::TestMap2D(const OGM_CELL_TYPE MIN_FLOOR_VAL, const OGM_CELL_TYPE MAX_CEIL_VAL, const OGM_CELL_TYPE UNKNOWN_CELL_VALUE) : _MIN_FLOOR_VAL(MIN_FLOOR_VAL), _MAX_CEIL_VAL(MAX_CEIL_VAL), _UNKNOWN_VAL(UNKNOWN_CELL_VALUE)
+{}
+
 int TestMap2D::CreateMapsFromProbabilityPNGFile(const char *FileName)
 {
 	// Get OGM map from file
@@ -39,10 +42,18 @@ void TestMap2D::EstimateRealMapFromOGM()
 			const POS_2D curPos(X,Y);
 
 			// Check if this cell will be full/empty
-			if(this->_InitialMap.GetPixel(curPos) >= randVal)
+			const auto curInitialVal = this->_InitialMap.GetPixel(curPos);
+			if(curInitialVal <= this->_MIN_FLOOR_VAL)
 				this->_RealMap.SetPixel(curPos, OGM_DISCRETE_EMPTY);
-			else
+			else if(curInitialVal >= this->_MAX_CEIL_VAL || curInitialVal == this->_UNKNOWN_VAL)
 				this->_RealMap.SetPixel(curPos, OGM_DISCRETE_FULL);
+			else
+			{
+				if(curInitialVal >= randVal)
+					this->_RealMap.SetPixel(curPos, OGM_DISCRETE_FULL);
+				else
+					this->_RealMap.SetPixel(curPos, OGM_DISCRETE_EMPTY);
+			}
 		}
 	}
 }

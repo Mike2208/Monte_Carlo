@@ -138,7 +138,7 @@ void Map2D<bool>::PrintMap(const char *FileName) const
 	{
 		for(POS_2D_TYPE X=POS_2D_MIN; X<this->GetWidth(); ++X)
 		{
-			file << std::to_string(static_cast<char>(this->_CellData.at(X+this->_Width*Y))) << " ";
+			file << std::to_string(static_cast<char>(!(this->GetPixel(POS_2D(X,Y))))) << " ";
 		}
 
 		file << std::endl;		// Begin new line after every finished image line

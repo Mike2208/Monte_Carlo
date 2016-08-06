@@ -92,7 +92,7 @@ int PNGFile::ReadImageToArray(std::vector<PIXEL_TYPE> &ImageArray, IMAGE_SIZE_TY
 
 	auto rowbytes = png_get_rowbytes(png_ptr, info_ptr);
 //	auto color_type = png_get_color_type(png_ptr, info_ptr);
-//	auto bit_depth  = png_get_bit_depth(png_ptr, info_ptr);
+	auto bit_depth  = png_get_bit_depth(png_ptr, info_ptr);
 
 	// Create row pointers to save where the image should be stored
 	std::vector<png_byte> tmpImage;
@@ -114,11 +114,13 @@ int PNGFile::ReadImageToArray(std::vector<PIXEL_TYPE> &ImageArray, IMAGE_SIZE_TY
 	// Move tmpImage to array and remove alpha value
 	// Allocate the required memory
 	ImageArray.resize(ImageWidth*ImageHeight);
+	const unsigned char bytesPerPixel = static_cast<unsigned char>(rowbytes/ImageHeight);
 	for(unsigned int X=0; X<ImageWidth; ++X)
 	{
 		for(unsigned int Y=0; Y<ImageHeight; ++Y)
 		{
-			ImageArray[X+Y*ImageWidth] = tmpImage[X*8+Y*rowbytes];
+			//ImageArray[X+Y*ImageWidth] = tmpImage[X*8+Y*rowbytes];
+			ImageArray.at(X+Y*ImageWidth) = tmpImage.at(X*bytesPerPixel+(ImageHeight-1-Y)*rowbytes);		// Mirror image to correct orientation
 		}
 	}
 
