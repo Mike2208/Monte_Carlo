@@ -18,6 +18,19 @@ TreeNode<T>::TreeNode(TreeNode<T> *const Parent, const T &NewData) noexcept : _P
 }
 
 template<class T>
+TreeNode<T>::TreeNode(TreeNode<T> *const Parent, T &&NewData) noexcept : _Parent(Parent), _Children(), _Data(std::move(NewData))
+{
+	this->_Children.resize(0);
+
+#ifdef DEBUG	// DEBUG
+	if(Parent == nullptr)
+		this->_NodeDepth = 0;
+	else
+		this->_NodeDepth = Parent->_NodeDepth+1;
+#endif			// ~DEBUG
+}
+
+template<class T>
 TreeNode<T>::TreeNode(const TreeNode<T> &S) noexcept : _Parent(S._Parent), _Children(S._Children), _Data(S._Data)
 {
 	this->ResetChildPointersSingle();
@@ -75,6 +88,16 @@ template<class T>
 TreeNode<T> *TreeNode<T>::AddChild(const T &NewData)
 {
 	this->_Children.push_back(std::move(TreeNode<T>(this, NewData)));
+
+	this->ResetChildPointersSingle();
+
+	return &(this->_Children.back());
+}
+
+template<class T>
+TreeNode<T> *TreeNode<T>::AddChild(T &&NewData)
+{
+	this->_Children.push_back(std::move(TreeNode<T>(this, std::move(NewData))));
 
 	this->ResetChildPointersSingle();
 

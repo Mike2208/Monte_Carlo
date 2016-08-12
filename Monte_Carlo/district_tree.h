@@ -15,6 +15,7 @@ namespace DISTRICT_TREE
 	{
 		DISTRICT_MAP_DEFINITIONS::ID	ID;		// ID of district
 
+		NODE_DATA() = default;
 		NODE_DATA(const DISTRICT_MAP_DEFINITIONS::ID &_ID) : ID(_ID) {}
 	};
 

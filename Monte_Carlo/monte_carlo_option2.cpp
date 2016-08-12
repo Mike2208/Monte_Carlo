@@ -134,7 +134,7 @@ namespace MONTE_CARLO_OPTION2
 			*(static_cast<NODE_EXTRA_DATA_MOVE *>(this->ExtraData)) = std::move(ExtraMoveData);
 		else
 		{
-			// Wrong data type, delete it first
+			// Different data type, delete it first
 			this->DeleteExtraData();
 
 			// Add new data
@@ -164,21 +164,32 @@ namespace MONTE_CARLO_OPTION2
 	NODE_EXTRA_DATA::NODE_EXTRA_DATA(NODE_EXTRA_DATA_MOVE &&_MoveData) : ExtraData(new NODE_EXTRA_DATA_MOVE(std::move(_MoveData))), DataType(DATA_MOVE)
 	{}
 
-	NODE_EXTRA_DATA::NODE_EXTRA_DATA(const NODE_EXTRA_DATA &S) noexcept : DataType(S.DataType)
+	NODE_EXTRA_DATA::NODE_EXTRA_DATA(const NODE_EXTRA_DATA &S) noexcept : ExtraData(nullptr), DataType(DATA_EMPTY)
 	{
-		if(this->DataType == DATA_EMPTY)
+		if(S.DataType == DATA_EMPTY)
 			this->ExtraData = nullptr;
-		else if(this->DataType == DATA_OBSTACLE)
-			this->ExtraData = new NODE_EXTRA_DATA_OBSTACLE(*static_cast<NODE_EXTRA_DATA_OBSTACLE *>(S.ExtraData));
-		else if(this->DataType == DATA_LEAF)
-			this->ExtraData = new NODE_EXTRA_DATA_LEAF(*static_cast<NODE_EXTRA_DATA_LEAF *>(S.ExtraData));
+		else if(S.DataType == DATA_OBSTACLE)
+			this->ExtraData = new NODE_EXTRA_DATA_OBSTACLE(*(static_cast<NODE_EXTRA_DATA_OBSTACLE *>(S.ExtraData)));
+		else if(S.DataType == DATA_LEAF)
+			this->ExtraData = new NODE_EXTRA_DATA_LEAF(*(static_cast<NODE_EXTRA_DATA_LEAF *>(S.ExtraData)));
+
+		this->DataType = S.DataType;
 	}
 
 	NODE_EXTRA_DATA::NODE_EXTRA_DATA(NODE_EXTRA_DATA &&S) noexcept : ExtraData(std::move(S.ExtraData)), DataType(std::move(S.DataType))
 	{
+		S.ExtraData = nullptr;
+		S.DataType = DATA_EMPTY;
+
 		// If this is a leaf node, copy back the data stored here
 		if(this->DataType == DATA_LEAF)
-			S = std::move(*((static_cast<NODE_EXTRA_DATA_LEAF *>(this->ExtraData))->GetExtraData()));
+		{
+			NODE_EXTRA_DATA *const pExtraData = (static_cast<NODE_EXTRA_DATA_LEAF *>(this->ExtraData))->GetExtraData();
+			if(pExtraData != nullptr)
+			{
+				S = std::move(*pExtraData);
+			}
+		}
 	}
 
 	NODE_EXTRA_DATA &NODE_EXTRA_DATA::operator=(const NODE_EXTRA_DATA &S) noexcept
@@ -189,9 +200,9 @@ namespace MONTE_CARLO_OPTION2
 		if(S.DataType == DATA_EMPTY)
 			this->ExtraData = nullptr;
 		else if(S.DataType == DATA_OBSTACLE)
-			this->SetExtraData(*static_cast<NODE_EXTRA_DATA_OBSTACLE *>(S.ExtraData));
+			this->ExtraData = new NODE_EXTRA_DATA_OBSTACLE(*(static_cast<NODE_EXTRA_DATA_OBSTACLE *>(S.ExtraData)));
 		else if(S.DataType == DATA_LEAF)
-			this->SetExtraData(*static_cast<NODE_EXTRA_DATA_LEAF *>(S.ExtraData));
+			this->ExtraData = new NODE_EXTRA_DATA_LEAF(*(static_cast<NODE_EXTRA_DATA_LEAF *>(S.ExtraData)));;
 
 		this->DataType = S.DataType;
 
@@ -269,32 +280,81 @@ namespace MONTE_CARLO_OPTION2
 		}
 	}
 
-	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const NODE_VALUE_TYPE &_Value, const EXPECTED_LENGTH_TYPE	&_ExpectedLength, const CERTAINTY_TYPE &_Certainty, const COST_TYPE	&_ExpectedCost, const NUM_VISIT_TYPE &_NumVisits, const POS_2D &_Position, bool	_IsDone, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Action(_Action), Value(_Value), ExpectedLength(_ExpectedLength), Certainty(_Certainty), ExpectedCost(_ExpectedCost), NumVisits(_NumVisits), Position(_Position), IsDone(_IsDone)
+	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const NODE_VALUE_TYPE &_Value, const EXPECTED_LENGTH_TYPE &_ExpectedLength, const CERTAINTY_TYPE &_Certainty, const COST_TYPE &_ExpectedCost, const NUM_VISIT_TYPE &_NumVisits, const POS_2D &_Position, bool _IsDone, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Action(_Action), Value(_Value), ExpectedLength(_ExpectedLength), Certainty(_Certainty), ExpectedCost(_ExpectedCost), NumVisits(_NumVisits), Position(_Position), IsDone(_IsDone)
 	{}
 
-	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position) : Action(_Action), Position(_Position)
+	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position) : NODE_EXTRA_DATA(), Action(_Action), Position(_Position)
 	{}
 
 	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Action(_Action), Position(_Position)
 	{}
+
+	void NODE_DATA::WriteToFile(std::fstream &FileData, int &SavedSize) const
+	{
+		SavedSize = sizeof(NODE_DATA);
+
+		// Write node
+		FileData.write(reinterpret_cast<const char *>(this), sizeof(NODE_DATA));
+
+		// Write extra data
+		if(this->DataType == DATA_LEAF)
+		{
+			const NODE_EXTRA_DATA_LEAF *pExtraData = static_cast<NODE_EXTRA_DATA_LEAF*>(this->ExtraData);
+			// TODO: Write data and add SavedSize
+		}
+		else if(this->DataType == DATA_MOVE)
+		{
+			// TODO: Write data and add SavedSize
+		}
+		else if(this->DataType == DATA_OBSTACLE)
+		{
+			// TODO: Write data and add SavedSize
+		}
+	}
+
+	void NODE_DATA::ReadFromFile(std::fstream &FileData)
+	{
+		// Read node
+		FileData.read(reinterpret_cast<char *>(this), sizeof(NODE_DATA));
+
+		// Read extra data
+		if(this->DataType == DATA_LEAF)
+		{
+			const NODE_EXTRA_DATA_LEAF *pExtraData = static_cast<NODE_EXTRA_DATA_LEAF*>(this->ExtraData);
+			// TODO: Read data
+		}
+		else if(this->DataType == DATA_MOVE)
+		{
+			// TODO: Read data
+		}
+		else if(this->DataType == DATA_OBSTACLE)
+		{
+			// TODO: Read data
+		}
+	}
 
 	NODE_EXTRA_DATA_LEAF::NODE_EXTRA_DATA_LEAF(const NODE_EXTRA_DATA_LEAF &S)
 	{
 		std::memcpy(this, &S, sizeof(NODE_EXTRA_DATA_LEAF));
 
 		this->ExtraData = nullptr;
-		this->ExtraData = new NODE_EXTRA_DATA(*(S.GetExtraData()));
+		if(S.ExtraData != nullptr)
+			this->ExtraData = new NODE_EXTRA_DATA(*(S.ExtraData));
 	}
 
 	NODE_EXTRA_DATA_LEAF &NODE_EXTRA_DATA_LEAF::operator=(const NODE_EXTRA_DATA_LEAF &S)
 	{
 		// Delete any previous data
+		if(this->PathStorage != nullptr)
+			this->PathStorage->ClearPath(this->StoredPathID);
 		if(this->ExtraData != nullptr)
 			this->ExtraData->DeleteExtraData();
 
 		// Copy all data, then create new container for extraData
 		std::memcpy(this, &S, sizeof(NODE_EXTRA_DATA_LEAF));
-		this->ExtraData = new NODE_EXTRA_DATA(*(S.GetExtraData()));
+		this->ExtraData = nullptr;
+		if(S.ExtraData != nullptr)
+			this->ExtraData = new NODE_EXTRA_DATA(*(S.ExtraData));
 
 		return *this;
 	}
@@ -357,13 +417,44 @@ namespace MONTE_CARLO_OPTION2
 		return nullptr;
 	}
 
+	NODE_EXTRA_DATA_LEAF::NODE_EXTRA_DATA_LEAF(NODE_EXTRA_DATA_LEAF &&S)
+	{
+		std::memcpy(this, &S, sizeof(NODE_EXTRA_DATA_LEAF));
+
+		S.PathStorage = nullptr;
+		S.ExtraData = nullptr;
+	}
+
+	NODE_EXTRA_DATA_LEAF &NODE_EXTRA_DATA_LEAF::operator=(NODE_EXTRA_DATA_LEAF &&S)
+	{
+		// Delete any data
+		if(this->PathStorage != nullptr)
+			this->PathStorage->ClearPath(this->StoredPathID);
+		if(this->ExtraData != nullptr)
+			delete this->ExtraData;
+
+		memcpy(this, &S, sizeof(NODE_EXTRA_DATA_LEAF));
+
+		// Remove data from S
+		S.ExtraData = nullptr;
+		S.PathStorage = nullptr;
+
+		return *this;
+	}
+
 	NODE_EXTRA_DATA_LEAF::~NODE_EXTRA_DATA_LEAF()
 	{
 		if(this->PathStorage != nullptr)
 			this->PathStorage->ClearPath(this->StoredPathID);
 		if(this->ExtraData != nullptr)
+		{
 			delete this->ExtraData;
+			this->ExtraData = nullptr;
+		}
 	}
+
+	OBSTACLE_DATA::OBSTACLE_DATA(const POS_2D &_Position, const CERTAINTY_TYPE &_OccupancyPercentage) : POS_2D(_Position), OccupancyPercentage(_OccupancyPercentage)
+	{}
 
 	NODE_EXTRA_DATA_MOVE::NODE_EXTRA_DATA_MOVE(const PATH_DATA &TotalPath, const ID &NextPosInPathID, const ID &EndPosInPathID) : PATH_DATA()
 	{
@@ -392,6 +483,17 @@ namespace MONTE_CARLO_OPTION2
 		return false;
 	}
 
+	bool TRAVERSED_PATH::PartialPathContainsBidirectionalMove(const POS_2D &Pos1, const POS_2D &Pos2, const ID &StartPathID) const
+	{
+		for(auto curMove = StartPathID; curMove < this->size(); ++curMove)
+		{
+			if(this->at(curMove).IsBidirectionalPath(Pos1, Pos2))
+				return true;
+		}
+
+		return false;
+	}
+
 	const DISTRICT &BRANCH_DATA::GetCurDistrict() const
 	{
 		return this->pDistrictStorage->GetDistrict(this->GetCurDistrictID());
@@ -414,8 +516,31 @@ namespace MONTE_CARLO_OPTION2
 
 	void BRANCH_DATA::StepUpOneNode()
 	{
-
+		if(this->pCurNode->GetParent() != nullptr)
+			this->RevertBranchData(*(this->pCurNode->GetParent()));
 	}
+
+	void BRANCH_DATA::Init(const OGM_MAP &OriginalMap, const POS_2D &Start, const POS_2D &Destination, TREE_CLASS &TreeData, const DISTRICT_STORAGE &DistrictStorage)
+	{
+		this->pOriginalMap = &OriginalMap;
+		this->pCurNode = &(TreeData.GetRoot());
+		this->Destination = Destination;
+		this->FailedPaths.clear();
+		this->PathsAfterObservation = 0;
+		this->PrevPath.clear();
+		this->RemainingMapEntropy = OccupancyGridMap::CalculateEntropyFromMap(OriginalMap);
+		this->SuccessPaths.clear();
+		this->VisitMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), 0);
+		this->pCurJumpPath = nullptr;
+		this->pDistrictStorage = &DistrictStorage;
+
+		// Calculate map data at start
+		OccupancyGridMap::CalculateLogMapFromCellMap(OriginalMap, this->CurLogData);
+		OccupancyGridMap::CalculateProbMapFromCellMap(OriginalMap, this->CurMapData);
+	}
+
+	BRANCH_DATA::BRANCH_DATA(RobotData &_RobotData, MCPathStorage *const PathStorage) : CurBotData(_RobotData), pStoredPathData(PathStorage)
+	{}
 
 	void BRANCH_DATA::SetMapPosition(const POS_2D &Position, const OGM_MAP::CELL_TYPE &NewValue)
 	{
@@ -493,7 +618,13 @@ namespace MONTE_CARLO_OPTION2
 				}
 			}
 			else
-				this->SetMapPosition(nextData.Position, MONTE_CARLO_OPTION2::CELL_OCCUPIED);
+			{
+				// Set position to free or occupied
+				if(nextData.Action.IsFreeResult())
+					this->SetMapPosition(nextData.Position, MONTE_CARLO_OPTION2::CELL_FREE);
+				else
+					this->SetMapPosition(nextData.Position, MONTE_CARLO_OPTION2::CELL_OCCUPIED);
+			}
 
 			if(nextData.Action.IsOccupiedResult())
 			{
@@ -552,12 +683,8 @@ namespace MONTE_CARLO_OPTION2
 		}
 		else if(curData.Action.IsIncompleteMove())
 		{
-			// At jump, delete jump path
-			if(this->pCurJumpPath != nullptr)
-			{
-				delete this->pCurJumpPath;
-				this->pCurJumpPath = nullptr;
-			}
+			// Remove old jump data
+			this->PrevPath.pop_back();
 		}
 		else if(curData.Action.IsObserveResult())
 		{
@@ -581,9 +708,53 @@ namespace MONTE_CARLO_OPTION2
 			// At observe action, do nothing
 		}
 
+		if(prevData.Action.IsIncompleteMove())
+		{
+			// At jump, delete old jump path
+			if(this->pCurJumpPath != nullptr)
+				*(this->pCurJumpPath) = TRAVERSED_PATH_SINGLE(this->CurBotData.GetGlobalBotPosition(), prevData.Position);
+			else
+				this->pCurJumpPath = new TRAVERSED_PATH_SINGLE(this->CurBotData.GetGlobalBotPosition(), prevData.Position);
+		}
+
 		// Revert current node
 		this->pCurNode = const_cast<TREE_NODE*>(&PrevNode);
 	}
+}
+
+MonteCarloOption2::MonteCarloOption2(RobotData _RobotData , const MC_PATH_STORAGE::PATH_ID &MaxStoredPaths) : _MCTree(), _Branch(_RobotData, &(this->_PathStorage)), _PathStorage(MaxStoredPaths)
+{}
+
+int MonteCarloOption2::PerformMonteCarlo(const OccupancyGridMap &Map, const DistrictMapStorage &DistrictData, const POS_2D &StartPos, const POS_2D &Destination)
+{
+	// Set current map to use
+	this->_Branch.Init(Map, StartPos, Destination, this->_MCTree, DistrictData);
+
+	// Create tree
+	this->_MCTree.Reset();
+	TREE_NODE *pCurNode = &(this->_MCTree.GetRoot());
+	pCurNode->GetDataR() = NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_OBSERVE, StartPos);		// Observe start pos
+	pCurNode = pCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_RESULT_FREE, StartPos));		// Mark start pos as free
+	pCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, StartPos));				// Move robot to start pos
+
+	this->_Branch.pCurNode = &(this->_MCTree.GetRoot());
+
+	BRANCH_DATA rootData = this->_Branch;		// Store root data for later
+
+	// End Condition: Continue until all paths are checked
+	while(!this->_MCTree.GetRoot().GetData().IsDone)
+	{
+		// Perform one Monte Carlo step
+		this->Selection();
+		this->Expansion();
+		this->Simulation();
+		this->Backtrack();
+
+		// Revert to start
+		this->_Branch = rootData;
+	}
+
+	return 1;
 }
 
 int MonteCarloOption2::Selection()
@@ -686,26 +857,27 @@ void MonteCarloOption2::Expansion()
 			// If we are neither at the target nor the follow up position, follow the stored path instead of finding new one
 			// Check if this path is already stored or whether we need to calculate it
 			const PATH_DATA *pPath;
-			if(!this->_Branch.StoredPathData.IsPathStored(pLeafData->StoredPathID))
+			if(!this->_Branch.pStoredPathData->IsPathStored(pLeafData->StoredPathID))
 			{
 				// Path not stored, calculate it and store it in temporary location
 				MCPathStorage::PATH_ID freeID;
-				if(this->_Branch.StoredPathData.IsFreeSpaceAvailable(&freeID))
+				if(this->_Branch.pStoredPathData->IsFreeSpaceAvailable(&freeID))
 				{
 					PATH_DATA tmpPath;
 					CalculatePath(this->_Branch, curBotPos, pLeafData->TargetPosition, &tmpPath, nullptr, nullptr, nullptr);
-					this->_Branch.StoredPathData.SetPath(freeID, std::move(tmpPath));
-					pPath = &(this->_Branch.StoredPathData.GetPath(freeID));
+					this->_Branch.pStoredPathData->SetPath(freeID, std::move(tmpPath));
+					pPath = &(this->_Branch.pStoredPathData->GetPath(freeID));
 				}
 				else
 				{
-					CalculatePath(this->_Branch, curBotPos, pLeafData->TargetPosition, &(this->_Branch.StoredPathData.GetTempPath()), nullptr, nullptr, nullptr);
-					pPath = &(this->_Branch.StoredPathData.GetTempPath());			// Point to temp path
+					CalculatePath(this->_Branch, curBotPos, pLeafData->TargetPosition, &(this->_Branch.pStoredPathData->GetTempPath()), nullptr, nullptr, nullptr);
+					pPath = &(this->_Branch.pStoredPathData->GetTempPath());			// Point to temp path
 				}
 			}
 			else
 			{
-				pPath = &(this->_Branch.StoredPathData.GetPath(pLeafData->StoredPathID));		// Point to stored path
+				ppCurNode->GetDataR().GetExtraLeafData()->StoredPathID = this->_Branch.pStoredPathData->GetMaxStoredPaths();		// Set to invalid ID
+				pPath = &(this->_Branch.pStoredPathData->GetPath(pLeafData->StoredPathID));		// Point to stored path
 			}
 
 			// Follow the path until an obstacle should be simulated
@@ -713,33 +885,47 @@ void MonteCarloOption2::Expansion()
 			CERTAINTY_TYPE pathCertainty;
 			PATH_DATA::ID posReachedID;
 			POS_2D obstaclePos;
-			const POS_2D *pPosReached;
+			POS_2D posReached;
 			TREE_NODE *pIntermediateNode;
-			const int tmpResult = this->FollowPathUntilObstacle(this->_Branch, *pPath, this->_Branch.MinPathCertainty, this->_Branch.MinPathLength, &pathCertainty, &pathLength, &posReachedID, &obstaclePos);
+			int tmpResult;
+			if(pPath->size() > 2 && this->_Branch.CurMapData.GetPixel(pPath->back()) > MONTE_CARLO_OPTION2::MIN_CERTAINTY)
+			{
+				// Create an obstacle at end if it's possible
+				PATH_DATA::const_iterator forcedObstacle = pPath->end()-1;
+				tmpResult = this->FollowPathUntilObstacle(this->_Branch, *pPath, this->_Branch.MinPathCertainty, this->_Branch.MinPathLength, this->_Branch.CurBotData.GetScanRange(), this->_Branch.CurBotData.GetGlobalBotPosition(), MONTE_CARLO_OPTION2::MAX_CERTAINTY, 0, &(forcedObstacle), &pathCertainty, &pathLength, &posReachedID, &obstaclePos);
+			}
+			else
+				tmpResult = this->FollowPathUntilObstacle(this->_Branch, *pPath, this->_Branch.MinPathCertainty, this->_Branch.MinPathLength, this->_Branch.CurBotData.GetScanRange(), this->_Branch.CurBotData.GetGlobalBotPosition(), MONTE_CARLO_OPTION2::MAX_CERTAINTY, 0, nullptr, &pathCertainty, &pathLength, &posReachedID, &obstaclePos);
 			if(tmpResult < 0)
 				return;			//ERROR
 			else if(tmpResult == 0)
 			{
 				// This result indicates that bot encountered an obstacle before moving, thus skip the move order and add observation immediately
 				pIntermediateNode = ppCurNode;
-				pPosReached = &curBotPos;
+				posReached = curBotPos;
 			}
 			else
 			{
 				// Move to new position, then add branch
-				pPosReached = &(pPath->at(posReachedID));
+				posReached = pPath->at(posReachedID);
 
 				if(posReachedID == 0)
 					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, pPath->at(posReachedID)));			// If one move necessary, add simple move order
 				else
-					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, pPath->at(posReachedID), NODE_EXTRA_DATA(NODE_EXTRA_DATA_MOVE(*pPath, 0, posReachedID))));
+					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, pPath->at(posReachedID), NODE_EXTRA_DATA(NODE_EXTRA_DATA_MOVE(*pPath, 0, posReachedID))));				
+
+				// Update path by removing traversed position
+				if(posReachedID == pPath->size()-1)
+					pLeafData->PathStorage->ClearPath(pLeafData->StoredPathID);
+				else
+					pLeafData->PathStorage->GetPathR(pLeafData->StoredPathID).erase(pPath->begin(), pPath->begin()+posReachedID);
 
 				// Calculate move data
 				//this->CalculateMoveNodeData(this->_Branch, this->_Branch.pCurNode->GetDataR());
 			}
 
 			// Now add an observation node and move leaf data to this node
-			NODE_EXTRA_DATA_OBSTACLE obstacleData = this->CreateObstacleAtPos(obstaclePos, *pPosReached, this->_Branch.ObstacleLength, this->_Branch.ObstacleHeight, this->_Branch.MinObstacleCertainty, this->_Branch.MaxObstacleCertainty);
+			NODE_EXTRA_DATA_OBSTACLE obstacleData = this->CreateObstacleAtPos(this->_Branch, obstaclePos, posReached, this->_Branch.ObstacleLength, this->_Branch.ObstacleHeight, this->_Branch.MinObstacleCertainty, this->_Branch.MaxObstacleCertainty);
 			pIntermediateNode = pIntermediateNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_OBSERVE, obstaclePos, NODE_EXTRA_DATA(std::move(ppCurNode->GetDataR()))));
 
 			// Now append obstacle data to this leaf's data
@@ -755,45 +941,61 @@ void MonteCarloOption2::Expansion()
 		// Look at all connections around current node and add those that haven't been followed recently
 		for(const auto &curIDConnection : curDistrict.GetAdjacentConnections())
 		{
-			bool posRecentlyTraversed = false;
 			for(const auto &curConnectionPos : curIDConnection.ConnectionPositions)
 			{
 				if(curBotPos == curConnectionPos[0])
 					continue;			// Skip if we are at this position
 
 				// Check if a position has already been traversed recently
-				// TODO
+				if(this->_Branch.PrevPath.PartialPathContainsBidirectionalMove(curConnectionPos[0], curConnectionPos[1], this->_Branch.PathsAfterObservation))
+					continue;			// Skip if we already tried this decision
 
-				// Compare connection position with previous path
-				for(MONTE_CARLO_OPTION2::TRAVERSED_PATH::iterator curPrevPath = this->_Branch.PrevPath.begin()+(this->_Branch.PathsAfterObservation); curPrevPath != this->_Branch.PrevPath.end(); ++curPrevPath)
+				// If this position hasn't been traversed yet, add branch that moves here
+				// Add child with node data
+				NODE_EXTRA_DATA_LEAF tmpLeafData;
+				PATH_DATA &tmpPath = this->_Branch.pStoredPathData->ReservePathWithTemp(&tmpLeafData.StoredPathID);		// Get a new free path pos
+
+				// Attempt to find path to destination
+				tmpLeafData.TargetPosition = curConnectionPos.at(0);
+				if(CalculatePath(this->_Branch, curBotPos, tmpLeafData.TargetPosition, &tmpPath, nullptr, nullptr, nullptr) >= 0)
 				{
-					if(curPrevPath.base()->at(0) != curConnectionPos.at(0) || curPrevPath.base()->at(1) != curConnectionPos.at(0))
-					{
-						// If this position hasn't been traversed yet, add branch that moves here
-						// Add child with node data
-						MCPathStorage::PATH_ID freeID;
-						NODE_EXTRA_DATA_LEAF tmpLeafData;
-						tmpLeafData.TargetPosition = curConnectionPos.at(0);
-						tmpLeafData.FollowUpPosition = curConnectionPos.at(1);
-						tmpLeafData.RecentPathCertainty = MONTE_CARLO_OPTION2::MAX_CERTAINTY;
-						tmpLeafData.RecentPathLength = 0;
-						tmpLeafData.PathStorage = &(this->_Branch.StoredPathData);
-						if(tmpLeafData.PathStorage->IsFreeSpaceAvailable(&freeID))
-						{
-							PATH_DATA tmpPath;
-							CalculatePath(this->_Branch, curBotPos, tmpLeafData.TargetPosition, &tmpPath, nullptr, nullptr, nullptr);
-							tmpLeafData.PathStorage->SetPath(freeID, std::move(tmpPath));
-						}
-						else
-							CalculatePath(this->_Branch, curBotPos, tmpLeafData.TargetPosition, nullptr, nullptr, nullptr, nullptr);
+					// If a path was found, add exploration node
+					tmpLeafData.FollowUpPosition = curConnectionPos.at(1);
+					tmpLeafData.RecentPathCertainty = MONTE_CARLO_OPTION2::MAX_CERTAINTY;
+					tmpLeafData.RecentPathLength = 0;
+					tmpLeafData.PathStorage = this->_Branch.pStoredPathData;
 
-						// Create new child
-						TREE_NODE *pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_JUMP, curConnectionPos.at(1), std::move(tmpLeafData)));
-					}
+					// Create new child
+					TREE_NODE *pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_JUMP, curConnectionPos.at(1), std::move(tmpLeafData)));
 				}
 			}
 		}
+
+		// Check if we are in same district as destination
+		if(this->_Branch.pDistrictStorage->GetDistrictIDAtGlobalPos(this->_Branch.Destination) == curDistrict.GetID())
+		{
+			// Add child with node data leading to destination
+			NODE_EXTRA_DATA_LEAF tmpLeafData;
+			PATH_DATA &tmpPath = this->_Branch.pStoredPathData->ReservePathWithTemp(&tmpLeafData.StoredPathID);		// Get a new free path pos
+
+			// Attempt to find path to destination
+			tmpLeafData.TargetPosition = this->_Branch.Destination;
+			if(CalculatePath(this->_Branch, curBotPos, tmpLeafData.TargetPosition, &tmpPath, nullptr, nullptr, nullptr) >= 0)
+			{
+				// If a path was found, add exploration node
+				tmpLeafData.FollowUpPosition = this->_Branch.Destination;
+				tmpLeafData.RecentPathCertainty = MONTE_CARLO_OPTION2::MAX_CERTAINTY;
+				tmpLeafData.RecentPathLength = 0;
+				tmpLeafData.PathStorage = this->_Branch.pStoredPathData;
+
+				// Create new child
+				TREE_NODE *pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_JUMP, this->_Branch.Destination, std::move(tmpLeafData)));
+			}
+		}
 	}
+
+	if(ppCurNode->GetNumChildren() == 0)
+		ppCurNode->GetDataR().IsDone = true;		// Set leaf to done if no children could be created
 }
 
 void MonteCarloOption2::Simulation()
@@ -809,21 +1011,20 @@ void MonteCarloOption2::Simulation()
 		while(!this->_Branch.pCurNode->IsLeaf())
 		{
 			numStepsDown++;
-			this->_Branch.StepDownOneNode(0);
+			this->_Branch.StepDownOneNode(0);		// There should be only one child
 		}
 
 		// Simulate this leaf
 		this->SimulateCurrentLeaf();
 
 		// Move back up to parent node of all simulations
-		do
+		while(numStepsDown > 1)
 		{
 			numStepsDown--;
 			this->_Branch.StepUpOneNode();
 
 			this->Backtrack_Step();			// Perform backtrack from this node
 		}
-		while(numStepsDown >= 1);
 
 		// Skip last backtrack, that will be done after all children have been simulated
 		this->_Branch.StepUpOneNode();
@@ -860,11 +1061,24 @@ void MonteCarloOption2::SimulateCurrentLeaf()
 	}
 	else if(r_CurLeafData.Action.IsIncompleteMove())
 	{
+		NODE_DATA intermediateData;
 
+		// Run two simulations, one from bot position to the jump point, the other from jump point to destination
+		this->RunSimulation(this->_Branch.CurBotData.GetGlobalBotPosition(), r_CurLeafData.Position, this->_Branch, ppCurNode->GetParent()->GetData().NumVisits, intermediateData);
+		this->RunSimulation(r_CurLeafData.Position, this->_Branch.Destination, this->_Branch, ppCurNode->GetParent()->GetData().NumVisits, r_CurLeafData);
+
+		// Combine the two results
+		r_CurLeafData.ExpectedLength += intermediateData.ExpectedLength;
+		r_CurLeafData.ExpectedCost += intermediateData.ExpectedCost;
+		r_CurLeafData.Certainty *= intermediateData.Certainty;
+
+		r_CurLeafData.IsDone &= intermediateData.IsDone;			// Only done if both paths are done
+		this->CalculateNodeValue(r_CurLeafData, this->_Branch.Constant, ppCurNode->GetParent()->GetData().NumVisits, r_CurLeafData.Value);			// Calculate node value
 	}
 	else if(r_CurLeafData.Action.IsObserveResult() || r_CurLeafData.Action.IsMovementAction())
 	{
-
+		// Run the simulation
+		this->RunSimulation(this->_Branch.CurBotData.GetGlobalBotPosition(), this->_Branch.Destination, this->_Branch, ppCurNode->GetParent()->GetData().NumVisits, r_CurLeafData);
 	}
 }
 
@@ -904,7 +1118,7 @@ void MonteCarloOption2::Backtrack_Step()
 		r_CurNodeData.ExpectedCost = bestData.ExpectedCost + this->_Branch.ObserveActionCost;
 		r_CurNodeData.ExpectedLength = bestData.ExpectedLength;
 	}
-	else if(r_CurNodeData.Action.IsMovementAction() || r_CurNodeData.Action.IsObserveResult())
+	else if(r_CurNodeData.Action.IsMovementAction())
 	{
 		// Copy best value and add move length of this node
 		const NODE_DATA &bestData = pBestChildNode->GetData();
@@ -921,6 +1135,16 @@ void MonteCarloOption2::Backtrack_Step()
 			r_CurNodeData.ExpectedCost = bestData.ExpectedCost + this->_Branch.MoveActionCost*1;
 			r_CurNodeData.ExpectedLength = bestData.ExpectedLength + 1;
 		}
+	}
+	else // if(r_CurNodeData.Action.IsObserveResult())
+	{
+		// Copy best value
+		const NODE_DATA &bestData = pBestChildNode->GetData();
+		r_CurNodeData.Certainty = bestData.Certainty;				// Copy certainty, the uncertainty of this path is already considered in the following observation
+
+		r_CurNodeData.Certainty = bestData.Certainty;
+		r_CurNodeData.ExpectedCost = bestData.ExpectedCost + this->_Branch.ObserveActionCost;
+		r_CurNodeData.ExpectedLength = bestData.ExpectedLength;
 	}
 
 	r_CurNodeData.NumVisits++;
@@ -956,14 +1180,120 @@ int MonteCarloOption2::CalculatePath(const BRANCH_DATA &BranchData, const POS_2D
 	return 1;
 }
 
-int MonteCarloOption2::FollowPathUntilObstacle(const BRANCH_DATA &BranchData, const PATH_DATA &PathToTake, const CERTAINTY_TYPE &MinCertainty, const EXPECTED_LENGTH_TYPE &MinLength, CERTAINTY_TYPE *const PathCertainty, EXPECTED_LENGTH_TYPE *const PathLength, PATH_DATA::ID *const EndPosID, POS_2D *const ObstaclePos)
+int MonteCarloOption2::FollowPathUntilObstacle(const BRANCH_DATA &BranchData, const PATH_DATA &PathToTake, const CERTAINTY_TYPE &MinCertainty, const EXPECTED_LENGTH_TYPE &MinLength, const EXPECTED_LENGTH_TYPE &ScanRange, const POS_2D &StartPos, const CERTAINTY_TYPE &StartCertainty, const EXPECTED_LENGTH_TYPE &StartLength, const PATH_DATA::const_iterator *const NextForcedObstacleIterator, CERTAINTY_TYPE *const PathCertainty, EXPECTED_LENGTH_TYPE *const PathLength, PATH_DATA::ID *const EndPosID, POS_2D *const ObstaclePos)
 {
-	return -1;
+	// Set start parameters
+	const CERTAINTY_TYPE maxInvertedLogCertainty = OccupancyGridMap::CalculateLogValueFromProb(MONTE_CARLO_OPTION2::MAX_CERTAINTY - MinCertainty);
+	CERTAINTY_TYPE curInvertedLogCertainty = OccupancyGridMap::CalculateLogValueFromProb(StartCertainty);
+	EXPECTED_LENGTH_TYPE curLength = StartLength;
+	EXPECTED_LENGTH_TYPE curDistBetweenBotAndObstacle = GetMovementCost(StartPos, PathToTake.at(0));		// Keep track of distance between robot and obstacle
+	PATH_DATA::ID obstacleID = GetInfiniteVal<PATH_DATA::ID>();
+	PATH_DATA::ID botID = GetInfiniteVal<PATH_DATA::ID>();
+	const POS_2D *pCurBotPos = &StartPos;
+	const POS_2D *pCurObstaclePos = &StartPos;
+
+	// Go through path until length reaches minimum AND Certainty reaches minimum
+	for(auto curPathPos = PathToTake.begin(); curPathPos != PathToTake.end(); ++curPathPos)
+	{
+		// Update certainty and length
+		curInvertedLogCertainty += BranchData.CurLogData.GetPixel(*curPathPos);
+		const auto movementCost = GetMovementCost(*curPathPos, *pCurObstaclePos);
+		curLength += movementCost;
+		curDistBetweenBotAndObstacle += movementCost;
+
+		// Move bot until next obstacel pos is back in scan range
+		while(curDistBetweenBotAndObstacle > ScanRange)
+		{
+			// Move bot up along path
+			botID++;
+
+			// Update distance
+			curDistBetweenBotAndObstacle -= GetMovementCost(*pCurBotPos, PathToTake.at(botID));
+
+			// Update robot position
+			pCurBotPos = &(PathToTake.at(botID));
+		}
+
+		// Update obstacle position
+		pCurObstaclePos = &(*curPathPos);
+
+		// If we reach a forced obstacle position, create an obstacle here
+		if(NextForcedObstacleIterator != nullptr)
+		{
+			if(*NextForcedObstacleIterator == curPathPos)
+			{
+				obstacleID = static_cast<PATH_DATA::ID>((*NextForcedObstacleIterator)-PathToTake.begin());
+				break;
+			}
+		}
+
+		// Check if both the certainty and length is in correct area
+		if(curLength >= MinLength && curInvertedLogCertainty >= maxInvertedLogCertainty)
+		{
+			// Stop if both conditions are met
+			obstacleID = static_cast<PATH_DATA::ID>((*NextForcedObstacleIterator)-PathToTake.begin());
+			break;
+		}
+	}
+
+	// Save the requested data
+	if(PathCertainty != nullptr)
+		*PathCertainty = MONTE_CARLO_OPTION2::MAX_CERTAINTY - OccupancyGridMap::CalculateProbValueFromLog(curInvertedLogCertainty);
+	if(PathLength != nullptr)
+		*PathLength = std::move(curLength);
+	if(EndPosID != nullptr)
+		*EndPosID = std::move(botID);
+	if(ObstaclePos != nullptr)
+		*ObstaclePos = *pCurObstaclePos;
+
+	// Check if a path was found
+	if(obstacleID == GetInfiniteVal<PATH_DATA::ID>())
+		return -1;
+
+	// Check if bot moved
+	if(botID == GetInfiniteVal<PATH_DATA::ID>())
+		return 0;
+
+	return 1;
 }
 
-MonteCarloOption2::NODE_EXTRA_DATA_OBSTACLE MonteCarloOption2::CreateObstacleAtPos(const POS_2D &ObstaclePosition, const POS_2D &BotPosition, const EXPECTED_LENGTH_TYPE &ObstacleLength, const EXPECTED_LENGTH_TYPE &ObstacleHeight, const CERTAINTY_TYPE &MinObstacleCertainty, const CERTAINTY_TYPE &MaxObstacleCertainty)
+MonteCarloOption2::NODE_EXTRA_DATA_OBSTACLE &&MonteCarloOption2::CreateObstacleAtPos(const BRANCH_DATA &BranchData, const POS_2D &ObstaclePosition, const POS_2D &BotPosition, const EXPECTED_LENGTH_TYPE &ObstacleLength, const EXPECTED_LENGTH_TYPE &ObstacleHeight, const CERTAINTY_TYPE &MinObstacleCertainty, const CERTAINTY_TYPE &MaxObstacleCertainty)
 {
-	return NODE_EXTRA_DATA_OBSTACLE();
+	NODE_EXTRA_DATA_OBSTACLE newObstacle;
+
+	if(ObstacleHeight == 1 && ObstacleLength == 1)
+	{
+		newObstacle.push_back(MONTE_CARLO_OPTION2::OBSTACLE_DATA(ObstaclePosition, MONTE_CARLO_OPTION2::MAX_CERTAINTY));
+
+		return std::move(newObstacle);
+	}
+
+	// Calculate height and width angle
+	float heightAngle = std::atan2(ObstaclePosition.Y-BotPosition.Y, ObstaclePosition.X - BotPosition.X);
+	float widthAngle = (heightAngle < -M_PI_2 ? -heightAngle+M_PI_2 : heightAngle-M_PI_2);
+
+	// Get start position and increment
+	const float incrementAlongWidthX = 1;
+	const float incrementAlongWidthY = std::sin(widthAngle)/std::cos(widthAngle);
+	const float incrementAlongHeightX = std::cos(heightAngle)/std::sin(heightAngle);
+	const float incrementAlongHeightY = 1;
+	const POS_2D_TYPE startPosX = std::round(std::cos(-widthAngle)*ObstacleLength/2+ObstaclePosition.X);
+	const POS_2D_TYPE startPosY = std::round(std::sin(-widthAngle)*ObstacleLength/2+ObstaclePosition.Y);
+
+	// Move obstacle data
+	for(float curIncrementAlongWidthX = 0, curIncrementAlongWidthY = 0; curIncrementAlongWidthX <= ObstacleLength; curIncrementAlongWidthX += incrementAlongWidthX, curIncrementAlongWidthY += incrementAlongWidthY)
+	{
+		for(float curIncrementAlongHeightX = 0, curIncrementAlongHeightY = 0; curIncrementAlongHeightY <= ObstacleHeight; curIncrementAlongHeightX += incrementAlongHeightX, curIncrementAlongHeightY += incrementAlongHeightY)
+		{
+			// Check if current position is in map
+			const MONTE_CARLO_OPTION2::OBSTACLE_DATA curPos = MONTE_CARLO_OPTION2::OBSTACLE_DATA(POS_2D(std::round(curIncrementAlongWidthX+curIncrementAlongHeightX+startPosX), std::round(curIncrementAlongWidthY+curIncrementAlongHeightY+startPosY)), MONTE_CARLO_OPTION2::MAX_CERTAINTY);
+
+			if(BranchData.CurMapData.IsInMap(static_cast<POS_2D>(curPos)))
+				newObstacle.push_back(curPos);
+		}
+	}
+
+	return std::move(newObstacle);
 }
 
 void MonteCarloOption2::RunSimulation(const POS_2D &BotPos, const POS_2D &Destination, const BRANCH_DATA &MapData, const NUM_VISITS_TYPE &NumParentsVisit, NODE_DATA &Result)
@@ -1004,7 +1334,7 @@ void MonteCarloOption2::CalculateNodeValue(const NODE_DATA &Data, const NODE_VAL
 	if(Data.IsDone)
 		Value = MONTE_CARLO_OPTION2::MIN_NODE_VALUE;
 	else
-		Value = Data.Certainty/Data.ExpectedLength + Constant*static_cast<NODE_VALUE_TYPE>(std::sqrt(static_cast<double>(NumParentsVisit)/std::log2(Data.NumVisits)));
+		Value = Data.Certainty/Data.ExpectedLength + Constant*static_cast<NODE_VALUE_TYPE>(std::sqrt(static_cast<double>(NumParentsVisit)/Data.NumVisits));
 }
 
 const MonteCarloOption2::TREE_NODE *MonteCarloOption2::FindBestChildNode(const TREE_NODE &CurNode, bool &AllDone) const

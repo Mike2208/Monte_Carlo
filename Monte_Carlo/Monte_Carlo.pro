@@ -50,7 +50,13 @@ SOURCES += main.cpp \
     robot_data.cpp \
     mc_path_storage.cpp \
     algorithm_a_star.cpp \
-    algorithm_a_star_templates.cpp
+    algorithm_a_star_templates.cpp \
+    district_map_storage_templates.cpp \
+    file_tree_node.cpp \
+    file_tree.cpp \
+    file_tree_node_templates.cpp \
+    file_tree_templates.cpp \
+    file_tree_save_file.cpp
 
 HEADERS += \
     map_2d.h \
@@ -92,6 +98,9 @@ HEADERS += \
     monte_carlo_option2.h \
     robot_data.h \
     mc_path_storage.h \
-    algorithm_a_star.h
+    algorithm_a_star.h \
+    file_tree_node.h \
+    file_tree.h \
+    file_tree_save_file.h
 
 unix:!macx: LIBS += -lpng

@@ -32,6 +32,20 @@ void OccupancyGridMap::CalculateLogMapFromCellMap(const OGM_MAP_TYPE &CellMap, O
 	}
 }
 
+void OccupancyGridMap::CalculateProbMapFromCellMap(const OGM_MAP_TYPE &CellMap, OGM_PROB_MAP_TYPE &ProbMap)
+{
+	ProbMap.ResizeMap(CellMap.GetWidth(), CellMap.GetHeight());
+
+	for(POS_2D_TYPE X=POS_2D_MIN; X<CellMap.GetWidth(); X++)
+	{
+		for(POS_2D_TYPE Y=POS_2D_MIN; Y<CellMap.GetHeight(); Y++)
+		{
+			POS_2D tmpPos(X,Y);
+			ProbMap.GetPixelR(tmpPos) = OccupancyGridMap::CalculateProbValFromCell(CellMap.GetPixel(tmpPos));
+		}
+	}
+}
+
 OGM_LOG_TYPE OccupancyGridMap::CalculateLogValueFromProb(const OGM_PROB_TYPE &Value)
 {
 	return static_cast<OGM_LOG_TYPE>(-log(OGM_PROB_MAX-Value));
@@ -61,6 +75,10 @@ OGM_ENTROPY_TYPE OccupancyGridMap::CalculateEntropyFromCell(const OGM_CELL_TYPE 
 
 OGM_ENTROPY_TYPE OccupancyGridMap::CalculateEntropyFromProb(const OGM_PROB_TYPE &Value)
 {
+	// prevent 0*inf
+	if(Value == OGM_PROB_MAX || Value == OGM_PROB_MIN)
+		return 0;
+
 	const OGM_PROB_TYPE invertedVal = OGM_PROB_MAX - Value;
 	return static_cast<OGM_ENTROPY_TYPE>(-(log2(Value)*Value+log2(invertedVal)*invertedVal));
 }

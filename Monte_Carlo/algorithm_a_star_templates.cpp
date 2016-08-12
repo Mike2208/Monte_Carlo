@@ -96,6 +96,10 @@ bool AlgorithmAStar::CalculatePath(const Map2D<T> &Map, const T &CutOffValue, co
 					}
 				}
 
+				// Stop before saving start position to path (also avoids error if)
+				if(bestAdjacentPos == StartPos)
+					break;
+
 				if(bestAdjacentPos == curPos)
 					return false;		// ERROR
 
@@ -104,7 +108,7 @@ bool AlgorithmAStar::CalculatePath(const Map2D<T> &Map, const T &CutOffValue, co
 				// Save position
 				reversePath.push_back(curPos);
 			}
-			while(curPos != StartPos);
+			while(1);		// Break condition above
 
 			// Save Reversed path
 			Path->clear();

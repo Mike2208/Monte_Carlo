@@ -1,5 +1,14 @@
 #include "test_functions.h"
 
+template<class T>
+void PrintPath(const AlgorithmAStar::PATH_DATA &Path, const T &ValueToSet, Map2D<T> &Map)
+{
+	for(const auto &curPos : Path)
+	{
+		Map.SetPixel(curPos, ValueToSet);
+	}
+}
+
 namespace TEST_FUNCTIONS
 {
 	struct TWO_VALS
@@ -121,6 +130,36 @@ namespace TEST_FUNCTIONS
 		ALGORITHM_VORONOI_FIELDS::ID nextFreeID = 1;
 		ALGORITHM_VORONOI_FIELDS::DISTRICT_STORAGE freeDistricts, occupiedDistricts;
 		AlgorithmVoronoiFields<OccupancyGridMap::CELL_TYPE>::CalculateVoronoiField(testMap, 90, 0, testDistrict, occupiedDistricts, freeDistricts, nextFreeID);
+
+		return 1;
+	}
+
+	int TestPath()
+	{
+		TestMap2D testMap(0, 100, 10);
+		testMap.CreateMapsFromProbabilityPNGFile("test.png");
+
+		unsigned int numCells = 0;
+		for(const auto curData : testMap.GetOGMap().GetCellStorage())
+		{
+			if(curData != OGM_CELL_MIN && curData != OGM_CELL_MAX && curData != 10)
+			{
+				std::cout << std::to_string(curData) << std::endl;
+				numCells++;
+			}
+		}
+
+		//testMap.GetOGMap().PrintMap("/tmp/testOGM.pgm");
+		testMap.GetRealMap().PrintMap("/tmp/testREAL.pbm");
+
+		AlgorithmAStar tmpAStar;
+		AlgorithmAStar::PATH_DATA tmpPath;
+		AlgorithmAStar::DISTANCE_TYPE tmpDist;
+		tmpAStar.CalculatePath(testMap.GetRealMap(), true, POS_2D(836,testMap.GetOGMap().GetHeight()-1-491), POS_2D(950,testMap.GetOGMap().GetHeight()-1-490), nullptr, &tmpPath, &tmpDist);
+
+		PrintPath(tmpPath, true, testMap.GetRealMapR());
+
+		testMap.GetRealMap().PrintMap("/tmp/testREAL_Path.pbm");
 
 		return 1;
 	}

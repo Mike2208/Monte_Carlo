@@ -9,6 +9,11 @@ const MCPathStorage::PATH_DATA &MCPathStorage::GetPath(const PATH_ID &PathID)con
 	return this->at(PathID);
 }
 
+MCPathStorage::PATH_DATA &MCPathStorage::GetPathR(const PATH_ID &PathID)
+{
+	return this->at(PathID);
+}
+
 int MCPathStorage::SetPath(const PATH_ID &PathID, const PATH_DATA &PathData)
 {
 	// Check if path exists
@@ -112,6 +117,54 @@ void MCPathStorage::ClearPath(const PATH_ID &PathID)
 	}
 
 	return;
+}
+
+MCPathStorage::PATH_DATA &MCPathStorage::ReservePathWithTemp(PATH_ID *ReservedID)
+{
+	PATH_DATA *pCurReservedPath;
+
+	// If no place is available
+	if(this->size() == this->_MaxStoredPaths)
+	{
+		*ReservedID = this->_MaxStoredPaths;
+		pCurReservedPath = &(this->_TempPath);
+
+		if(this->_NumFreePathsInArray > 0)
+		{
+			// Find free path
+			for(PATH_ID curPathID = 0; curPathID < this->size(); ++curPathID)
+			{
+				// Reserve path if free
+				if(this->at(curPathID).IsFree)
+				{
+					this->at(curPathID).IsFree = false;
+					this->_NumFreePathsInArray++;
+
+					*ReservedID = curPathID;
+					pCurReservedPath = &(this->at(curPathID));
+
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+		// Add path and reserve it
+		*ReservedID = this->size();
+		this->push_back(MC_PATH_STORAGE::PATH_DATA_FREE());
+		pCurReservedPath = &(this->back());
+	}
+
+	return *pCurReservedPath;
+}
+
+bool MCPathStorage::IsTempStorage(const PATH_DATA *const PathData) const
+{
+	if(PathData == &(this->_TempPath))
+		return true;
+
+	return false;
 }
 
 MCPathStorage::PATH_DATA &MCPathStorage::GetTempPath()

@@ -52,6 +52,8 @@ class Map2D
 		// Prints map to file
 		void PrintMap(const char *FileName, const T &MaxVal, const T &MinVal) const;
 
+		bool IsInMap(const POS_2D &Position) const;
+
 	private:
 
 		POS_2D_TYPE		_Height;		// Map height

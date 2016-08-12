@@ -116,4 +116,14 @@ void Map2D<T>::PrintMap(const char *FileName, const T &MaxVal, const T &MinVal) 
 	file.close();		// Close file after finish
 }
 
+template<class T>
+bool Map2D<T>::IsInMap(const POS_2D &Position) const
+{
+	if(Position.X >= this->_Width || Position.Y >= this->_Height
+			|| Position.X < 0 || Position.Y < 0)
+		return false;
+
+	return true;
+}
+
 #endif // MAP_2D_TEMPLATES_H

@@ -139,17 +139,17 @@ namespace MONTE_CARLO_OPTION2
 	{
 			NODE_ACTION	Action;				// Action/Result of this node
 
-			NODE_VALUE_TYPE	Value;				// Value of this node (used during selection phase)
+			NODE_VALUE_TYPE	Value = 0;				// Value of this node (used during selection phase)
 
 			EXPECTED_LENGTH_TYPE	ExpectedLength;	// Expected length to dest from here
 			CERTAINTY_TYPE			Certainty;		// Certainty of reaching dest from here
 
 			COST_TYPE		ExpectedCost;	// Cost to reach dest from here
-			NUM_VISIT_TYPE	NumVisits;
+			NUM_VISIT_TYPE	NumVisits = 0;
 
 			POS_2D			Position;		// Position this node is referring to
 
-			bool	IsDone;										// Have all possible variations beneath this node been checked?
+			bool	IsDone = false;										// Have all possible variations beneath this node been checked?
 
 			bool IsDeadEnd() const;		// Returns whether this node is a dead end
 			void SetToDeadEnd();		// Sets node to dead end
@@ -164,6 +164,9 @@ namespace MONTE_CARLO_OPTION2
 			NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position);
 			NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position, const NODE_EXTRA_DATA &_ExtraData);
 			NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position, NODE_EXTRA_DATA &&_ExtraData);
+
+			void WriteToFile(std::fstream &FileData, int &SavedSize) const;	// Just writes the data in a way that it can be retrieved
+			void ReadFromFile(std::fstream &FileData);		// Read T into NewData from FileData
 
 		private:
 
@@ -191,8 +194,8 @@ namespace MONTE_CARLO_OPTION2
 		NODE_EXTRA_DATA *GetExtraData();
 
 		NODE_EXTRA_DATA_LEAF() = default;
-		NODE_EXTRA_DATA_LEAF(NODE_EXTRA_DATA_LEAF &&S) = default;
-		NODE_EXTRA_DATA_LEAF &operator=(NODE_EXTRA_DATA_LEAF &&S) = default;
+		NODE_EXTRA_DATA_LEAF(NODE_EXTRA_DATA_LEAF &&S);
+		NODE_EXTRA_DATA_LEAF &operator=(NODE_EXTRA_DATA_LEAF &&S);
 		~NODE_EXTRA_DATA_LEAF();
 
 		explicit operator const NODE_EXTRA_DATA_MOVE*() const;
@@ -212,6 +215,8 @@ namespace MONTE_CARLO_OPTION2
 	struct OBSTACLE_DATA : public POS_2D
 	{
 		CERTAINTY_TYPE OccupancyPercentage;		// Certainty of occupying this space
+
+		OBSTACLE_DATA(const POS_2D &_Position, const CERTAINTY_TYPE &_OccupancyPercentage);
 	};
 
 	struct NODE_EXTRA_DATA_OBSTACLE : public std::vector<OBSTACLE_DATA>			// Contains all positions of obstacle and their corresonding observed percentages
@@ -253,6 +258,7 @@ namespace MONTE_CARLO_OPTION2
 	{
 		typedef TRAVERSED_PATH::size_type ID;
 		bool PathContainsBidirectionalMove(const POS_2D &Pos1, const POS_2D &Pos2) const;
+		bool PartialPathContainsBidirectionalMove(const POS_2D &Pos1, const POS_2D &Pos2, const ID &StartPathID) const;
 	};
 
 	// Data of current branch
@@ -305,30 +311,36 @@ namespace MONTE_CARLO_OPTION2
 		DISTRICT_ID GetCurDistrictID() const;		// Returns current district ID
 		DISTRICT_ID GetDistrictIDAtPos(const POS_2D &Position) const;
 
-		MCPathStorage StoredPathData;				// Temporary Storage of paths
+		MCPathStorage *pStoredPathData;				// Pointer to Temporary Storage of paths
 
 		const PROB_CELL_TYPE &GetCurMapData(const POS_2D &Position) const { return this->CurMapData.GetPixel(Position); }
+
+		POS_2D Destination;							// Destination to reach
 
 		void StepDownOneNode(const TREE_NODE::CHILD_ID &ChildID);
 		void StepUpOneNode();
 
 		void Init(const OGM_MAP &OriginalMap, const POS_2D &Start, const POS_2D &Destination, TREE_CLASS &TreeData, const DISTRICT_STORAGE &DistrictStorage);
 
-		BRANCH_DATA(const MC_PATH_STORAGE::PATH_ID &MaxStoredPaths);
+		CERTAINTY_TYPE MinPathCertainty = 0.5;		// Certainty threshold after which obstacle is said to be detected
+		EXPECTED_LENGTH_TYPE MinPathLength = 20;		// Length threshold after which obstacle is said to be detected
 
-		CERTAINTY_TYPE MinPathCertainty;		// Certainty threshold after which obstacle is said to be detected
-		EXPECTED_LENGTH_TYPE MinPathLength;		// Length threshold after which obstacle is said to be detected
+		EXPECTED_LENGTH_TYPE ObstacleLength = 1;	// Length of obstacle that should be created (perpendicular to bot direction)
+		EXPECTED_LENGTH_TYPE ObstacleHeight = 1;	// Height of obstacle that should be created (parallel to bot direction)
+		CERTAINTY_TYPE MinObstacleCertainty = MAX_CERTAINTY;	// Minimum certainty that a created obstacle should have
+		CERTAINTY_TYPE MaxObstacleCertainty = MAX_CERTAINTY;	// Maximum certatinty that a created obstacle should have
 
-		EXPECTED_LENGTH_TYPE ObstacleLength;	// Length of obstacle that should be created (perpendicular to bot direction)
-		EXPECTED_LENGTH_TYPE ObstacleHeight;	// Height of obstacle that should be created (parallel to bot direction)
-		CERTAINTY_TYPE MinObstacleCertainty;	// Minimum certainty that a created obstacle should have
-		CERTAINTY_TYPE MaxObstacleCertainty;	// Maximum certatinty that a created obstacle should have
-
-		NODE_VALUE_TYPE Constant;				// Constant in node value calc
-		COST_TYPE MoveActionCost;				// Cost of a move action
-		COST_TYPE ObserveActionCost;			// Cost of an observe action
+		NODE_VALUE_TYPE Constant = 1;				// Constant in node value calc
+		COST_TYPE MoveActionCost = 1;				// Cost of a move action
+		COST_TYPE ObserveActionCost = 1;			// Cost of an observe action
 
 		AlgorithmAStar	AStarMap;				// Map for A* Calculations
+
+		BRANCH_DATA(RobotData &_RobotData, MCPathStorage *const PathStorage);
+		BRANCH_DATA(const BRANCH_DATA &S) = default;
+		BRANCH_DATA(BRANCH_DATA &&S) = default;
+		BRANCH_DATA &operator=(const BRANCH_DATA &S) = default;
+		BRANCH_DATA &operator=(BRANCH_DATA &&S) = default;
 
 		private:
 
@@ -360,8 +372,11 @@ class MonteCarloOption2
 		typedef MONTE_CARLO_OPTION2::COST_TYPE		COST_TYPE;
 		typedef MONTE_CARLO_OPTION2::NODE_VALUE_TYPE	NODE_VALUE_TYPE;
 		typedef MONTE_CARLO_OPTION2::NUM_VISIT_TYPE		NUM_VISITS_TYPE;
+		typedef MONTE_CARLO_OPTION2::DISTRICT_STORAGE	DISTRICT_STORAGE;
 	public:
-		MonteCarloOption2(const MC_PATH_STORAGE::PATH_ID &MaxStoredPaths);
+		MonteCarloOption2(RobotData _RobotData, const MC_PATH_STORAGE::PATH_ID &MaxStoredPaths);
+
+		int PerformMonteCarlo(const OccupancyGridMap &Map, const DistrictMapStorage &DistrictData, const POS_2D &StartPos, const POS_2D &Destination);
 
 		int Selection();
 		void Expansion();
@@ -371,14 +386,15 @@ class MonteCarloOption2
 	private:
 		TREE_CLASS	_MCTree;		// Monte Carlo Tree
 		BRANCH_DATA	_Branch;		// Data of current branch
+		MCPathStorage _PathStorage;	// Path Storage
 
 		void SimulateCurrentLeaf();
 		void Backtrack_Step();
 
 		// Extra functions
 		int CalculatePath(const BRANCH_DATA &BranchData, const POS_2D &StartPos, const POS_2D &Destination, PATH_DATA *const PathTaken, EXPECTED_LENGTH_TYPE *const ExpectedLength, CERTAINTY_TYPE *const Certainty, COST_TYPE *const Cost);		// Calculate path taken
-		int FollowPathUntilObstacle(const BRANCH_DATA &BranchData, const PATH_DATA &PathToTake, const CERTAINTY_TYPE &MinCertainty, const EXPECTED_LENGTH_TYPE &MinLength, CERTAINTY_TYPE *const PathCertainty, EXPECTED_LENGTH_TYPE *const PathLength, PATH_DATA::ID *const EndPosID, POS_2D *const ObstaclePos);		// Follows path until path certainty is below threshold AND path length is above threshold
-		NODE_EXTRA_DATA_OBSTACLE CreateObstacleAtPos(const POS_2D &ObstaclePosition, const POS_2D &BotPosition, const EXPECTED_LENGTH_TYPE &ObstacleLength, const EXPECTED_LENGTH_TYPE &ObstacleHeight, const CERTAINTY_TYPE &MinObstacleCertainty, const CERTAINTY_TYPE &MaxObstacleCertainty);				// Create an obstacle
+		int FollowPathUntilObstacle(const BRANCH_DATA &BranchData, const PATH_DATA &PathToTake, const CERTAINTY_TYPE &MinCertainty, const EXPECTED_LENGTH_TYPE &MinLength, const EXPECTED_LENGTH_TYPE &ScanRange, const POS_2D &StartPos, const CERTAINTY_TYPE &StartCertainty, const EXPECTED_LENGTH_TYPE &StartLength, const PATH_DATA::const_iterator *const NextForcedObstacleIterator, CERTAINTY_TYPE *const PathCertainty, EXPECTED_LENGTH_TYPE *const PathLength, PATH_DATA::ID *const EndPosID, POS_2D *const ObstaclePos);		// Follows path until path certainty is below threshold AND path length is above threshold
+		NODE_EXTRA_DATA_OBSTACLE &&CreateObstacleAtPos(const BRANCH_DATA &BranchData, const POS_2D &ObstaclePosition, const POS_2D &BotPosition, const EXPECTED_LENGTH_TYPE &ObstacleLength, const EXPECTED_LENGTH_TYPE &ObstacleHeight, const CERTAINTY_TYPE &MinObstacleCertainty, const CERTAINTY_TYPE &MaxObstacleCertainty);				// Create an obstacle
 		void CalculateMoveNodeData(const BRANCH_DATA &BranchData, NODE_DATA &NodeToCalculate);
 
 		void RunSimulation(const POS_2D &BotPos, const POS_2D &Destination, const BRANCH_DATA &MapData, const NUM_VISITS_TYPE &NumParentsVisit, NODE_DATA &Result);		// Run the simulation from the given position, then save the data in node data

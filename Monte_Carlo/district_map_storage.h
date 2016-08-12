@@ -69,4 +69,7 @@ class DistrictMapStorage
 		DistrictGraph						_DistrictGraph;			// Graph of all connections
 };
 
+// Templates
+#include "district_map_storage_templates.cpp"
+
 #endif // DISTRICT_MAP_STORAGE_H

@@ -14,6 +14,7 @@
 #include "test_policy.h"
 #include "policy_monte_carlo_converter.h"
 #include "algorithm_voronoi_fields.h"
+#include "algorithm_a_star.h"
 
 #include <fstream>
 #include <iostream>
@@ -28,6 +29,8 @@ namespace TEST_FUNCTIONS
 	int TestPolicy();
 
 	int TestVoronoiField();
+
+	int TestPath();
 }
 
 

@@ -17,6 +17,7 @@ namespace MC_PATH_STORAGE
 	{
 		bool IsFree = false;
 
+		PATH_DATA_FREE() = default;
 		PATH_DATA_FREE(const PATH_DATA &PathData) : PATH_DATA(PathData) {}
 	};
 
@@ -35,12 +36,17 @@ class MCPathStorage : private MC_PATH_STORAGE::PATH_STORAGE
 		MCPathStorage(const PATH_ID &MaxStoredPaths);
 
 		const PATH_DATA &GetPath(const PATH_ID &PathID) const;
+		PATH_DATA &GetPathR(const PATH_ID &PathID);
 		int SetPath(const PATH_ID &PathID, const PATH_DATA &PathData);
 		int SetPath(const PATH_ID &PathID, PATH_DATA &&PathData);
 
 		PATH_ID AddPath(const PATH_DATA &PathData);
 		PATH_ID AddPath(PATH_DATA &&PathData);
 		void ClearPath(const PATH_ID &PathID);
+
+		PATH_DATA &ReservePathWithTemp(PATH_ID *ReservedID = nullptr);		// Attempt to add a path, and use temp place if none is available
+
+		bool IsTempStorage(const PATH_DATA *const PathData) const;			// Returns whether the given path is temp storage
 
 		PATH_DATA &GetTempPath();
 		const PATH_DATA &GetTempPath()const;

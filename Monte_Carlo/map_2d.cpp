@@ -147,5 +147,15 @@ void Map2D<bool>::PrintMap(const char *FileName) const
 	file.close();		// Close file after finish
 }
 
+//template<>
+bool Map2D<bool>::IsInMap(const POS_2D &Position) const
+{
+	if(Position.X >= this->_Width || Position.Y >= this->_Height
+			|| Position.X < 0 || Position.Y < 0)
+		return false;
+
+	return true;
+}
+
 template class Map2D<OGM_CELL_TYPE>;
 template class Map2D<OGM_LOG_TYPE>;

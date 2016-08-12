@@ -21,6 +21,7 @@ typedef float OGM_ENTROPY_TYPE;
 
 typedef Map2D<OGM_CELL_TYPE> OGM_MAP_TYPE;
 typedef Map2D<OGM_LOG_TYPE>	OGM_LOG_MAP_TYPE;
+typedef Map2D<OGM_PROB_TYPE>	OGM_PROB_MAP_TYPE;
 
 class OccupancyGridMap : public OGM_MAP_TYPE
 {
@@ -36,6 +37,7 @@ class OccupancyGridMap : public OGM_MAP_TYPE
 		static OGM_PROB_TYPE CalculateProbValFromCell(const OGM_CELL_TYPE &Value);		// Cell -> Prob
 
 		static void CalculateLogMapFromCellMap(const OGM_MAP_TYPE &CellMap, OGM_LOG_MAP_TYPE &LogMap);		// Cell Map -> Log Map
+		static void CalculateProbMapFromCellMap(const OGM_MAP_TYPE &CellMap, OGM_PROB_MAP_TYPE &ProbMap);		// Cell Map -> Prob Map
 
 		static OGM_LOG_TYPE CalculateLogValueFromProb(const OGM_PROB_TYPE &Value);		// Prob-> Log
 

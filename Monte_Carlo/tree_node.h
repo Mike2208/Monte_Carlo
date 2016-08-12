@@ -15,6 +15,7 @@ class TreeNode
 		typedef typename CHILD_STORAGE::size_type CHILD_ID;
 
 		TreeNode(TreeNode<T> *const Parent, const T &NewData) noexcept;
+		TreeNode(TreeNode<T> *const Parent, T &&NewData) noexcept;
 
 		TreeNode() = default;
 		TreeNode(const TreeNode<T> &S) noexcept;	// Copy Constructor
@@ -30,13 +31,15 @@ class TreeNode
 		T &GetDataR() { return this->_Data; }			// Get Reference to data ( allows changed)
 		const T &GetData() const { return this->_Data; }		// Get Reference to data ( no changes)
 
-		void SetData(const T &NewData) { this->_Data = NewData; }
+		void SetData(const T &NewData)	{ this->_Data = NewData; }
+		void SetData(T &&NewData)		{ this->_Data = std::move(NewData); }
 
 		CHILD_ID GetNumChildren() const  { return this->_Children.size(); }
 		TreeNode<T> *GetChild(const CHILD_ID &ID)  { return &(this->_Children.at(ID)); }
 		const TreeNode<T> *GetChild(const CHILD_ID &ID) const { return &(this->_Children.at(ID)); }
 
 		TreeNode<T> *AddChild(const T &NewData);
+		TreeNode<T> *AddChild(T &&NewData);
 
 		template<class U>
 		void SortChildren(const U &CompareClass) { std::sort(this->_Children.begin(), this->_Children.end(), CompareClass); }

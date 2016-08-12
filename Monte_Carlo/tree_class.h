@@ -19,6 +19,8 @@ class TreeClass
 		TreeNode<T> &GetRoot() { return this->_Root; }
 		const TreeNode<T> &GetRoot() const { return this->_Root; }
 
+		void Reset() { this->_Root.Reset(); }
+
 #ifdef DEBUG	// DEBUG
 		void PrintTree_BreadthFirst();
 		void PrintTree_DepthFirst();
