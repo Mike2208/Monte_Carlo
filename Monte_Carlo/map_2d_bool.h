@@ -21,27 +21,27 @@ class Map2D<bool>
 		void ResizeMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight);
 		void ResetMap(const POS_2D_TYPE &NewWidth, const POS_2D_TYPE &NewHeight, const bool &DefaultCellValue);
 
-		void SetMapToValue(const bool Value);
-		void SetPixel(const POS_2D &Position, const bool &Value);
+		virtual void SetMapToValue(const bool Value);
+		virtual void SetPixel(const POS_2D &Position, const bool &Value);
 
 		//bool &GetPixelR(const POS_2D &Position);
-		bool GetPixel(const POS_2D &Position) const;
-		int GetPixel(const POS_2D &Position, bool &Value) const;
+		virtual bool GetPixel(const POS_2D &Position) const;
+		virtual int GetPixel(const POS_2D &Position, bool &Value) const;
 
-		void SetPathToValue(const POS_2D &StartPos, const POS_2D &EndPos, const bool&Value);		// Set the path from StartPos to EndPod to the given value
+		virtual void SetPathToValue(const POS_2D &StartPos, const POS_2D &EndPos, const bool&Value);		// Set the path from StartPos to EndPod to the given value
 
-		POS_2D_TYPE GetHeight() const;
-		POS_2D_TYPE GetWidth() const;
+		virtual POS_2D_TYPE GetHeight() const;
+		virtual POS_2D_TYPE GetWidth() const;
 
 		// Gets entire cell storage ( usefull for parsing entire map )
 		const CELL_STORAGE &GetCellStorage() const;
 		CELL_STORAGE &GetCellStorageR();
 
-		void PrintMap(const char *FileName) const;
+		virtual void PrintMap(const char *FileName) const;
 
-		bool IsInMap(const POS_2D &Position) const;
+		virtual bool IsInMap(const POS_2D &Position) const;
 
-	private:
+	protected:
 
 		POS_2D_TYPE		_Height;		// Map height
 		POS_2D_TYPE		_Width;			// Map width

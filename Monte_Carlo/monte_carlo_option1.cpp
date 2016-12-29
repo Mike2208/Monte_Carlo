@@ -241,7 +241,7 @@ int MonteCarloOption1::NodeSimulation(const MonteCarloBranchData &BranchData, MO
 	curData.NumVisits = 1;		// first visit
 
 	// Check if start position is reachable
-	curData.Certainty = OccupancyGridMap::CalculateCertaintyFromLog(BranchData.DStarCostMap.MapData().GetPixel(BranchData.GetBotPos()));
+	curData.Certainty = OccupancyGridMap::CalculateCertaintyProbFromLog(BranchData.DStarCostMap.MapData().GetPixel(BranchData.GetBotPos()));
 	if(curData.Certainty <= OGM_PROB_MIN)
 		this->SetNodeToDeadEnd(curData);
 	else

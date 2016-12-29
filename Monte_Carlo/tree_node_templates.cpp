@@ -105,6 +105,25 @@ TreeNode<T> *TreeNode<T>::AddChild(T &&NewData)
 }
 
 template<class T>
+TreeNode<T> *TreeNode<T>::InsertChild(const T &NewData)
+{
+	// Move children to temporary storage
+	auto tmpChildStorage(std::move(this->_Children));
+
+	// Current node's child storage cleared with move
+	//this->_Children.clear();
+
+	// Insert new child and move temporary storage
+	TreeNode<T> *const retVal = this->AddChild(NewData);
+	retVal->_Children = std::move(tmpChildStorage);
+
+	// Reset pointers of moved storage
+	this->_Children.front().ResetChildPointersSingle();
+
+	return retVal;
+}
+
+template<class T>
 void TreeNode<T>::ResetChildPointersSingle() noexcept
 {
 	// Go through all children once

@@ -82,6 +82,7 @@ void AlgorithmDStar<T>::CalculateDStarHomologyDistMap(const Map2D<T> &OriginalMa
 		for(auto navDirection : NavigationOptions)
 		{
 			const POS_2D adjoiningPos = curPos+navDirection;
+			const DIST_MAP_TYPE navDist = GetMovementCost(curPos, adjoiningPos);
 			DIST_MAP_TYPE adjoiningDist;
 
 			if(DistMap.GetPixel(adjoiningPos, adjoiningDist) < 0)
@@ -93,10 +94,10 @@ void AlgorithmDStar<T>::CalculateDStarHomologyDistMap(const Map2D<T> &OriginalMa
 			if(adjoiningVal < CutOffValue)
 			{
 				// Is a faster path available
-				if(adjoiningDist > curDist + 1)
+				if(adjoiningDist > curDist + navDist)
 				{
 					// Set faster path
-					DistMap.SetPixel(adjoiningPos, curDist + 1);
+					DistMap.SetPixel(adjoiningPos, curDist + navDist);
 
 					// Add to queue to be checked
 					posToCheck.push(adjoiningPos);

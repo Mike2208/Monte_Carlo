@@ -56,7 +56,13 @@ SOURCES += main.cpp \
     file_tree.cpp \
     file_tree_node_templates.cpp \
     file_tree_templates.cpp \
-    file_tree_save_file.cpp
+    file_tree_save_file.cpp \
+    monte_carlo_option3.cpp \
+    monte_carlo_dstar_maps.cpp \
+    map_2d_overlay.cpp \
+    map_2d_move.cpp \
+    quad_map.cpp \
+    quad_d_star_maps.cpp
 
 HEADERS += \
     map_2d.h \
@@ -101,6 +107,12 @@ HEADERS += \
     algorithm_a_star.h \
     file_tree_node.h \
     file_tree.h \
-    file_tree_save_file.h
+    file_tree_save_file.h \
+    monte_carlo_option3.h \
+    monte_carlo_dstar_maps.h \
+    map_2d_overlay.h \
+    map_2d_move.h \
+    quad_map.h \
+    quad_d_star_maps.h
 
 unix:!macx: LIBS += -lpng

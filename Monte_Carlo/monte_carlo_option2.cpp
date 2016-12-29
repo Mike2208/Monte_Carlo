@@ -280,13 +280,13 @@ namespace MONTE_CARLO_OPTION2
 		}
 	}
 
-	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const NODE_VALUE_TYPE &_Value, const EXPECTED_LENGTH_TYPE &_ExpectedLength, const CERTAINTY_TYPE &_Certainty, const COST_TYPE &_ExpectedCost, const NUM_VISIT_TYPE &_NumVisits, const POS_2D &_Position, bool _IsDone, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Action(_Action), Value(_Value), ExpectedLength(_ExpectedLength), Certainty(_Certainty), ExpectedCost(_ExpectedCost), NumVisits(_NumVisits), Position(_Position), IsDone(_IsDone)
+	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const NODE_VALUE_TYPE &_Value, const EXPECTED_LENGTH_TYPE &_ExpectedLength, const CERTAINTY_TYPE &_Certainty, const COST_TYPE &_ExpectedCost, const NUM_VISIT_TYPE &_NumVisits, bool _IsDone, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Action(_Action), Value(_Value), ExpectedLength(_ExpectedLength), Certainty(_Certainty), ExpectedCost(_ExpectedCost), NumVisits(_NumVisits), IsDone(_IsDone)
 	{}
 
-	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position) : NODE_EXTRA_DATA(), Action(_Action), Position(_Position)
+	NODE_DATA::NODE_DATA(const NODE_ACTION _Action) : NODE_EXTRA_DATA(), Action(_Action)
 	{}
 
-	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Action(_Action), Position(_Position)
+	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Action(_Action)
 	{}
 
 	void NODE_DATA::WriteToFile(std::fstream &FileData, int &SavedSize) const
@@ -583,10 +583,10 @@ namespace MONTE_CARLO_OPTION2
 			}
 
 			// Set all positions that bot visited as free
-			this->SetMapPosition(nextData.Position, MONTE_CARLO_OPTION2::CELL_FREE);
+			//this->SetMapPosition(nextData.Position, MONTE_CARLO_OPTION2::CELL_FREE);
 
 			// Move bot to next position
-			this->CurBotData.SetGlobalBotPosition(nextData.Position);
+			this->CurBotData.SetGlobalBotPosition(pMoveData->back());
 
 			// Check if bot has left current jump successfully
 			if(this->pCurJumpPath != nullptr && this->CurBotData.GetGlobalBotPosition() == this->pCurJumpPath->back())
@@ -599,10 +599,12 @@ namespace MONTE_CARLO_OPTION2
 		}
 		else if(nextData.Action.IsIncompleteMove())
 		{
+			const NODE_EXTRA_DATA_LEAF *pExtraData = nextData.GetExtraLeafData();
+
 			// At jump, save jump path
 			if(this->pCurJumpPath != nullptr)
 				delete this->pCurJumpPath;
-			this->pCurJumpPath = new TRAVERSED_PATH_SINGLE(this->CurBotData.GetGlobalBotPosition(), nextData.Position);
+			this->pCurJumpPath = new TRAVERSED_PATH_SINGLE(this->CurBotData.GetGlobalBotPosition(), pExtraData->FollowUpPosition);
 
 			this->PrevPath.push_back(*(this->pCurJumpPath));
 		}
@@ -620,10 +622,10 @@ namespace MONTE_CARLO_OPTION2
 			else
 			{
 				// Set position to free or occupied
-				if(nextData.Action.IsFreeResult())
-					this->SetMapPosition(nextData.Position, MONTE_CARLO_OPTION2::CELL_FREE);
-				else
-					this->SetMapPosition(nextData.Position, MONTE_CARLO_OPTION2::CELL_OCCUPIED);
+				//if(nextData.Action.IsFreeResult())
+				//	this->SetMapPosition(nextData., MONTE_CARLO_OPTION2::CELL_FREE);
+				//else
+				//	this->SetMapPosition(nextData.Position, MONTE_CARLO_OPTION2::CELL_OCCUPIED);
 			}
 
 			if(nextData.Action.IsOccupiedResult())
@@ -668,7 +670,7 @@ namespace MONTE_CARLO_OPTION2
 			}
 
 			// Set all positions that bot visited as free
-			this->SetMapPosition(curData.Position, MONTE_CARLO_OPTION2::CELL_FREE);
+			//this->SetMapPosition(curData.Position, MONTE_CARLO_OPTION2::CELL_FREE);
 
 			// Move bot to previous position
 			const TREE_NODE *pLastMoveNode = &PrevNode;
@@ -679,7 +681,7 @@ namespace MONTE_CARLO_OPTION2
 
 				pLastMoveNode = pLastMoveNode->GetParent();
 			}
-			this->CurBotData.SetGlobalBotPosition(pLastMoveNode->GetData().Position);
+			//this->CurBotData.SetGlobalBotPosition(pLastMoveNode->GetData().Position);
 		}
 		else if(curData.Action.IsIncompleteMove())
 		{
@@ -697,8 +699,8 @@ namespace MONTE_CARLO_OPTION2
 					this->SetMapPosition(static_cast<POS_2D>(curPosData), this->pOriginalMap->GetPixel(curPosData));
 				}
 			}
-			else
-				this->SetMapPosition(prevData.Position, this->pOriginalMap->GetPixel(prevData.Position));
+			//else
+			//	this->SetMapPosition(prevData.Position, this->pOriginalMap->GetPixel(prevData.Position));
 
 			// Store that we performed an observation
 			this->PathsAfterObservation = this->PrevPath.size();
@@ -711,10 +713,10 @@ namespace MONTE_CARLO_OPTION2
 		if(prevData.Action.IsIncompleteMove())
 		{
 			// At jump, delete old jump path
-			if(this->pCurJumpPath != nullptr)
-				*(this->pCurJumpPath) = TRAVERSED_PATH_SINGLE(this->CurBotData.GetGlobalBotPosition(), prevData.Position);
-			else
-				this->pCurJumpPath = new TRAVERSED_PATH_SINGLE(this->CurBotData.GetGlobalBotPosition(), prevData.Position);
+			//if(this->pCurJumpPath != nullptr)
+			//	*(this->pCurJumpPath) = TRAVERSED_PATH_SINGLE(this->CurBotData.GetGlobalBotPosition(), prevData.Position);
+			//else
+			//	this->pCurJumpPath = new TRAVERSED_PATH_SINGLE(this->CurBotData.GetGlobalBotPosition(), prevData.Position);
 		}
 
 		// Revert current node
@@ -733,9 +735,9 @@ int MonteCarloOption2::PerformMonteCarlo(const OccupancyGridMap &Map, const Dist
 	// Create tree
 	this->_MCTree.Reset();
 	TREE_NODE *pCurNode = &(this->_MCTree.GetRoot());
-	pCurNode->GetDataR() = NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_OBSERVE, StartPos);		// Observe start pos
-	pCurNode = pCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_RESULT_FREE, StartPos));		// Mark start pos as free
-	pCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, StartPos));				// Move robot to start pos
+	pCurNode->GetDataR() = NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_OBSERVE);		// Observe start pos
+	pCurNode = pCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_RESULT_FREE));		// Mark start pos as free
+	pCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE));				// Move robot to start pos
 
 	this->_Branch.pCurNode = &(this->_MCTree.GetRoot());
 
@@ -826,7 +828,7 @@ void MonteCarloOption2::Expansion()
 				const BRANCH_DATA::PROB_CELL_TYPE cellProbability = this->_Branch.GetCurMapData(pLeafData->FollowUpPosition);
 				if(cellProbability <=  MONTE_CARLO_OPTION2::CELL_FREE)
 				{
-					ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, pLeafData->FollowUpPosition));		// If cell is free, move here
+					ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE/*, pLeafData->FollowUpPosition*/));		// If cell is free, move here
 					expansionFinished = true;
 
 					ppCurNode->GetDataR().DeleteExtraData();		// Leaf data no longer needed, delete it
@@ -840,7 +842,7 @@ void MonteCarloOption2::Expansion()
 				else
 				{
 					// If cell status is unknown, observe cell
-					ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_OBSERVE, pLeafData->FollowUpPosition));
+					ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_OBSERVE/*, pLeafData->FollowUpPosition*/));
 					expansionFinished = true;
 				}
 			}
@@ -910,7 +912,7 @@ void MonteCarloOption2::Expansion()
 				posReached = pPath->at(posReachedID);
 
 				if(posReachedID == 0)
-					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, pPath->at(posReachedID)));			// If one move necessary, add simple move order
+					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE/*, pPath->at(posReachedID)*/));			// If one move necessary, add simple move order
 				else
 					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, pPath->at(posReachedID), NODE_EXTRA_DATA(NODE_EXTRA_DATA_MOVE(*pPath, 0, posReachedID))));				
 
@@ -1054,18 +1056,19 @@ void MonteCarloOption2::SimulateCurrentLeaf()
 		// Create two child leafs, one for free result and one for occupied
 
 		// Free result should copy old leaf data
-		ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_RESULT_FREE, r_CurLeafData.Position, NODE_EXTRA_DATA(std::move(r_CurLeafData))));			// This moves leaf data, but copies the obstacle data and leaves it behind
-		ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_RESULT_FREE, r_CurLeafData.Position, NODE_EXTRA_DATA(std::move(r_CurLeafData))));		// This moves the remaining obstacle data to this child node
+		ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_RESULT_FREE, /*r_CurLeafData.Position, */NODE_EXTRA_DATA(std::move(r_CurLeafData))));			// This moves leaf data, but copies the obstacle data and leaves it behind
+		ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_RESULT_FREE, /*r_CurLeafData.Position, */NODE_EXTRA_DATA(std::move(r_CurLeafData))));		// This moves the remaining obstacle data to this child node
 
 		this->Simulation();		// Run the simulation on these two created leaves
 	}
 	else if(r_CurLeafData.Action.IsIncompleteMove())
 	{
 		NODE_DATA intermediateData;
+		const NODE_EXTRA_DATA_LEAF &extraData = *r_CurLeafData.GetExtraLeafData();
 
 		// Run two simulations, one from bot position to the jump point, the other from jump point to destination
-		this->RunSimulation(this->_Branch.CurBotData.GetGlobalBotPosition(), r_CurLeafData.Position, this->_Branch, ppCurNode->GetParent()->GetData().NumVisits, intermediateData);
-		this->RunSimulation(r_CurLeafData.Position, this->_Branch.Destination, this->_Branch, ppCurNode->GetParent()->GetData().NumVisits, r_CurLeafData);
+		this->RunSimulation(this->_Branch.CurBotData.GetGlobalBotPosition(), extraData.TargetPosition, this->_Branch, ppCurNode->GetParent()->GetData().NumVisits, intermediateData);
+		this->RunSimulation(extraData.TargetPosition, this->_Branch.Destination, this->_Branch, ppCurNode->GetParent()->GetData().NumVisits, r_CurLeafData);
 
 		// Combine the two results
 		r_CurLeafData.ExpectedLength += intermediateData.ExpectedLength;

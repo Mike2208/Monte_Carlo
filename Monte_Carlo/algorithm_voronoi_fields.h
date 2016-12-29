@@ -151,7 +151,7 @@ class AlgorithmVoronoiFields
 		static int CreateParellelPath(const POS_2D &StartPos, const ALGORITHM_VORONOI_FIELDS::ID &IDToSetPathTo, const ALGORITHM_VORONOI_FIELDS::ID &ParallelID, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap, ALGORITHM_VORONOI_FIELDS::DIST_MAP &DistMap, ALGORITHM_VORONOI_FIELDS::DISTRICT_SIZE *DistrictSize = nullptr, typename AlgorithmDStar<T>::PATH_VECTOR *Path = nullptr);
 		static void CombineTwoIDs(const ALGORITHM_VORONOI_FIELDS::ID &OrignalID, const ALGORITHM_VORONOI_FIELDS::ID &ReplacementID, const POS_2D &ConnectionPos, ALGORITHM_VORONOI_FIELDS::ID_MAP &IDMap);
 
-		static ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE IsOccupiedCell(const T &CellValue, const T &CutOffValue)  { return (CellValue > CutOffValue ? ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED : !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED); }
+		static ALGORITHM_VORONOI_FIELDS::OCCUPATION_MAP::CELL_TYPE IsOccupiedCell(const T &CellValue, const T &CutOffValue)  { return (CellValue > CutOffValue ? ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED : !ALGORITHM_VORONOI_FIELDS::CELL_OCCUPIED); }	
 };
 
 #include "algorithm_voronoi_fields_template.cpp"

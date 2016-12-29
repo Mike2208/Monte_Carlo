@@ -10,7 +10,7 @@ template<class T>
 class DStarMap
 {
 	public:
-		typedef unsigned int PATH_LENGTH_TYPE;
+		typedef float PATH_LENGTH_TYPE;
 
 		//DStarMap() = default;
 
@@ -31,7 +31,6 @@ class DStarMap
 
 		POS_2D		_ZeroPos;
 		Map2D<T>	_DStarMap;
-
 };
 
 #include "d_star_map_templates.cpp"

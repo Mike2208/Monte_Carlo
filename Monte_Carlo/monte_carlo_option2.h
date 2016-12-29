@@ -62,12 +62,13 @@ namespace MONTE_CARLO_OPTION2
 	// Extra data of nodes
 	enum NODE_EXTRA_DATA_TYPE
 	{
-		DATA_EMPTY, DATA_OBSTACLE, DATA_LEAF, DATA_MOVE
+		DATA_EMPTY, DATA_OBSTACLE, DATA_LEAF, DATA_MOVE, DATA_RESULT
 	};
 
 	struct NODE_EXTRA_DATA_MOVE;			// Extra data to store move orders
 	struct NODE_EXTRA_DATA_OBSTACLE;		// Extra data used to create obstacle on maps
 	struct NODE_EXTRA_DATA_LEAF;			// Extra data in leaf
+	struct NODE_EXTRA_DATA_RESULT;			// Extra data in results
 	struct NODE_EXTRA_DATA
 	{
 		const NODE_EXTRA_DATA_LEAF *GetExtraLeafData() const;
@@ -147,8 +148,6 @@ namespace MONTE_CARLO_OPTION2
 			COST_TYPE		ExpectedCost;	// Cost to reach dest from here
 			NUM_VISIT_TYPE	NumVisits = 0;
 
-			POS_2D			Position;		// Position this node is referring to
-
 			bool	IsDone = false;										// Have all possible variations beneath this node been checked?
 
 			bool IsDeadEnd() const;		// Returns whether this node is a dead end
@@ -159,11 +158,11 @@ namespace MONTE_CARLO_OPTION2
 #endif			// ~DEBUG
 
 			NODE_DATA() = default;
-			NODE_DATA(const NODE_ACTION _Action, const NODE_VALUE_TYPE &_Value, const EXPECTED_LENGTH_TYPE	&_ExpectedLength, const CERTAINTY_TYPE &_Certainty, const COST_TYPE	&_ExpectedCost, const NUM_VISIT_TYPE &_NumVisits, const POS_2D &_Position, bool	IsDone, NODE_EXTRA_DATA &&_ExtraData);
+			NODE_DATA(const NODE_ACTION _Action, const NODE_VALUE_TYPE &_Value, const EXPECTED_LENGTH_TYPE	&_ExpectedLength, const CERTAINTY_TYPE &_Certainty, const COST_TYPE	&_ExpectedCost, const NUM_VISIT_TYPE &_NumVisits, bool	IsDone, NODE_EXTRA_DATA &&_ExtraData);
 
-			NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position);
+			NODE_DATA(const NODE_ACTION _Action);
 			NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position, const NODE_EXTRA_DATA &_ExtraData);
-			NODE_DATA(const NODE_ACTION _Action, const POS_2D &_Position, NODE_EXTRA_DATA &&_ExtraData);
+			NODE_DATA(const NODE_ACTION _Action, NODE_EXTRA_DATA &&_ExtraData);
 
 			void WriteToFile(std::fstream &FileData, int &SavedSize) const;	// Just writes the data in a way that it can be retrieved
 			void ReadFromFile(std::fstream &FileData);		// Read T into NewData from FileData
@@ -181,6 +180,8 @@ namespace MONTE_CARLO_OPTION2
 	{
 		POS_2D TargetPosition;			// Position we would like to reach
 		POS_2D FollowUpPosition;		// Position we would like to move to after reaching target (used for switching districts)
+
+		POS_2D StartPosition;			// Start position of this jump
 
 		CERTAINTY_TYPE RecentPathCertainty;		// Certainty of path since last observation
 		EXPECTED_LENGTH_TYPE RecentPathLength;	// Length of path since last observation
@@ -202,6 +203,8 @@ namespace MONTE_CARLO_OPTION2
 		explicit operator NODE_EXTRA_DATA_MOVE*();
 		explicit operator const NODE_EXTRA_DATA_OBSTACLE*() const;
 		explicit operator NODE_EXTRA_DATA_OBSTACLE*();
+		explicit operator const NODE_EXTRA_DATA_RESULT*() const;
+		explicit operator NODE_EXTRA_DATA_RESULT*();
 
 		private:
 			NODE_EXTRA_DATA *ExtraData = nullptr;			// Pointer to more data in leaf

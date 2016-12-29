@@ -1,5 +1,11 @@
 #include "algorithm_voronoi_fields.h"
 
+template<>
+void Map2D<ALGORITHM_VORONOI_FIELDS::SKEL_MAP_DATA>::PrintMap(const char *FileName, const ALGORITHM_VORONOI_FIELDS::SKEL_MAP_DATA &MaxVal, const ALGORITHM_VORONOI_FIELDS::SKEL_MAP_DATA &MinVal) const
+{
+	return;
+}
+
 bool ALGORITHM_VORONOI_FIELDS::DISTRICT_CHANGE_VECTOR::AreChangedIDs(const ID &DistrictID1, const ID &DistrictID2) const
 {
 	for(const auto &curChange : *this)

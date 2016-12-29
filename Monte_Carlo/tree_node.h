@@ -48,6 +48,8 @@ class TreeNode
 
 		const CHILD_STORAGE &GetStorage() const	{ return this->_Children; }
 
+		TreeNode<T> *InsertChild(const T &NewData);
+
 #ifdef DEBUG	// DEBUG
 		unsigned int _NodeDepth;
 		void PrintNode() const;

@@ -25,6 +25,9 @@ const MOVE_DIST_TYPE NavigationCost[NumNavigationOptions] =
 	1,
 	1
 };
+
+const MOVE_DIST_TYPE MAX_MOVE_DIST = 1;
+
 #else
 const NAV_OPTION_TYPE NumNavigationOptions = 8;					// Number of move options available
 const POS_2D NavigationOptions[NumNavigationOptions] =			// Array with all possible move options
@@ -51,6 +54,8 @@ const MOVE_DIST_TYPE NavigationCost[NumNavigationOptions] =
 	1,
 	static_cast<MOVE_DIST_TYPE>(std::sqrt(2))
 };
+
+const MOVE_DIST_TYPE MAX_MOVE_DIST = 1.5;
 #endif
 
 POS_2D GetAdjoiningPos(const POS_2D &CurPos, const NAV_OPTION_TYPE &OptionID);

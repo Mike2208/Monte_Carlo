@@ -6,6 +6,7 @@
 #include "robot_navigation.h"
 
 #include <cmath>
+#include <type_traits>
 #include <fstream>
 
 template<class T>
@@ -107,7 +108,7 @@ void Map2D<T>::PrintMap(const char *FileName, const T &MaxVal, const T &MinVal) 
 	{
 		for(POS_2D_TYPE X=POS_2D_MIN; X<this->GetWidth(); ++X)
 		{
-			file << std::to_string(static_cast<unsigned char>(255*static_cast<float>(this->GetPixel(POS_2D(X,Y))-MinVal)/static_cast<float>(MaxVal))) << " ";
+			file << std::to_string(static_cast<unsigned char>(255*static_cast<float>(this->GetPixel(POS_2D(X,Y)) - MinVal)/static_cast<float>(MaxVal))) << " ";
 		}
 
 		file << std::endl;		// Begin new line after every finished image line

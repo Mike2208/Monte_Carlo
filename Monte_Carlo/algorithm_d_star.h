@@ -6,7 +6,7 @@
 
 #include <queue>
 
-typedef unsigned int D_STAR_DIST_MAP_TYPE;
+typedef float D_STAR_DIST_MAP_TYPE;
 typedef Map2D<D_STAR_DIST_MAP_TYPE> D_STAR_DIST_MAP;
 
 template<class T>

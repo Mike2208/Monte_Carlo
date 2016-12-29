@@ -33,16 +33,21 @@ class OccupancyGridMap : public OGM_MAP_TYPE
 
 		static OGM_CELL_TYPE CalculateCellValFromLog(const OGM_LOG_TYPE &Value);
 
+		static OGM_LOG_TYPE CalculateCertaintyLogFromCell(const OGM_CELL_TYPE &Value);	// Cell -> Certainty
 		static OGM_LOG_TYPE CalculateLogValFromCell(const OGM_CELL_TYPE &Value);		// Cell -> Log
 		static OGM_PROB_TYPE CalculateProbValFromCell(const OGM_CELL_TYPE &Value);		// Cell -> Prob
 
+		static void CalculateCertaintyLogMapFromCellMap(const OGM_MAP_TYPE &CellMap, OGM_LOG_MAP_TYPE &LogMap);
 		static void CalculateLogMapFromCellMap(const OGM_MAP_TYPE &CellMap, OGM_LOG_MAP_TYPE &LogMap);		// Cell Map -> Log Map
 		static void CalculateProbMapFromCellMap(const OGM_MAP_TYPE &CellMap, OGM_PROB_MAP_TYPE &ProbMap);		// Cell Map -> Prob Map
 
 		static OGM_LOG_TYPE CalculateLogValueFromProb(const OGM_PROB_TYPE &Value);		// Prob-> Log
 
+		static OGM_LOG_TYPE CalculateCertaintyLogValueFromCertaintyProb(const OGM_PROB_TYPE &Value);
+		static OGM_PROB_TYPE CalculateCertaintyProbValueFromCertaintyLog(const OGM_LOG_TYPE &Value);
+		static OGM_PROB_TYPE CalculateCertaintyProbFromLog(const OGM_LOG_TYPE &Value);		// Log -> Certainty
 		static OGM_PROB_TYPE CalculateProbValueFromLog(const OGM_LOG_TYPE &Value);		// Log -> Prob
-		static OGM_PROB_TYPE CalculateCertaintyFromLog(const OGM_LOG_TYPE &Value);		// Log -> Certainty (inverse prob)
+		static OGM_PROB_TYPE CalculateProbValueFromCertaintyLog(const OGM_LOG_TYPE &Value);		// Certainty Log -> Certainty (inverse prob)
 
 		static OGM_ENTROPY_TYPE CalculateEntropyFromCell(const OGM_CELL_TYPE &Value);	// Cell -> Entropy
 		static OGM_ENTROPY_TYPE CalculateEntropyFromProb(const OGM_PROB_TYPE &Value);	// Prob -> Entropy
