@@ -81,7 +81,7 @@ namespace MONTE_CARLO_OPTION3
 	// Virtual Object for extra data
 	struct NODE_EXTRA_DATA_OBJECT
 	{
-		virtual ~NODE_EXTRA_DATA_OBJECT() = 0;
+		virtual ~NODE_EXTRA_DATA_OBJECT() {}
 
 		// Deep Copy and clone functions
 		virtual std::unique_ptr<NODE_EXTRA_DATA_OBJECT> Create() const = 0;
@@ -183,24 +183,15 @@ namespace MONTE_CARLO_OPTION3
 		CERTAINTY_TYPE RecentPathLogCertainty;		// Certainty of path since last observation
 		EXPECTED_LENGTH_TYPE RecentPathLength;	// Length of path since last observation
 
-		void SetExtraData(const NODE_EXTRA_DATA &ExtraData);
-		void SetExtraData(NODE_EXTRA_DATA &&ExtraData);
-		const NODE_EXTRA_DATA &GetExtraData() const;
-		NODE_EXTRA_DATA &GetExtraData();
-
 		NODE_EXTRA_DATA_JUMP() = default;
 		NODE_EXTRA_DATA_JUMP(NODE_EXTRA_DATA_JUMP &&S) = default;
 		NODE_EXTRA_DATA_JUMP &operator=(NODE_EXTRA_DATA_JUMP &&S) = default;
 		~NODE_EXTRA_DATA_JUMP() = default;
 
-		//explicit operator const NODE_EXTRA_DATA_OBJECT*() const;
-		//explicit operator NODE_EXTRA_DATA_OBJECT*();
-
 		NODE_EXTRA_DATA_JUMP(const NODE_EXTRA_DATA_JUMP &S) = default;				// Only allow move to prevent paths being copied
 		NODE_EXTRA_DATA_JUMP &operator=(const NODE_EXTRA_DATA_JUMP &S) = default;		// Only allow move to prevent paths being copied
 
 		private:
-			NODE_EXTRA_DATA _ExtraData;			// Extra object in leaf
 
 			std::unique_ptr<NODE_EXTRA_DATA_OBJECT> Create() const override;
 			std::unique_ptr<NODE_EXTRA_DATA_OBJECT> Clone() const override;
@@ -218,6 +209,7 @@ namespace MONTE_CARLO_OPTION3
 			NODE_EXTRA_DATA_MOVE_PATH() = default;
 			NODE_EXTRA_DATA_MOVE_PATH(const POS_2D &_TargetPos, const MOVE_DIST_TYPE _PathLength) : TargetPosition(_TargetPos), PathLength(_PathLength)
 			{}
+			~NODE_EXTRA_DATA_MOVE_PATH() = default;
 
 		private:
 
@@ -261,8 +253,12 @@ namespace MONTE_CARLO_OPTION3
 			POS_2D ObservationPoint;		// Point that is observed
 			OGM_LOG_TYPE ObservationFreeProbabilityLog;			// Log Probability that pos is free
 
+			NODE_EXTRA_DATA_OBSERVE_ACTION() = default;
 			NODE_EXTRA_DATA_OBSERVE_ACTION(const POS_2D _ObservationPoint, const OGM_LOG_TYPE _ObservationFreeProbabilityLog) : ObservationPoint(_ObservationPoint), ObservationFreeProbabilityLog(_ObservationFreeProbabilityLog)
 			{}
+			NODE_EXTRA_DATA_OBSERVE_ACTION(const NODE_EXTRA_DATA_OBSERVE_ACTION &S) = default;
+			NODE_EXTRA_DATA_OBSERVE_ACTION(NODE_EXTRA_DATA_OBSERVE_ACTION &&S) = default;
+			~NODE_EXTRA_DATA_OBSERVE_ACTION() = default;
 
 		private:
 			std::unique_ptr<NODE_EXTRA_DATA_OBJECT> Create() const override;
@@ -276,6 +272,7 @@ namespace MONTE_CARLO_OPTION3
 
 			NODE_EXTRA_DATA_MOVE(const POS_2D &MoveDestination);
 			NODE_EXTRA_DATA_MOVE() = default;
+			~NODE_EXTRA_DATA_MOVE() = default;
 
 		private:
 			std::unique_ptr<NODE_EXTRA_DATA_OBJECT> Create() const override;
@@ -354,6 +351,7 @@ namespace MONTE_CARLO_OPTION3
 
 		ROBOT_POSITION_DATA	CurBotData;				// Current robot pose
 
+		std::vector<POS_2D>	PrevPath;				// Previously visited paths
 		std::vector<QuadMap::ID>	VisitedQuads;	// Quads visited since last observation
 		std::vector<POS_2D>	PosToUpdate;			// Positions to update to resync D* maps
 
@@ -458,7 +456,10 @@ class MonteCarloOption3
 		//int CalculatePath(const BRANCH_DATA &BranchData, const POS_2D &StartPos, const POS_2D &Destination, PATH_DATA *const PathTaken, EXPECTED_LENGTH_TYPE *const ExpectedLength, CERTAINTY_TYPE *const Certainty, COST_TYPE *const Cost);		// Calculate path taken
 		//int FollowPathUntilObstacle(const BRANCH_DATA &BranchData, const PATH_DATA &PathToTake, const CERTAINTY_TYPE &MinCertainty, const EXPECTED_LENGTH_TYPE &MinLength, const EXPECTED_LENGTH_TYPE &ScanRange, const POS_2D &StartPos, const CERTAINTY_TYPE &StartCertainty, const EXPECTED_LENGTH_TYPE &StartLength, const PATH_DATA::const_iterator *const NextForcedObstacleIterator, CERTAINTY_TYPE *const PathCertainty, EXPECTED_LENGTH_TYPE *const PathLength, PATH_DATA::ID *const EndPosID, POS_2D *const ObstaclePos);		// Follows path until path certainty is below threshold AND path length is above threshold
 		NODE_EXTRA_DATA_OBSTACLE &&CreateObstacleAtPos(const BRANCH_DATA &BranchData, const POS_2D &ObstaclePosition, const POS_2D &BotPosition, const EXPECTED_LENGTH_TYPE &ObstacleLength, const EXPECTED_LENGTH_TYPE &ObstacleHeight, const CERTAINTY_TYPE &MinObstacleCertainty, const CERTAINTY_TYPE &MaxObstacleCertainty);				// Create an obstacle
-		void CalculateMoveNodeData(const BRANCH_DATA &BranchData, NODE_DATA &NodeToCalculate);
+		//void CalculateMoveNodeData(const BRANCH_DATA &BranchData, NODE_DATA &NodeToCalculate);
+
+		std::vector<NODE_DATA> ExpandCurrentNode(const BRANCH_DATA &BranchData, const POS_2D &CurPos, const POS_2D &NextPos);			// Create node data for adjacent cells
+		void ExpandScanNode(TREE_NODE &ScanNode);
 
 		//void RunSimulation(const POS_2D &BotPos, const POS_2D &Destination, const BRANCH_DATA &MapData, const NUM_VISITS_TYPE &NumParentsVisit, NODE_DATA &Result);		// Run the simulation from the given position, then save the data in node data
 		void CalculateNodeValue(const NODE_DATA &Data, const NODE_VALUE_TYPE &Constant, const NUM_VISITS_TYPE &NumParentsVisit, NODE_VALUE_TYPE &Value);

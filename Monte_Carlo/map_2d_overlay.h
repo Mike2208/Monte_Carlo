@@ -12,7 +12,8 @@ class Map2DOverlay : public virtual Map2D<T>
 		typedef typename std::vector<T>::size_type CELL_STORAGE_INDEX;
 		typedef T CELL_TYPE;
 
-		Map2DOverlay(Map2D<T> OriginalMap, const POS_2D &BottomLeftPos, const POS_2D_TYPE Width, const POS_2D_TYPE Height);
+		Map2DOverlay(Map2D<T> OriginalMap, const POS_2D &BottomLeftPos, const POS_2D_TYPE Width, const POS_2D_TYPE Height)  : _OriginalMap(OriginalMap), _BottomLeftPos(BottomLeftPos), _OverlayWidth(Width), _OverlayHeight(Height)
+		{}
 
 		void SetMapToValue(const T &Value) override;
 		void SetPixel(const POS_2D &Position, const T &Value) override;

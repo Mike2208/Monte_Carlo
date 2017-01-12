@@ -96,13 +96,17 @@ class MonteCarloDStarMaps
 
 		// Resetting maps
 		void ResetDistMap(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, const OGM_LOG_TYPE ObstacleValue, Map2D<MOVE_DIST_TYPE> &DistMap);
-		void ResetProbMap(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap);
-		void ResetRatioMap(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap);
+		void ResetProbMapToTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap);
+		void ResetProbMapFromTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap);
+		void ResetRatioMapToTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap);
+		void ResetRatioMapFromTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap);
 
 		// Updating maps
 		void UpdateDistMap(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, const OGM_LOG_TYPE ObstacleValue, Map2D<MOVE_DIST_TYPE> &DistMap);
-		void UpdateProbMap(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap);
-		void UpdateRatioMap(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap);
+		void UpdateProbMapToTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap);
+		void UpdateProbMapFromTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap);
+		void UpdateRatioMapToTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap);
+		void UpdateRatioMapFromTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap);
 
 		inline OGM_LOG_TYPE CalculateRatio(const MOVE_DIST_TYPE Dist, const OGM_LOG_TYPE LogValueFromMaps) const;
 

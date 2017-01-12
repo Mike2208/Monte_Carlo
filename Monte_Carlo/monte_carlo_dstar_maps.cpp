@@ -33,9 +33,9 @@ void MonteCarloDStarMaps::ResetMapsWithNewStartPos(const OGM_LOG_MAP_TYPE &Origi
 	this->_StartPos = NewStartPos;
 
 	// Reset Maps
-	this->ResetDistMap(OriginalMap, this->_StartPos, MIN_OBSTACLE_VALUE, this->_DistToStart);
-	this->ResetProbMap(OriginalMap, this->_StartPos, this->_DistToStart);
-	this->ResetRatioMap(OriginalMap, this->_StartPos, this->_RatioToStart, this->_RatioDistToStart, this->_RatioProbToStart);
+//	this->ResetDistMap(OriginalMap, this->_StartPos, MIN_OBSTACLE_VALUE, this->_DistToStart);
+//	this->ResetProbMapFromTarget(OriginalMap, this->_StartPos, this->_DistToStart);
+	this->ResetRatioMapFromTarget(OriginalMap, this->_StartPos, this->_RatioToStart, this->_RatioDistToStart, this->_RatioProbToStart);
 }
 
 void MonteCarloDStarMaps::ResetMapsWithNewDestPos(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &NewDestPos)
@@ -43,9 +43,9 @@ void MonteCarloDStarMaps::ResetMapsWithNewDestPos(const OGM_LOG_MAP_TYPE &Origin
 	this->_DestPos = NewDestPos;
 
 	// Reset Maps
-	this->ResetDistMap(OriginalMap, this->_DestPos, MIN_OBSTACLE_VALUE, this->_DistToGoal);
-	this->ResetProbMap(OriginalMap, this->_DestPos, this->_DistToGoal);
-	this->ResetRatioMap(OriginalMap, this->_DestPos, this->_RatioToGoal, this->_RatioDistToGoal, this->_RatioProbToGoal);
+//	this->ResetDistMap(OriginalMap, this->_DestPos, MIN_OBSTACLE_VALUE, this->_DistToGoal);
+//	this->ResetProbMapToTarget(OriginalMap, this->_DestPos, this->_DistToGoal);
+	this->ResetRatioMapToTarget(OriginalMap, this->_DestPos, this->_RatioToGoal, this->_RatioDistToGoal, this->_RatioProbToGoal);
 }
 
 void MonteCarloDStarMaps::ResetMaps(const OGM_LOG_MAP_TYPE &OriginalMap)
@@ -64,47 +64,47 @@ void MonteCarloDStarMaps::UpdateMaps(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap,
 
 void MonteCarloDStarMaps::UpdateStartMaps(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues)
 {
-	this->UpdateDistMap(UpdatedOriginalMap, UpdatedValues, this->_StartPos, MIN_OBSTACLE_VALUE, this->_DistToStart);
-	this->UpdateProbMap(UpdatedOriginalMap, UpdatedValues, this->_StartPos, this->_ProbToStart);
-	this->UpdateRatioMap(UpdatedOriginalMap, UpdatedValues, this->_StartPos, this->_RatioToStart, this->_RatioDistToStart, this->_RatioProbToStart);
+//	this->UpdateDistMap(UpdatedOriginalMap, UpdatedValues, this->_StartPos, MIN_OBSTACLE_VALUE, this->_DistToStart);
+//	this->UpdateProbMapFromTarget(UpdatedOriginalMap, UpdatedValues, this->_StartPos, this->_ProbToStart);
+	this->UpdateRatioMapFromTarget(UpdatedOriginalMap, UpdatedValues, this->_StartPos, this->_RatioToStart, this->_RatioDistToStart, this->_RatioProbToStart);
 }
 
 void MonteCarloDStarMaps::UpdateDestMaps(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues)
 {
-	this->UpdateDistMap(UpdatedOriginalMap, UpdatedValues, this->_DestPos, MIN_OBSTACLE_VALUE, this->_DistToGoal);
-	this->UpdateProbMap(UpdatedOriginalMap, UpdatedValues, this->_DestPos, this->_ProbToGoal);
-	this->UpdateRatioMap(UpdatedOriginalMap, UpdatedValues, this->_DestPos, this->_RatioToGoal, this->_RatioDistToGoal, this->_RatioProbToGoal);
+//	this->UpdateDistMap(UpdatedOriginalMap, UpdatedValues, this->_DestPos, MIN_OBSTACLE_VALUE, this->_DistToGoal);
+//	this->UpdateProbMapToTarget(UpdatedOriginalMap, UpdatedValues, this->_DestPos, this->_ProbToGoal);
+	this->UpdateRatioMapToTarget(UpdatedOriginalMap, UpdatedValues, this->_DestPos, this->_RatioToGoal, this->_RatioDistToGoal, this->_RatioProbToGoal);
 }
 
 // Calculate best path options
 std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestDistPathFromStart(const POS_2D &TargetPosition) const
 {
-
+	return std::vector<POS_2D>();
 }
 
 std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestDistPathToGoal(const POS_2D &StartPosition) const
 {
-
+	return std::vector<POS_2D>();
 }
 
 std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestDistPath(const POS_2D &IntermediatePosition) const
 {
-
+	return std::vector<POS_2D>();
 }
 
 std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestProbPathFromStart(const POS_2D &TargetPosition) const
 {
-
+	return std::vector<POS_2D>();
 }
 
 std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestProbPathToGoal(const POS_2D &StartPosition) const
 {
-
+	return std::vector<POS_2D>();
 }
 
 std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestProbPath(const POS_2D &IntermediatePosition) const
 {
-
+	return std::vector<POS_2D>();
 }
 
 std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestRatioPathFromStart(const POS_2D &TargetPosition) const
@@ -151,16 +151,10 @@ std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestRatioPathFromStart(const P
 	std::vector<POS_2D> pathVector;
 	pathVector.reserve(reversePathVector.size());
 
-	auto reversePathIterator = reversePathVector.rbegin();
-	auto pathIterator = pathVector.begin();
-	for(; pathIterator != pathVector.end();)
+	for(auto reversePathIterator = reversePathVector.rbegin(); reversePathIterator != reversePathVector.rend(); ++reversePathIterator)
 	{
 		// Assign values from reverse path to correct one
-		*pathIterator = *reversePathIterator;
-
-		// Increment iterators
-		++pathIterator;
-		++reversePathIterator;
+		pathVector.push_back(*reversePathIterator);
 	}
 
 	return pathVector;
@@ -181,9 +175,6 @@ std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestRatioPathToGoal(const POS_
 	POS_2D curPos = StartPosition;
 	while(curPos != this->_DestPos)
 	{
-		// Add position to vector
-		reversePathVector.push_back(curPos);
-
 		// Find neighbor that's closest to goal
 		Map2D<OGM_LOG_TYPE>::CELL_TYPE bestNeighborValue = GetInfiniteVal<Map2D<OGM_LOG_TYPE>::CELL_TYPE>();
 		POS_2D bestNeighbor = curPos;
@@ -204,22 +195,19 @@ std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestRatioPathToGoal(const POS_
 		}
 
 		curPos = bestNeighbor;
+
+		// Add position to vector
+		reversePathVector.push_back(curPos);
 	}
 
 	// Reverse path vector to begin at goal
 	std::vector<POS_2D> pathVector;
 	pathVector.reserve(reversePathVector.size());
 
-	auto reversePathIterator = reversePathVector.rbegin();
-	auto pathIterator = pathVector.begin();
-	for(; pathIterator != pathVector.end();)
+	for(auto reversePathIterator = reversePathVector.rbegin(); reversePathIterator != reversePathVector.rend(); ++reversePathIterator)
 	{
 		// Assign values from reverse path to correct one
-		*pathIterator = *reversePathIterator;
-
-		// Increment iterators
-		++pathIterator;
-		++reversePathIterator;
+		pathVector.push_back(*reversePathIterator);
 	}
 
 	return pathVector;
@@ -232,7 +220,7 @@ std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestRatioPath(const POS_2D &In
 	// If intermediate position is not start pos, calculate path
 	if(IntermediatePosition != this->_StartPos)
 	{
-		tmpStartVector = std::move(this->CalculateBestDistPathFromStart(IntermediatePosition));
+		tmpStartVector = std::move(this->CalculateBestRatioPathFromStart(IntermediatePosition));
 
 		// Check if path was found
 		if(tmpStartVector.empty())
@@ -242,7 +230,7 @@ std::vector<POS_2D> MonteCarloDStarMaps::CalculateBestRatioPath(const POS_2D &In
 	std::vector<POS_2D> tmpDestVector;
 	if(IntermediatePosition != this->_DestPos)
 	{
-		tmpDestVector = std::move(this->CalculateBestDistPathToGoal(IntermediatePosition));
+		tmpDestVector = std::move(this->CalculateBestRatioPathToGoal(IntermediatePosition));
 
 		// Check if path was found
 		if(tmpDestVector.empty())
@@ -292,7 +280,7 @@ void MonteCarloDStarMaps::ResetDistMap(const OGM_LOG_MAP_TYPE &OriginalMap, cons
 			auto &r_adjacentDist = DistMap.GetPixelR(adjacentPos);
 
 			// Compare values
-			if(curDist + movementCost <= r_adjacentDist)
+			if(curDist + movementCost < r_adjacentDist)
 			{
 				// If smaller dist available, update adjacent pos and check its adjacent positions later
 				r_adjacentDist = curDist + movementCost;
@@ -306,7 +294,51 @@ void MonteCarloDStarMaps::ResetDistMap(const OGM_LOG_MAP_TYPE &OriginalMap, cons
 	while(!posToCheck.empty());
 }
 
-void MonteCarloDStarMaps::ResetProbMap(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap)
+void MonteCarloDStarMaps::ResetProbMapFromTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap)
+{
+	// Reset Map
+	ProbMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
+	ProbMap.SetPixel(TargetPos, OGM_LOG_MIN);
+
+	// Go through map and calculate lowest probability to target pos
+	std::queue<POS_2D> posToCheck;
+	posToCheck.push(TargetPos);
+	do
+	{
+		// Current position values
+		const POS_2D &curPos = posToCheck.front();
+		auto curProb = ProbMap.GetPixel(curPos);
+		//auto curOriginalProb = OriginalMap.GetPixel(curPos);
+
+		// Compare to adjacent positions
+		for(const auto navOption : NavigationOptions)
+		{
+			const POS_2D adjacentPos = curPos + navOption;
+
+			if(!ProbMap.IsInMap(adjacentPos))
+				continue;			// Skip if not in map
+
+			// Get adjacent prob values
+			auto &r_adjacentProb = ProbMap.GetPixelR(adjacentPos);
+
+			auto adjacentOriginalProb = OriginalMap.GetPixel(adjacentPos);
+
+			// Compare values
+			if(curProb + adjacentOriginalProb < r_adjacentProb)
+			{
+				// If smaller prob available, update adjacent pos and check it later
+				r_adjacentProb = curProb + adjacentOriginalProb;
+				posToCheck.push(adjacentPos);
+			}
+		}
+
+		// Remove checked element
+		posToCheck.pop();
+	}
+	while(!posToCheck.empty());
+}
+
+void MonteCarloDStarMaps::ResetProbMapToTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap)
 {
 	// Reset Map
 	ProbMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
@@ -336,7 +368,7 @@ void MonteCarloDStarMaps::ResetProbMap(const OGM_LOG_MAP_TYPE &OriginalMap, cons
 			//auto adjacentOriginalProb = OriginalMap.GetPixel(adjacentPos);
 
 			// Compare values
-			if(curProb + curOriginalProb <= r_adjacentProb)
+			if(curProb + curOriginalProb < r_adjacentProb)
 			{
 				// If smaller prob available, update adjacent pos and check it later
 				r_adjacentProb = curProb + curOriginalProb;
@@ -350,13 +382,72 @@ void MonteCarloDStarMaps::ResetProbMap(const OGM_LOG_MAP_TYPE &OriginalMap, cons
 	while(!posToCheck.empty());
 }
 
-void MonteCarloDStarMaps::ResetRatioMap(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
+void MonteCarloDStarMaps::ResetRatioMapFromTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
 {
 
 	// Reset Maps
-	RatioMap.ResetMap(this->_DistToGoal.GetWidth(), this->_DistToGoal.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
-	RatioDistMap.ResetMap(this->_DistToGoal.GetWidth(), this->_DistToGoal.GetHeight(), GetInfiniteVal<MOVE_DIST_TYPE>());
-	RatioProbMap.ResetMap(this->_DistToGoal.GetWidth(), this->_DistToGoal.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
+	RatioMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
+	RatioDistMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<MOVE_DIST_TYPE>());
+	RatioProbMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
+
+	RatioDistMap.SetPixel(TargetPos, 0);
+	RatioProbMap.SetPixel(TargetPos, OGM_LOG_MIN);
+	RatioMap.SetPixel(TargetPos, this->CalculateRatio(0, OGM_LOG_MIN));
+
+	// Go through map and calculate shortest distances
+	std::queue<POS_2D> posToCheck;
+	posToCheck.push(TargetPos);
+	do
+	{
+		// Current position values
+		const POS_2D &curPos = posToCheck.front();
+		auto curDist = RatioDistMap.GetPixel(curPos);
+		auto curProb = RatioProbMap.GetPixel(curPos);
+
+		// Get original prob value
+		//auto curOriginalProb = OriginalMap.GetPixel(curPos);
+
+		// Compare to adjacent positions
+		for(const auto navOption : NavigationOptions)
+		{
+			const POS_2D adjacentPos = curPos + navOption;
+			const auto movementCost = GetMovementCost(curPos, adjacentPos);
+
+			if(!RatioMap.IsInMap(adjacentPos))
+				continue;			// Skip if not in map
+
+			// Get adjacent ratio value
+			auto &r_adjacentRatio = RatioMap.GetPixelR(adjacentPos);
+
+			// Get original probability value
+			auto adjacentOriginalProb = OriginalMap.GetPixel(adjacentPos);
+
+			// Compare values
+			const auto newAdjacentRatio = this->CalculateRatio(curDist+movementCost, curProb+adjacentOriginalProb);
+			if(newAdjacentRatio < r_adjacentRatio)
+			{
+				// If smaller ratio available, update adjacent ratio and check its neighbors later
+				RatioDistMap.SetPixel(adjacentPos, curDist+movementCost);
+				RatioProbMap.SetPixel(adjacentPos, curProb+adjacentOriginalProb);
+				r_adjacentRatio = newAdjacentRatio;
+
+				posToCheck.push(adjacentPos);
+			}
+		}
+
+		// Remove checked element
+		posToCheck.pop();
+	}
+	while(!posToCheck.empty());
+}
+
+void MonteCarloDStarMaps::ResetRatioMapToTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
+{
+
+	// Reset Maps
+	RatioMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
+	RatioDistMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<MOVE_DIST_TYPE>());
+	RatioProbMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
 
 	RatioDistMap.SetPixel(TargetPos, 0);
 	RatioProbMap.SetPixel(TargetPos, OGM_LOG_MIN);
@@ -388,11 +479,11 @@ void MonteCarloDStarMaps::ResetRatioMap(const OGM_LOG_MAP_TYPE &OriginalMap, con
 			auto &r_adjacentRatio = RatioMap.GetPixelR(adjacentPos);
 
 			// Get original probability value
-			//auto adjacentOriginalProb = OriginalCertaintyMap.GetPixel(adjacentPos);
+			//auto adjacentOriginalProb = OriginalMap.GetPixel(adjacentPos);
 
 			// Compare values
 			const auto newAdjacentRatio = this->CalculateRatio(curDist+movementCost, curProb+curOriginalProb);
-			if(newAdjacentRatio <= r_adjacentRatio)
+			if(newAdjacentRatio < r_adjacentRatio)
 			{
 				// If smaller ratio available, update adjacent ratio and check its neighbors later
 				RatioDistMap.SetPixel(adjacentPos, curDist+movementCost);
@@ -573,7 +664,80 @@ void MonteCarloDStarMaps::UpdateDistMap(const OGM_LOG_MAP_TYPE &UpdatedOriginalM
 	}
 }
 
-void MonteCarloDStarMaps::UpdateProbMap(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap)
+void MonteCarloDStarMaps::UpdateProbMapFromTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap)
+{
+	// Set all updated values
+	std::queue<POS_2D> nextPositionsToCheck;
+
+	for(const auto &curUpdate : UpdatedValues)
+	{
+		// Add position to queue
+		nextPositionsToCheck.push(curUpdate);
+	}
+
+	// Vector to store positions that should be checked next
+	std::vector<POS_DATA<OGM_LOG_TYPE>> storedPositions;
+
+	while(!nextPositionsToCheck.empty())
+	{
+		const auto &curPos = nextPositionsToCheck.front();
+		auto &r_curProb = ProbMap.GetPixelR(curPos);
+
+		auto bestProb = GetInfiniteVal<OGM_LOG_TYPE>();
+		for(const auto navOption : NavigationOptions)
+		{
+			// Get adjacent positions
+			const auto adjacentPos = curPos + navOption;
+
+			// Check that pos is in map
+			if(!ProbMap.IsInMap(adjacentPos))
+				continue;
+
+			auto adjacentProb = ProbMap.GetPixel(adjacentPos);
+			const auto adjacentUpdatedProb = UpdatedOriginalMap.GetPixel(adjacentPos);
+
+			// Check if this position is dependent on updated value
+			if(adjacentProb > r_curProb)
+			{
+				// Add adjacent distance to positions to check
+				nextPositionsToCheck.push(adjacentPos);
+			}
+			else
+			{
+				// Store best probability and current position + value
+				//const auto curUpdatedProb = UpdatedOriginalMap.GetPixel(curPos);
+				if(adjacentProb + adjacentUpdatedProb < bestProb)
+				{
+					bestProb = adjacentProb + adjacentUpdatedProb;
+				}
+
+				// Store value to check whether adjacent dist can be improved with new curDist later
+				storedPositions.push_back(POS_DATA<OGM_LOG_TYPE>(adjacentPos, adjacentProb));
+			}
+		}
+
+		// Check all stored positions to see which can be improved with new best value
+		if(bestProb < r_curProb)
+		{
+			for(const auto &curStoredPos : storedPositions)
+			{
+				// TODO: Maybe save UpdatedOriginalMap.GetPixel(curStoredPos.Position) earlier for faster access
+				if(bestProb + UpdatedOriginalMap.GetPixel(curStoredPos.Position) < curStoredPos.Value)
+					nextPositionsToCheck.push(curStoredPos.Position);
+			}
+		}
+
+		// Clear saved data
+		storedPositions.clear();
+
+		// Update curProb with best new possible value
+		r_curProb = bestProb;
+
+		nextPositionsToCheck.pop();
+	}
+}
+
+void MonteCarloDStarMaps::UpdateProbMapToTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap)
 {
 	// Set all updated values
 	std::queue<POS_2D> nextPositionsToCheck;
@@ -646,13 +810,120 @@ void MonteCarloDStarMaps::UpdateProbMap(const OGM_LOG_MAP_TYPE &UpdatedOriginalM
 	}
 }
 
-void MonteCarloDStarMaps::UpdateRatioMap(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
+void MonteCarloDStarMaps::UpdateRatioMapFromTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
 {
 	// Set all updated values
 	std::queue<POS_2D> nextPositionsToCheck;
 
 	for(const auto &curUpdate : UpdatedValues)
 	{
+		// Check if map origin was updated
+		if(curUpdate == TargetPos)
+		{
+			// In this case, simply reset map as everything will change
+			this->ResetRatioMapFromTarget(UpdatedOriginalMap, TargetPos, RatioMap, RatioDistMap, RatioProbMap);
+			return;
+		}
+
+		// Add position to queue
+		nextPositionsToCheck.push(curUpdate);
+	}
+
+	// Vector to store positions that should be checked next
+	std::vector<POS_DATA<RATIO_DATA>> storedPositions;
+
+	while(!nextPositionsToCheck.empty())
+	{
+		const auto &curPos = nextPositionsToCheck.front();
+		auto &r_curRatio = RatioMap.GetPixelR(curPos);
+		auto &r_curRatioDist = RatioDistMap.GetPixelR(curPos);
+		auto &r_curRatioProb = RatioProbMap.GetPixelR(curPos);
+
+		//const auto curUpdatedProb = UpdatedOriginalMap.GetPixel(curPos);
+
+		auto bestRatio = GetInfiniteVal<OGM_LOG_TYPE>();
+		auto bestRatioDist = GetInfiniteVal<MOVE_DIST_TYPE>();
+		auto bestRatioProb = GetInfiniteVal<OGM_LOG_TYPE>();
+		for(const auto navOption : NavigationOptions)
+		{
+			// Get adjacent positions
+			const auto adjacentPos = curPos + navOption;
+			const auto movementCost = GetMovementCost(curPos, adjacentPos);
+
+			// Check that pos is in map
+			if(!RatioMap.IsInMap(adjacentPos))
+				continue;
+
+			auto adjacentRatio = RatioMap.GetPixel(adjacentPos);
+			auto adjacentRatioDist = RatioDistMap.GetPixel(adjacentPos);
+			auto adjacentRatioProb = RatioProbMap.GetPixel(adjacentPos);
+
+			const auto adjacentUpdatedProb = UpdatedOriginalMap.GetPixel(adjacentPos);
+
+			// Check if this position is dependent on old value
+			//if(adjacentRatio >= this->CalculateRatio(r_curRatioDist+movementCost, r_curRatioProb+adjacentUpdatedProb))
+			if(adjacentRatio > r_curRatio)
+			{
+				// Add adjacent distance to positions to check
+				nextPositionsToCheck.push(adjacentPos);
+			}
+			else
+			{
+				// Store best probability and current position + value
+				const auto tmpRatioDist = adjacentRatioDist+movementCost;
+				const auto tmpRatioProb = adjacentRatioProb + adjacentUpdatedProb;
+				const auto tmpRatio = this->CalculateRatio(tmpRatioDist, tmpRatioProb);
+				if(tmpRatio < bestRatio)
+				{
+					bestRatio = tmpRatio;
+					bestRatioDist = tmpRatioDist;
+					bestRatioProb = tmpRatioProb;
+				}
+
+				// Store value to check whether adjacent dist can be improved with new curDist later
+				storedPositions.push_back(POS_DATA<RATIO_DATA>(adjacentPos, RATIO_DATA(adjacentRatio, adjacentRatioDist, adjacentRatioProb)));
+			}
+		}
+
+		// Check all stored positions to see which can be improved with new best value
+		if(bestRatio < r_curRatio)
+		{
+			for(const auto &curStoredPos : storedPositions)
+			{
+				// TODO: Maybe save UpdatedOriginalMap.GetPixel(curStoredPos.Position) earlier for faster access
+				if(this->CalculateRatio(bestRatioDist+GetMovementCost(curPos, curStoredPos.Position), bestRatioProb+UpdatedOriginalMap.GetPixel(curStoredPos.Position)) < curStoredPos.Value.Ratio)
+					nextPositionsToCheck.push(curStoredPos.Position);
+			}
+		}
+
+		// Clear saved data
+		storedPositions.clear();
+
+		// Update curProb with best new possible value
+		r_curRatio = bestRatio;
+		r_curRatioDist = bestRatioDist;
+		r_curRatioProb = bestRatioProb;
+
+		nextPositionsToCheck.pop();
+	}
+}
+
+void MonteCarloDStarMaps::UpdateRatioMapToTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
+{
+	// Set all updated values
+	std::queue<POS_2D> nextPositionsToCheck;
+
+	for(const auto &curUpdate : UpdatedValues)
+	{
+		// Check if map origin was updated
+		if(curUpdate == TargetPos)
+		{
+			// In this case, simply reset map as everything will change
+			this->ResetRatioMapToTarget(UpdatedOriginalMap, TargetPos, RatioMap, RatioDistMap, RatioProbMap);
+
+			return;
+		}
+
 		// Add position to queue
 		nextPositionsToCheck.push(curUpdate);
 	}
@@ -738,5 +1009,6 @@ void MonteCarloDStarMaps::UpdateRatioMap(const OGM_LOG_MAP_TYPE &UpdatedOriginal
 
 OGM_LOG_TYPE MonteCarloDStarMaps::CalculateRatio(const MOVE_DIST_TYPE Dist, const OGM_LOG_TYPE LogValueFromMaps) const
 {
-	return static_cast<OGM_LOG_TYPE>(Dist)/OccupancyGridMap::CalculateCertaintyProbFromLog(LogValueFromMaps);
+	return static_cast<OGM_LOG_TYPE>(Dist)/OccupancyGridMap::CalculateCertaintyProbValueFromCertaintyLog(LogValueFromMaps);
+	//return static_cast<OGM_LOG_TYPE>(log(Dist+1))+(LogValueFromMaps+1);
 }

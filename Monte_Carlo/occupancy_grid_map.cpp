@@ -9,12 +9,12 @@ OGM_CELL_TYPE OccupancyGridMap::CalculateCellValFromLog(const OGM_LOG_TYPE &Valu
 
 OGM_LOG_TYPE OccupancyGridMap::CalculateCertaintyLogFromCell(const OGM_CELL_TYPE &Value)
 {
-	return static_cast<OGM_LOG_TYPE>(-log(Value)+log(OGM_CELL_MAX));
+	return static_cast<OGM_LOG_TYPE>(-log(OGM_CELL_MAX-Value)+log(OGM_CELL_MAX));
 }
 
 OGM_LOG_TYPE OccupancyGridMap::CalculateLogValFromCell(const OGM_CELL_TYPE &Value)
 {
-	return static_cast<OGM_LOG_TYPE>(-log(OGM_CELL_MAX-Value)+log(OGM_CELL_MAX));
+	return static_cast<OGM_LOG_TYPE>(-log(Value)+log(OGM_CELL_MAX));
 }
 
 OGM_PROB_TYPE OccupancyGridMap::CalculateProbValFromCell(const OGM_CELL_TYPE &Value)
@@ -72,22 +72,22 @@ OGM_LOG_TYPE OccupancyGridMap::CalculateLogValueFromProb(const OGM_PROB_TYPE &Va
 
 OGM_LOG_TYPE OccupancyGridMap::CalculateCertaintyLogValueFromCertaintyProb(const OGM_PROB_TYPE &Value)
 {
-	return static_cast<OGM_LOG_TYPE>(-log(OGM_PROB_MAX-Value));
+	return static_cast<OGM_LOG_TYPE>(-log(Value));
 }
 
 OGM_PROB_TYPE OccupancyGridMap::CalculateCertaintyProbValueFromCertaintyLog(const OGM_LOG_TYPE &Value)
 {
-	return OGM_PROB_MAX-static_cast<OGM_PROB_TYPE>(exp(-Value));
+	return static_cast<OGM_PROB_TYPE>(exp(-Value));
 }
 
 OGM_PROB_TYPE CalculateProbValueFromCertaintyLog(const OGM_LOG_TYPE &Value)
 {
-	return static_cast<OGM_PROB_TYPE>(exp(-Value));
+	return OGM_PROB_MAX-static_cast<OGM_PROB_TYPE>(exp(-Value));
 }
 
 OGM_PROB_TYPE OccupancyGridMap::CalculateCertaintyProbFromLog(const OGM_LOG_TYPE &Value)
 {
-	return static_cast<OGM_PROB_TYPE>(exp(-Value));
+	return OGM_PROB_MAX-static_cast<OGM_PROB_TYPE>(exp(-Value));
 }
 
 OGM_ENTROPY_TYPE OccupancyGridMap::CalculateEntropyFromCell(const OGM_CELL_TYPE &Value)

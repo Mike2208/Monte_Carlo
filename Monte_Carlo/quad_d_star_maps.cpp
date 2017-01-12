@@ -345,9 +345,9 @@ QuadDStarMaps::ID_RECTANGLE QuadDStarMaps::GetQuadRectangleWithEdges()
 	if(curIDRectangle.BottomLeftPos.Y > 0)
 		curIDRectangle.BottomLeftPos.Y -= 1;
 
-	if(curIDRectangle.BottomLeftPos.X + curIDRectangle.Width >= this->_QuadMap.GetIDMap().GetWidth() )
+	if(curIDRectangle.BottomLeftPos.X + curIDRectangle.Width < this->_QuadMap.GetIDMap().GetWidth() )
 			curIDRectangle.Width += 1;
-	if(curIDRectangle.BottomLeftPos.Y + curIDRectangle.Height >= this->_QuadMap.GetIDMap().GetHeight() )
+	if(curIDRectangle.BottomLeftPos.Y + curIDRectangle.Height < this->_QuadMap.GetIDMap().GetHeight() )
 			curIDRectangle.Height += 1;
 
 	return curIDRectangle;

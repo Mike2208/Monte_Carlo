@@ -911,10 +911,10 @@ void MonteCarloOption2::Expansion()
 				// Move to new position, then add branch
 				posReached = pPath->at(posReachedID);
 
-				if(posReachedID == 0)
-					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE/*, pPath->at(posReachedID)*/));			// If one move necessary, add simple move order
-				else
-					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, pPath->at(posReachedID), NODE_EXTRA_DATA(NODE_EXTRA_DATA_MOVE(*pPath, 0, posReachedID))));				
+//				if(posReachedID == 0)
+//					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE/*, pPath->at(posReachedID)*/));			// If one move necessary, add simple move order
+//				else
+//					pIntermediateNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_MOVE, pPath->at(posReachedID), NODE_EXTRA_DATA(NODE_EXTRA_DATA_MOVE(*pPath, 0, posReachedID))));
 
 				// Update path by removing traversed position
 				if(posReachedID == pPath->size()-1)
@@ -928,7 +928,7 @@ void MonteCarloOption2::Expansion()
 
 			// Now add an observation node and move leaf data to this node
 			NODE_EXTRA_DATA_OBSTACLE obstacleData = this->CreateObstacleAtPos(this->_Branch, obstaclePos, posReached, this->_Branch.ObstacleLength, this->_Branch.ObstacleHeight, this->_Branch.MinObstacleCertainty, this->_Branch.MaxObstacleCertainty);
-			pIntermediateNode = pIntermediateNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_OBSERVE, obstaclePos, NODE_EXTRA_DATA(std::move(ppCurNode->GetDataR()))));
+//			pIntermediateNode = pIntermediateNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_OBSERVE, obstaclePos, NODE_EXTRA_DATA(std::move(ppCurNode->GetDataR()))));
 
 			// Now append obstacle data to this leaf's data
 			pIntermediateNode->GetDataR().GetExtraLeafData()->SetExtraData(std::move(obstacleData));
@@ -968,7 +968,7 @@ void MonteCarloOption2::Expansion()
 					tmpLeafData.PathStorage = this->_Branch.pStoredPathData;
 
 					// Create new child
-					TREE_NODE *pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_JUMP, curConnectionPos.at(1), std::move(tmpLeafData)));
+//					TREE_NODE *pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_JUMP, curConnectionPos.at(1), std::move(tmpLeafData)));
 				}
 			}
 		}
@@ -991,7 +991,7 @@ void MonteCarloOption2::Expansion()
 				tmpLeafData.PathStorage = this->_Branch.pStoredPathData;
 
 				// Create new child
-				TREE_NODE *pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_JUMP, this->_Branch.Destination, std::move(tmpLeafData)));
+//				TREE_NODE *pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION2::NODE_ACTION_JUMP, this->_Branch.Destination, std::move(tmpLeafData)));
 			}
 		}
 	}
@@ -1240,8 +1240,8 @@ int MonteCarloOption2::FollowPathUntilObstacle(const BRANCH_DATA &BranchData, co
 	}
 
 	// Save the requested data
-	if(PathCertainty != nullptr)
-		*PathCertainty = MONTE_CARLO_OPTION2::MAX_CERTAINTY - OccupancyGridMap::CalculateProbValueFromLog(curInvertedLogCertainty);
+//	if(PathCertainty != nullptr)
+//		*PathCertainty = MONTE_CARLO_OPTION2::MAX_CERTAINTY - OccupancyGridMap::CalculateProbValueFromLog(curInvertedLogCertainty);
 	if(PathLength != nullptr)
 		*PathLength = std::move(curLength);
 	if(EndPosID != nullptr)

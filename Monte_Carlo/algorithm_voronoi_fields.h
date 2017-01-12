@@ -99,6 +99,7 @@ namespace ALGORITHM_VORONOI_FIELDS
 		DIST_MAP::CELL_TYPE DistToPrevElement;
 		SKEL_MAP_SHORTEST_DIST_POS_ID PrevElementID;
 
+		operator float() const { return DistToPrevElement; }
 		SKEL_MAP_DATA() = default;
 		SKEL_MAP_DATA(const DIST_MAP::CELL_TYPE &_DistToPrevElement, const SKEL_MAP_SHORTEST_DIST_POS_ID &_PrevElementID);
 	};

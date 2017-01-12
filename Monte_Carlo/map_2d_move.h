@@ -17,7 +17,7 @@ class Map2DMove : public virtual Map2D<T>
 		Map2DMove(const Map2DMove<T> &S) : _pOriginalMap(S._pOriginalMap), _MovePosition(S._MovePosition) {}
 		Map2DMove(Map2DMove<T> &&S) : _pOriginalMap(std::move(S._pOriginalMap)), _MovePosition(std::move(S._MovePosition)) {}
 		Map2DMove<T> &operator=(const Map2DMove<T> &S) = default;
-		Map2DMove<T> &operator=(Map2DMove<T> &&S) = default;
+		Map2DMove<T> &operator=(Map2DMove<T> &&S);
 
 
 		void SetPixel(const POS_2D &Position, const T &Value) override { return this->_pOriginalMap->SetPixel(Position+this->_MovePosition, Value); }
