@@ -42,6 +42,11 @@ class MonteCarloNodeData
 		MONTE_CARLO_NODE_DATA::EXPECTED_LENGTH	ExpectedLength;	// Expected length to dest from here
 		MONTE_CARLO_NODE_DATA::CERTAINTY			Certainty;		// Certainty of reaching node from here
 
+		MONTE_CARLO_NODE_DATA::EXPECTED_LENGTH	PolicyExpectedLength;		// Expected length to policy completion from here
+		MONTE_CARLO_NODE_DATA::CERTAINTY			PolicyCertainty;		// Certainty of completing policy from here
+
+		MONTE_CARLO_NODE_DATA::CERTAINTY		MapCertainty = 0;
+
 		MONTE_CARLO_NODE_DATA::COST_TYPE		ExpectedCost;	// Cost to reach dest from here
 		unsigned int NumVisits;
 

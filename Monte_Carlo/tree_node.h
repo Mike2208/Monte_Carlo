@@ -4,6 +4,7 @@
 #include "standard_definitions.h"
 #include <vector>
 #include <algorithm>	// std::sort
+#include <memory>		// std::unique_ptr
 
 template<class T>
 class TreeNode
@@ -40,6 +41,11 @@ class TreeNode
 
 		TreeNode<T> *AddChild(const T &NewData);
 		TreeNode<T> *AddChild(T &&NewData);
+		TreeNode<T> *AddChild(TreeNode<T> &&ChildNode);
+
+		std::unique_ptr<TreeNode<T>> RemoveAndSetAsRoot();
+
+		void RemoveChildOutOfTree(const CHILD_ID &ID);
 
 		template<class U>
 		void SortChildren(const U &CompareClass) { std::sort(this->_Children.begin(), this->_Children.end(), CompareClass); }
@@ -47,6 +53,8 @@ class TreeNode
 		bool IsLeaf() const { return (this->_Children.size() > 0 ? 0:1); }		// Returns whether node is leaf ( no children )
 
 		const CHILD_STORAGE &GetStorage() const	{ return this->_Children; }
+		CHILD_STORAGE		&GetStorageR()		{ return this->_Children; }
+
 
 		TreeNode<T> *InsertChild(const T &NewData);
 

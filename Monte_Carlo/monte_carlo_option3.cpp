@@ -2,6 +2,7 @@
 #include "algorithm_a_star.h"
 
 #include <cstring>
+#include <time.h>
 
 namespace MONTE_CARLO_OPTION3
 {
@@ -47,6 +48,40 @@ namespace MONTE_CARLO_OPTION3
 		return *this;
 	}
 
+	bool NODE_EXTRA_DATA::operator==(const NODE_EXTRA_DATA &S) const
+	{
+		// If actions aren't the same, return false
+		if(this->Action != S.Action)
+			return false;
+
+		if(this->Action.IsObserveAction())
+		{
+			// Return true if both observe same point
+			if(dynamic_cast<const NODE_EXTRA_DATA_OBSERVE_ACTION&>(*this->_pExtraData).ObservationPoint == dynamic_cast<const NODE_EXTRA_DATA_OBSERVE_ACTION&>(*S._pExtraData).ObservationPoint)
+				return true;
+		}
+		else if (this->Action.IsIncompleteMove())
+		{
+			// Return true if both move to same point next
+			if(dynamic_cast<const NODE_EXTRA_DATA_JUMP&>(*this->_pExtraData).PathData.front() == dynamic_cast<const NODE_EXTRA_DATA_JUMP&>(*S._pExtraData).PathData.front())
+				return true;
+		}
+		else if (this->Action.IsCompleteMove())
+		{
+			// Return true if both move to same point next
+			if(dynamic_cast<const NODE_EXTRA_DATA_MOVE&>(*this->_pExtraData).NewPos == dynamic_cast<const NODE_EXTRA_DATA_MOVE&>(*S._pExtraData).NewPos)
+				return true;
+		}
+		else if (this->Action.IsMovePath())
+		{
+			// Return true if both move to same point
+			if(dynamic_cast<const NODE_EXTRA_DATA_MOVE_PATH&>(*this->_pExtraData).TargetPosition == dynamic_cast<const NODE_EXTRA_DATA_MOVE_PATH&>(*S._pExtraData).TargetPosition)
+				return true;
+		}
+
+		return false;
+	}
+
 	bool NODE_DATA::IsDeadEnd() const
 	{
 		if(this->Certainty <= OGM_PROB_MIN)
@@ -80,14 +115,20 @@ namespace MONTE_CARLO_OPTION3
 	}
 
 	// Custom constructors due to NODE_EXTRA_DATA memory allocation
-	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const NODE_VALUE_TYPE &_Value, const EXPECTED_LENGTH_TYPE &_ExpectedLength, const CERTAINTY_TYPE &_Certainty, const COST_TYPE &_ExpectedCost, const NUM_VISIT_TYPE &_NumVisits, bool _IsDone, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Action(_Action), Value(_Value), ExpectedLength(_ExpectedLength), Certainty(_Certainty), ExpectedCost(_ExpectedCost), NumVisits(_NumVisits), IsDone(_IsDone)
-	{}
+	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, const NODE_VALUE_TYPE &_Value, const EXPECTED_LENGTH_TYPE &_ExpectedLength, const CERTAINTY_TYPE &_Certainty, const COST_TYPE &_ExpectedCost, const NUM_VISIT_TYPE &_NumVisits, bool _IsDone, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Value(_Value), ExpectedLength(_ExpectedLength), Certainty(_Certainty), ExpectedCost(_ExpectedCost), NumVisits(_NumVisits), IsDone(_IsDone)
+	{
+		this->Action = _Action;
+	}
 
-	NODE_DATA::NODE_DATA(const NODE_ACTION _Action) : NODE_EXTRA_DATA(), Action(_Action)
-	{}
+	NODE_DATA::NODE_DATA(const NODE_ACTION _Action) : NODE_EXTRA_DATA()
+	{
+		this->Action = _Action;
+	}
 
-	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData)), Action(_Action)
-	{}
+	NODE_DATA::NODE_DATA(const NODE_ACTION _Action, NODE_EXTRA_DATA &&_ExtraData) : NODE_EXTRA_DATA(std::move(_ExtraData))
+	{
+		this->Action = _Action;
+	}
 
 	std::unique_ptr<NODE_EXTRA_DATA_OBJECT> NODE_EXTRA_DATA_JUMP::Create() const
 	{
@@ -192,13 +233,6 @@ namespace MONTE_CARLO_OPTION3
 		// Step down one node
 		this->pCurNode = this->pCurNode->GetChild(ChildID);
 
-		// Divide quad by the requested number of times
-		const auto &curData = this->pCurNode->GetData();
-		for(size_t divideNum = 0; divideNum < curData.NumDivisions; ++divideNum)
-		{
-			this->DStarMaps.DivideQuad(this->CurCertaintyLogData, std::vector<POS_2D>(), this->DStarMaps.GetQuadIDAtPos(this->CurBotData.GetGlobalBotPosition()), 1 , 0);
-		}
-
 		// Mark that sync is necessary
 		this->_StepDownSynced = false;
 	}
@@ -229,6 +263,13 @@ namespace MONTE_CARLO_OPTION3
 				this->PrevNodeWasObserveAction = false;
 			}
 
+			// Divide quad by the requested number of times
+			const auto &curData = this->pCurNode->GetData();
+			for(size_t divideNum = 0; divideNum < curData.NumDivisions; ++divideNum)
+			{
+				this->DStarMaps.DivideQuad(this->CurCertaintyLogData, std::vector<POS_2D>(), this->DStarMaps.GetQuadIDAtPos(this->CurBotData.GetGlobalBotPosition()), 1 , 0);
+			}
+
 			if(nextData.Action.IsCompleteMove())
 			{
 				// If this node is a move action, update robot position
@@ -239,7 +280,7 @@ namespace MONTE_CARLO_OPTION3
 
 				// Add to quad vector
 				const auto curQuad = this->DStarMaps.GetQuadIDAtPos(moveData.NewPos);
-				if(!this->VisitedQuads.empty() && this->VisitedQuads.back() != curQuad)
+				if(this->VisitedQuads.empty() || this->VisitedQuads.back() != curQuad)
 					this->VisitedQuads.push_back(curQuad);
 
 				// Add to path
@@ -255,7 +296,7 @@ namespace MONTE_CARLO_OPTION3
 
 				// Add to quad vector
 				const auto curQuad = this->DStarMaps.GetQuadIDAtPos(moveData.TargetPosition);
-				if(!this->VisitedQuads.empty() && this->VisitedQuads.back() != curQuad)
+				if(this->VisitedQuads.empty() || this->VisitedQuads.back() != curQuad)
 					this->VisitedQuads.push_back(curQuad);
 
 				// Add to path
@@ -269,11 +310,18 @@ namespace MONTE_CARLO_OPTION3
 				// Set all visited positions to free
 				for(const auto &curPos : jumpData.PathData)
 				{
+					// Remove visited cells after observation
+					if(this->CurCertaintyLogData.GetPixel(curPos) > OGM_LOG_MIN)
+					{
+						this->VisitedQuads.clear();
+						this->PrevPath.clear();
+					}
+
 					this->SetMapPositionDiscrete(curPos, 0);
 
 					// Add to visited quads
 					const auto curQuad = this->DStarMaps.GetQuadIDAtPos(curPos);
-					if(!this->VisitedQuads.empty() && this->VisitedQuads.back() != curQuad)
+					if(this->VisitedQuads.empty() || this->VisitedQuads.back() != curQuad)
 						this->VisitedQuads.push_back(curQuad);
 
 					// Add to path
@@ -356,12 +404,12 @@ namespace MONTE_CARLO_OPTION3
 		this->SetMapPositionDiscrete(Position, CellOccupied);
 	}
 
-	void BRANCH_DATA::Init(const OGM_MAP &OriginalMap, const POS_2D &Start, const POS_2D &Destination, TREE_CLASS &TreeData)
+	void BRANCH_DATA::Init(const std::vector<OGM_MAP> &OriginalMaps, const POS_2D &Start, const POS_2D &Destination, TREE_CLASS &TreeData)
 	{
-		this->pOriginalMap = &OriginalMap;
+		this->pOriginalMaps = &OriginalMaps;
 		//this->VisitMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), 0);
 		this->pCurNode = &(TreeData.GetRoot());
-		this->RemainingMapEntropy = OccupancyGridMap::CalculateEntropyFromMap(OriginalMap);
+		//this->RemainingMapEntropy = OccupancyGridMap::CalculateEntropyFromMap(OriginalMap);
 		this->CurBotData.SetGlobalBotPosition(Start);
 		//this->PrevPath.clear();
 		this->VisitedQuads.clear();
@@ -373,9 +421,14 @@ namespace MONTE_CARLO_OPTION3
 		this->_StepDownPossible = true;
 		this->_StepDownSynced = true;
 
+		// Calculate total map certainties
+		this->MapCertainties.resize(this->pOriginalMaps->size(), 1.0f);
+		this->MapCertaintiesNormalized.resize(this->pOriginalMaps->size(), 1.0f/(this->pOriginalMaps->size()));
+
 		// Calculate map data at start
 		//OccupancyGridMap::CalculateLogMapFromCellMap(OriginalMap, this->CurLogData);
-		OccupancyGridMap::CalculateCertaintyLogMapFromCellMap(OriginalMap, this->CurCertaintyLogData);
+		this->CurCertaintyLogData.ResizeMap(OriginalMaps.at(0).GetWidth(), OriginalMaps.at(0).GetHeight());
+		this->UpdateTotalMap();
 
 		// Set start position to cleared
 		this->SetMapPositionDiscrete(Start, OGM_DISCRETE_EMPTY);
@@ -385,7 +438,7 @@ namespace MONTE_CARLO_OPTION3
 		this->DStarMaps.ResetDestPos(this->CurCertaintyLogData, Destination);
 	}
 
-	BRANCH_DATA::BRANCH_DATA(const OGM_MAP &MapData, RobotData &_RobotData, MCPathStorage *const PathStorage) : pOriginalMap(&MapData), CurBotData(_RobotData), pPathStorage(PathStorage), DStarMaps(MapData.GetWidth(), MapData.GetHeight())
+	BRANCH_DATA::BRANCH_DATA(const std::vector<OGM_MAP> &MapData, RobotData &_RobotData, MCPathStorage *const PathStorage) : pOriginalMaps(&MapData), CurBotData(_RobotData), pPathStorage(PathStorage), DStarMaps(MapData.at(0).GetWidth(), MapData.at(0).GetHeight())
 	{}
 
 	void BRANCH_DATA::SetMapPositionDiscrete(const POS_2D &Position, const bool &NewValue)
@@ -406,6 +459,52 @@ namespace MONTE_CARLO_OPTION3
 
 			// Add to vector with updated positions
 			this->PosToUpdate.push_back(Position);
+		}
+	}
+
+	void BRANCH_DATA::UpdateMapCertainties(const CERTAINTY_TYPE PrevOccupancyProb, const bool PosOccupied)
+	{
+		CERTAINTY_TYPE totalCertainty = 0;
+		for(auto &curCertainty : this->MapCertainties)
+		{
+			if(PosOccupied)
+				curCertainty *= PrevOccupancyProb;
+			else
+				curCertainty *= (1.0f-PrevOccupancyProb);
+
+			totalCertainty += curCertainty;
+		}
+
+		for(size_t curNormCertID = 0; curNormCertID < this->MapCertaintiesNormalized.size(); ++curNormCertID)
+		{
+			this->MapCertaintiesNormalized.at(curNormCertID) = this->MapCertainties.at(curNormCertID)/totalCertainty;
+		}
+	}
+
+	void BRANCH_DATA::UpdateTotalMap()
+	{
+		POS_2D curPos;
+		for(curPos.X = 0; curPos.X < this->CurCertaintyLogData.GetWidth(); ++curPos.X)
+		{
+			for(curPos.Y = 0; curPos.Y < this->CurCertaintyLogData.GetHeight(); ++curPos.Y)
+			{
+				auto &r_CurVal = this->CurCertaintyLogData.GetPixelR(curPos);
+				if(r_CurVal > OGM_LOG_MIN && r_CurVal < OGM_LOG_MAX)
+				{
+					const auto prevVal = r_CurVal;
+
+					r_CurVal = 0;
+					for(size_t curMapID = 0; curMapID < this->pOriginalMaps->size(); ++curMapID)
+					{
+						r_CurVal += this->MapCertaintiesNormalized.at(curMapID)*this->pOriginalMaps->at(curMapID).GetPixel(curPos);
+					}
+
+					r_CurVal = OccupancyGridMap::CalculateCertaintyLogFromProb(r_CurVal/OGM_CELL_MAX);
+
+					if(prevVal != r_CurVal)
+						this->PosToUpdate.push_back(curPos);
+				}
+			}
 		}
 	}
 
@@ -504,13 +603,14 @@ namespace MONTE_CARLO_OPTION3
 	}
 }
 
-MonteCarloOption3::MonteCarloOption3(const OccupancyGridMap &Map, RobotData _RobotData, const MC_PATH_STORAGE::PATH_ID &MaxStoredPaths) : _MCTree(), _Branch(Map, _RobotData, &(this->_PathStorage)), _PathStorage(MaxStoredPaths)
+MonteCarloOption3::MonteCarloOption3(const std::vector<OccupancyGridMap> &Maps, RobotData _RobotData, const MC_PATH_STORAGE::PATH_ID &MaxStoredPaths) : _MCTree(), _Branch(Maps, _RobotData, &(this->_PathStorage)), _StartBranch(Maps, _RobotData, &(this->_PathStorage)), _PathStorage(MaxStoredPaths)
 {}
 
-int MonteCarloOption3::PerformMonteCarlo(const POS_2D &StartPos, const POS_2D &Destination)
+int MonteCarloOption3::PerformMonteCarlo(const POS_2D &StartPos, const POS_2D &Destination, const NODE_VALUE_TYPE &Constant, const CheckConditions &StopConditions, const char *const PolicyFileName, PolicyData &NewPolicy)
 {
 	// Set current map to use
-	this->_Branch.Init(*this->_Branch.pOriginalMap, StartPos, Destination, this->_MCTree);
+	this->_Branch.Init(*this->_Branch.pOriginalMaps, StartPos, Destination, this->_MCTree);
+	this->_Branch.Constant = Constant;		// Set explore parameter
 
 	// Create tree
 	this->_MCTree.Reset();
@@ -520,10 +620,12 @@ int MonteCarloOption3::PerformMonteCarlo(const POS_2D &StartPos, const POS_2D &D
 	this->_Branch.pCurNode = &(this->_MCTree.GetRoot());
 
 	// Store root data for later
-	BRANCH_DATA rootData = this->_Branch;
+	this->_StartBranch = this->_Branch;
 
 	// End Condition: Continue until all paths are checked
-	while(!this->_MCTree.GetRoot().GetData().IsDone)
+	const auto &rootNodeData = this->_StartBranch.pCurNode->GetData();
+	auto startTime = time(nullptr);
+	while(!StopConditions.AreConditionsMet(rootNodeData.IsDone, rootNodeData.NumVisits, time(nullptr)-startTime, rootNodeData.CertaintyPolicy, rootNodeData.Certainty, rootNodeData.MapCertainty))
 	{
 		// Perform one Monte Carlo step
 		this->Selection();
@@ -532,8 +634,10 @@ int MonteCarloOption3::PerformMonteCarlo(const POS_2D &StartPos, const POS_2D &D
 		this->Backtrack();
 
 		// Revert to start
-		this->_Branch = rootData;
+		this->_Branch = this->_StartBranch;
 	}
+
+	NewPolicy = this->CreatePolicyFromTree(PolicyFileName);
 
 	return 1;
 }
@@ -669,525 +773,24 @@ int MonteCarloOption3::Selection()
 		return 2;	// return that expansion will be done
 }
 
-
 int MonteCarloOption3::Expansion()
 {
 	TREE_NODE *&ppCurNode = this->_Branch.pCurNode;
 	NODE_DATA *pCurNodeData = &ppCurNode->GetDataR();
 
-	// Sanity check if bot is at destination
-	if(this->_Branch.CurBotData.GetGlobalBotPosition() == this->_Branch.Destination)
-		return 0;		// Nothing left to do
-
-	// Add node incomplete move to destination
-//	if(pCurNodeData->Action.IsNoAction())
-//	{
-//		// Sync up node
-//		this->_Branch.StepDownOneNodeSync();
-
-//		// Get distance and certainty to goal
-//		const POS_2D curBotPos = this->_Branch.CurBotData.GetGlobalBotPosition();
-//		const auto distToGoal = this->_Branch.DStarMaps.GetDStarRatioDistMapToGoal().GetPixel(curBotPos)+this->_Branch.DStarMaps.GetDStarRatioDistMapToStart().GetPixel(curBotPos);
-//		const auto certLogToGoal = this->_Branch.DStarMaps.GetDStarRatioCertaintyMapToGoal().GetPixel(curBotPos)+this->_Branch.DStarMaps.GetDStarRatioCertaintyMapToStart().GetPixel(curBotPos);
-
-//		// Change no action to movement to goal
-//		// Select correct node type (incomplete move, move path, or single move)
-//		if(certLogToGoal >= OGM_LOG_MAX)
-//		{
-//			// Mark as dead end
-//			pCurNodeData->IsDone = true;
-//		}
-//		else if(certLogToGoal > OGM_LOG_MIN)
-//		{
-//			// Incomplete move
-//			pCurNodeData->Action.SetAction(MONTE_CARLO_OPTION3::NODE_ACTION_JUMP);
-//			pCurNodeData->SetExtraData(NODE_EXTRA_DATA_JUMP());
-
-//			// Update jump data
-//			auto &jumpData = dynamic_cast<NODE_EXTRA_DATA_JUMP&>(pCurNodeData->GetExtraData());
-
-//			// Calculate path and jump data
-//			jumpData.PathData = this->_Branch.DStarMaps.CalculateRatioPathToGoal(curBotPos);
-//			jumpData.RecentPathLength = distToGoal;
-//			jumpData.RecentPathLogCertainty = certLogToGoal;
-//		}
-//		else
-//		{
-//			if(distToGoal > MAX_MOVE_DIST)
-//			{
-//				// Complete move path
-//				pCurNodeData->Action.SetAction(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE_PATH);
-//				pCurNodeData->SetExtraData(NODE_EXTRA_DATA_MOVE_PATH(this->_Branch.Destination, distToGoal));
-//			}
-//			else
-//			{
-//				// Complete single move
-//				pCurNodeData->Action.SetAction(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE);
-//				pCurNodeData->SetExtraData(NODE_EXTRA_DATA_MOVE(this->_Branch.Destination));
-//			}
-//		}
-
-//		// Run simulation to get node data
-//		this->SimulateCurrentLeaf();
-
-//		// If this node is now done, stop
-//		if(pCurNodeData->IsDone)
-//			return 0;
-
-//		// Node changed, set to unsynced(only possible if node was no action)
-//		this->_Branch.SetStepDownToUnsynced();
-//	}
-
-	// If this is an incomplete move that should be expanded, check whether quad should be divided or simply next quad on map should be analyzed
+	// Check whether to expand or fill in skipped cells
 	if(pCurNodeData->Action.IsIncompleteMove() && !this->_Branch.IsNodeSynced())
 	{
-		QUAD_MAP::ID nextQuadID;
-		bool alterAction = false;
-
-		// Check whether a division is necessary
-		auto &curJumpData = dynamic_cast<NODE_EXTRA_DATA_JUMP&>(pCurNodeData->GetExtraData());
-		size_t nextQuadPathPos;
-		if(curJumpData.PathData.empty())
-			nextQuadPathPos = 0;
-		else
-			nextQuadPathPos = curJumpData.PathData.size()-1;
-
-		QUAD_MAP::ID curQuadID;
-		do
-		{
-			curQuadID = this->_Branch.DStarMaps.GetQuadIDAtPos(this->_Branch.CurBotData.GetGlobalBotPosition());
-			nextQuadID = curQuadID;
-
-			// Go through path and find next quad
-			for(auto pathPosIterator = curJumpData.PathData.begin(); pathPosIterator != curJumpData.PathData.end(); ++pathPosIterator)
-			{
-				// Check if destination reached
-				if(*pathPosIterator == this->_Branch.Destination)
-				{
-					// Destination found, save it
-					nextQuadID = MONTE_CARLO_OPTION3::DESTINATION_ID;
-					nextQuadPathPos = pathPosIterator - curJumpData.PathData.begin();
-					break;
-				}
-
-				// Compare quad IDs
-				const auto pathQuadID = this->_Branch.DStarMaps.GetQuadIDAtPos(*pathPosIterator);
-				if(pathQuadID != curQuadID)
-				{
-					// Next quad found, save it
-					nextQuadID = pathQuadID;
-					nextQuadPathPos = pathPosIterator - curJumpData.PathData.begin();
-					break;
-				}
-			}
-
-			// Check if this move action should be changed to a scan (done when next path position is in different quad)
-			if(nextQuadPathPos == 0)
-			{
-				alterAction = true;
-				break;
-			}
-
-			// If next quad is destination, divide current quad
-			if(nextQuadID == MONTE_CARLO_OPTION3::DESTINATION_ID)
-			{
-				// Divide quad and keep D* Destination map up to date
-				if(!this->_Branch.DStarMaps.DivideQuad(this->_Branch.CurCertaintyLogData, std::vector<POS_2D>(), curQuadID, true, false))
-					break;		// Stop if no division possible
-				pCurNodeData->NumDivisions++;
-			}
-
-			// Continue checking until a next quad is found that isn't the destination
-		}
-		while(nextQuadID == MONTE_CARLO_OPTION3::DESTINATION_ID || nextQuadID == curQuadID);
-
-		// Save current path data
-		std::unique_ptr<NODE_EXTRA_DATA_JUMP> pOldData(new NODE_EXTRA_DATA_JUMP(curJumpData));
-
-		// Check whether current node needs to be changed to an observation or move action
-		if(alterAction)
-		{
-			auto newChildNodes(this->ExpandCurrentNode(this->_Branch, this->_Branch.CurBotData.GetGlobalBotPosition(), pOldData->PathData.front()));
-
-			// Check certainty of next node
-			const auto curPosCertainty = this->_Branch.CurCertaintyLogData.GetPixel(pOldData->PathData.front());
-			if(curPosCertainty > OGM_LOG_MIN)
-			{
-				// Change to scan
-				pCurNodeData->Action.SetAction(MONTE_CARLO_OPTION3::NODE_ACTION_OBSERVE);
-				pCurNodeData->SetExtraData(NODE_EXTRA_DATA_OBSERVE_ACTION(pOldData->PathData.front(), curPosCertainty));
-
-				// Sync everything back up
-				this->_Branch.StepDownOneNodeSync();
-				this->_Branch.SyncDStarMaps(true, false);
-
-				// Insert node indicator for observe result free
-				auto *const pFreeResultNode = ppCurNode->InsertChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_NONE));
-
-				// Insert move to next position at free result
-				pFreeResultNode->InsertChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE, NODE_EXTRA_DATA_MOVE(pOldData->PathData.front())));
-
-				// Create new child node that simulates an observe result occupied
-				TREE_NODE *pOccupiedNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_NONE));
-
-				// Create a copy of current branch to simulate the occupied result
-				auto tmpBranch = this->_Branch;
-
-				// Simulate an occupied result
-				tmpBranch.StepDownOneNode(1);
-
-				// Sync up D* maps
-				tmpBranch.SyncDStarMaps(1,0);
-
-				// Calculate node data
-				this->SimulateBranch(tmpBranch);
-
-//				pNewData->Certainty = certaintyToGoal;
-//				pNewData->ExpectedLength = distToGoal;
-//				pNewData->IsDone = false;
-//				pNewData->NumVisits = 1;
-//				this->CalculateNodeValue(*pNewData, tmpBranch.Constant, pCurNodeData->NumVisits, pNewData->Value);
-
-//				if(certaintyToGoal > OGM_LOG_MIN)
-//				{
-//					// Incomplete move
-//					pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_JUMP, NODE_EXTRA_DATA_JUMP()));
-//					pNewData = &pNewNode->GetDataR();
-//					NODE_EXTRA_DATA_JUMP &newExtraData = dynamic_cast<NODE_EXTRA_DATA_JUMP&>(pNewData->GetExtraData());
-//					newExtraData.PathData = tmpBranch.DStarMaps.CalculateRatioPathToGoal(curBotPos);
-//					newExtraData.RecentPathLength = distToGoal;
-//					newExtraData.RecentPathLogCertainty = certaintyToGoal;
-
-//					pNewData->Certainty = OGM_LOG_MIN;
-//					pNewData->ExpectedLength = 0;
-//					pNewData->IsDone = false;
-//					pNewData->NumVisits = 1;
-//					this->CalculateNodeValue(*pNewData, tmpBranch.Constant, curNodeData.NumVisits, pNewData->Value);
-//				}
-//				else
-//				{
-//					// Check if single move or larger one
-//					if(distToGoal > MAX_MOVE_DIST)
-//					{
-//						// Move path
-//						pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE_PATH, NODE_EXTRA_DATA_MOVE_PATH(tmpBranch.Destination, distToGoal)));
-//						pNewData = &pNewNode->GetDataR();
-
-//						pNewData->Certainty = certaintyToGoal;
-//						pNewData->ExpectedLength = distToGoal;
-//						pNewData->IsDone = true;			// Complete path found, done
-//						pNewData->NumVisits = 1;
-//						this->CalculateNodeValue(*pNewData, tmpBranch.Constant, curNodeData.NumVisits, pNewData->Value);
-//					}
-//					else
-//					{
-//						// Single move
-//						pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE, NODE_EXTRA_DATA_MOVE(tmpBranch.Destination)));
-//						pNewData = &pNewNode->GetDataR();
-
-//						pNewData->Certainty = certaintyToGoal;
-//						pNewData->ExpectedLength = distToGoal;
-//						pNewData->IsDone = true;			// Complete path found, done
-//						pNewData->NumVisits = 1;
-//						this->CalculateNodeValue(*pNewData, tmpBranch.Constant, curNodeData.NumVisits, pNewData->Value);
-//					}
-//				}
-
-				this->_Branch.StepDownOneNodeSimple(0);		// Move down to inserted child (moves to observe result free)
-				this->_Branch.StepDownOneNodeSimple(0);		// Move down to inserted child (moves to move action)
-				pCurNodeData = &ppCurNode->GetDataR();
-
-				// Update Path Length and Certainty
-				pOldData->RecentPathLogCertainty -= this->_Branch.CurCertaintyLogData.GetPixel(pOldData->PathData.front());
-				pOldData->RecentPathLength -= GetMovementCost(this->_Branch.CurBotData.GetGlobalBotPosition(), pOldData->PathData.front());
-			}
-			else
-			{
-				// Change to complete move (move to next quad)
-				pCurNodeData->Action.SetAction(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE);			// Set action type
-				pCurNodeData->SetExtraData(NODE_EXTRA_DATA_MOVE(pOldData->PathData.front()));	// Set extra data to new value
-
-				// Update Path Length (certainty remains the same)
-				pOldData->RecentPathLength -= GetMovementCost(this->_Branch.CurBotData.GetGlobalBotPosition(), pOldData->PathData.front());
-			}
-
-			// Remove checked position from next half
-			nextQuadPathPos = 1;
-		}
-		else
-		{
-			// Simply remove last part of vector (will now move to next quad)
-			curJumpData.PathData.resize(nextQuadPathPos);
-
-			// Update path length and certainty
-			POS_2D prevPos = this->_Branch.CurBotData.GetGlobalBotPosition();
-			for(auto curPathPos = pOldData->PathData.begin(), endPathPos = pOldData->PathData.begin()+nextQuadPathPos; curPathPos != endPathPos; ++curPathPos)
-			{
-				// Update Path Length and Certainty for each point bot crossed
-				pOldData->RecentPathLogCertainty -= this->_Branch.CurCertaintyLogData.GetPixel(*curPathPos);
-				pOldData->RecentPathLength -= GetMovementCost(prevPos, *curPathPos);
-
-				prevPos = *curPathPos;
-			}
-		}
-
-		// Sync everything back up (now we added first half of incomplete move path to branch)
-		this->_Branch.StepDownOneNodeSync();
-
-		// Remove first part of pOldData (already checked previously, in first half of path)
-		if(nextQuadPathPos > 0)
-			pOldData->PathData.erase(pOldData->PathData.begin(), pOldData->PathData.begin()+nextQuadPathPos);
-
-		// Check if something is left
-		if(!pOldData->PathData.empty())
-		{
-			// If Path is left, create a node between both halves
-			TREE_NODE *pNewNode = ppCurNode;
-
-			// Determine type of node that must be created
-			const auto oldPos = this->_Branch.CurBotData.GetGlobalBotPosition();
-			const auto curPos = pOldData->PathData.front();
-			const auto posLogCertainty = this->_Branch.CurCertaintyLogData.GetPixel(curPos);
-			if(posLogCertainty > OGM_LOG_MIN)
-			{
-				// Add an observation action
-				pNewNode = ppCurNode->InsertChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_OBSERVE, NODE_EXTRA_DATA_OBSERVE_ACTION(curPos, posLogCertainty)));
-
-				// Add free result
-				pNewNode->InsertChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_NONE));
-
-				// Add occupied result
-				auto *const pOccupiedNode = pNewNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_NONE));
-
-				// Simulate occupied result to populate node data
-				this->_Branch.StepDownOneNodeSync();		// Make sure everything is synced
-				this->_Branch.SyncDStarMaps(1,0);
-				auto tmpBranch = this->_Branch;
-				tmpBranch.SimulateObserveObservation(tmpBranch.ObservationPoint, OGM_DISCRETE_FULL);
-				this->SimulateBranch(tmpBranch);
-				//this->RunSimulation(tmpBranch.CurBotData.GetGlobalBotPosition(), tmpBranch.Destination, tmpBranch, pCurNodeData->NumVisits, pOccupiedNode->GetDataR());
-
-				// Move down to newly created free node
-				this->_Branch.StepDownOneNodeSimple(0);
-				pCurNodeData = &ppCurNode->GetDataR();
-			}
-			else
-			{
-				// Add a move action
-				pNewNode = ppCurNode->InsertChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE, NODE_EXTRA_DATA_MOVE(curPos)));
-
-				// Move down to newly created move node
-				this->_Branch.StepDownOneNodeSimple(0);
-				pCurNodeData = &ppCurNode->GetDataR();
-			}
-
-			// Remove checked node from vector
-			pOldData->RecentPathLogCertainty -= posLogCertainty;
-			pOldData->RecentPathLength -= GetMovementCost(oldPos, curPos);
-			pOldData->PathData.erase(pOldData->PathData.begin());
-
-			// Check if path is left
-			if(pOldData->PathData.empty())
-			{
-				// Save remaining path as incomplete move
-				pNewNode = pNewNode->InsertChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_JUMP, NODE_EXTRA_DATA(std::move(pOldData))));
-
-//				// Adjust node data
-//				if(pNewNode->IsLeaf())
-//					this->SimulateCurrentLeaf();		// Only simulate if nothing behind it
-//				else
-//					this->PerformBacktrackStep(*pNewNode);
-			}
-			else
-			{
-				// If no path left, check whether destination was reached
-				if(this->_Branch.CurBotData.GetGlobalBotPosition() == this->_Branch.Destination)
-				{
-					return 0;		// Nothing left to do
-				}
-			}
-		}
+		// Insert skipped cell
+		this->InsertSkippedCell(this->_Branch);
 	}
-
-	//NODE_DATA newJumpData(MONTE_CARLO_OPTION3::NODE_ACTION_JUMP, NODE_EXTRA_DATA(std::move(std::unique_ptr<NODE_EXTRA_DATA_JUMP>(new NODE_EXTRA_DATA_JUMP()))));
-
-	// Sync everything back up if not yet done
-	this->_Branch.StepDownOneNodeSync();
-
-	// Check whether destination is reached
-	if(this->_Branch.CurBotData.GetGlobalBotPosition() == this->_Branch.Destination)
+	else
 	{
-		return 0;		// Nothing left to do
+		// Perform expansion at leaf node
+		this->PerformLeafExpansion(this->_Branch);
 	}
 
-	this->_Branch.SyncDStarMaps(true, true);
-
-	// Get all adjacent Quads
-	const auto curQuadID = this->_Branch.DStarMaps.GetQuadIDAtPos(this->_Branch.CurBotData.GetGlobalBotPosition());
-	const auto &curAdjacentQuadIDs = this->_Branch.DStarMaps.GetAdjacentQuadIDs(curQuadID);
-
-	QUAD_MAP::ID pathNextID = curQuadID;
-	bool destReached = false;
-	if(pCurNodeData->Action.IsIncompleteMove())
-	{
-		// Find next quad ID
-		const auto &jumpData(dynamic_cast<const NODE_EXTRA_DATA_JUMP&>(pCurNodeData->GetExtraData()));
-		for(auto curPathPos = jumpData.PathData.begin(); curPathPos != jumpData.PathData.end(); ++curPathPos)
-		{
-			const auto pathQuadID = this->_Branch.DStarMaps.GetQuadIDAtPos(*curPathPos);
-			if(pathQuadID != curQuadID)
-			{
-				// ID found, stop
-				pathNextID = pathQuadID;
-				break;
-			}
-		}
-	}
-
-	bool pathToDestCreated = false;
-	bool newPathCreated = false;
-	do
-	{
-		for(const auto &curAdjacentQuadID : curAdjacentQuadIDs)
-		{
-			// Check if this quad is next in incomplete move
-			if(pathNextID == curAdjacentQuadID)
-			{
-				continue;			// Skip if it will already be checked
-			}
-
-			// Check if previously visited after last observation action
-			bool previouslyVisited = false;
-			for(const auto &prevQuadID : this->_Branch.VisitedQuads)
-			{
-				if(prevQuadID == curAdjacentQuadID)
-				{
-					previouslyVisited = true;
-					break;		// don't visit now
-				}
-			}
-
-			if(previouslyVisited)
-				continue;			// Skip if previously visited
-
-			// Get connection rectangle
-			const auto rectangle = this->_Branch.DStarMaps.GetAdjacentRectangle(curQuadID, curAdjacentQuadID);
-			const POS_2D rectangleTop = POS_2D(rectangle.BottomLeftPos.X+rectangle.Width, rectangle.BottomLeftPos.Y+rectangle.Height);
-			POS_2D bestPos;
-			auto bestVal = GetInfiniteVal<OGM_LOG_TYPE>();
-			POS_2D curPos;
-			for(curPos.X = rectangle.BottomLeftPos.X ; curPos.X < rectangleTop.X ; ++curPos.X)
-			{
-				for(curPos.Y = rectangle.BottomLeftPos.Y ; curPos.Y < rectangleTop.Y ; ++curPos.Y)
-				{
-					// Check which position is better
-					const auto curVal = this->_Branch.DStarMaps.GetDStarRatioMapToGoal().GetPixel(curPos)+this->_Branch.DStarMaps.GetDStarRatioMapToStart().GetPixel(curPos);
-					if(curVal <= bestVal)
-					{
-						bestVal = curVal;
-						bestPos = curPos;
-					}
-				}
-			}
-
-			// Check if a position exists that isn't a dead end
-			if(bestVal == GetInfiniteVal<OGM_LOG_TYPE>())
-				continue;		// Skip if all positions are dead ends
-
-			// Create new child that visits selected position
-			const auto bestValDist = this->_Branch.DStarMaps.GetDStarRatioDistMapToGoal().GetPixel(bestPos)+this->_Branch.DStarMaps.GetDStarRatioDistMapToStart().GetPixel(bestPos);
-			const auto bestValCertLog = this->_Branch.DStarMaps.GetDStarRatioCertaintyMapToGoal().GetPixel(bestPos)+this->_Branch.DStarMaps.GetDStarRatioCertaintyMapToStart().GetPixel(bestPos);
-
-			// Select correct node type
-			TREE_NODE *pNewNode = nullptr;
-			NODE_DATA *pNewData = nullptr;
-
-			if(bestValCertLog > OGM_LOG_MIN)
-			{
-				// Incomplete move
-				pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_JUMP, NODE_EXTRA_DATA_JUMP()));
-				pNewData = &pNewNode->GetDataR();
-				auto &jumpData = dynamic_cast<NODE_EXTRA_DATA_JUMP&>(pNewData->GetExtraData());
-
-				// Calculate path and jump data
-				jumpData.PathData = this->_Branch.DStarMaps.CalculateRatioPathOverPos(bestPos);
-				jumpData.RecentPathLength = bestValDist;
-				jumpData.RecentPathLogCertainty = bestValCertLog;
-			}
-			else
-			{
-				if(bestValDist > MAX_MOVE_DIST)
-				{
-					// Complete move path
-					pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE_PATH, NODE_EXTRA_DATA_MOVE_PATH(bestPos, bestValDist)));
-				}
-				else
-				{
-					// Complete single move
-					pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE, NODE_EXTRA_DATA_MOVE(bestPos)));
-				}
-			}
-
-			// Simulation done in next step
-		}
-
-		// Check if destination is in quad an not yet reached
-		if(!pathToDestCreated && pathNextID != MONTE_CARLO_OPTION3::DESTINATION_ID)
-		{
-			if(this->_Branch.DStarMaps.GetQuadIDAtPos(this->_Branch.Destination) == curQuadID)
-			{
-				// Create new child that attempts to reach destination
-				const auto destValDist = this->_Branch.DStarMaps.GetDStarRatioDistMapToGoal().GetPixel(this->_Branch.CurBotData.GetGlobalBotPosition());
-				const auto destValCertLog = this->_Branch.DStarMaps.GetDStarRatioCertaintyMapToGoal().GetPixel(this->_Branch.CurBotData.GetGlobalBotPosition());
-
-				// Select correct node type
-				TREE_NODE *pNewNode = nullptr;
-				NODE_DATA *pNewData = nullptr;
-
-				if(destValCertLog > OGM_LOG_MIN)
-				{
-					// Incomplete move
-					pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_JUMP, NODE_EXTRA_DATA_JUMP()));
-					pNewData = &pNewNode->GetDataR();
-					auto &jumpData = dynamic_cast<NODE_EXTRA_DATA_JUMP&>(pNewData->GetExtraData());
-
-					// Calculate path and jump data
-					jumpData.PathData = this->_Branch.DStarMaps.CalculateRatioPathOverPos(this->_Branch.CurBotData.GetGlobalBotPosition());
-					jumpData.RecentPathLength = destValDist;
-					jumpData.RecentPathLogCertainty = destValCertLog;
-				}
-				else
-				{
-					if(destValDist > MAX_MOVE_DIST)
-					{
-						// Complete move path
-						pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE_PATH, NODE_EXTRA_DATA_MOVE_PATH(this->_Branch.Destination, destValDist)));
-					}
-					else
-					{
-						// Complete single move
-						pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE, NODE_EXTRA_DATA_MOVE(this->_Branch.Destination)));
-					}
-				}
-
-				// Simulation done in next step
-
-				newPathCreated = true;
-				pathToDestCreated = true;		// Prevent path being created twice
-			}
-		}
-
-		// If no new path was created, divide quad and retry
-		if(!newPathCreated)
-		{
-			// If no division possible, stop
-			if(!this->_Branch.DStarMaps.DivideQuad(this->_Branch.CurCertaintyLogData, std::vector<POS_2D>(), this->_Branch.DStarMaps.GetQuadIDAtPos(this->_Branch.CurBotData.GetGlobalBotPosition()), 1, 1))
-				break;
-
-			pCurNodeData->NumDivisions++;
-		}
-	}
-	while(!newPathCreated);
+	return 1;
 }
 
 int MonteCarloOption3::Simulation()
@@ -1206,7 +809,7 @@ int MonteCarloOption3::Simulation()
 	{
 		// Simulate all children of this node
 		const auto numChildren = this->_Branch.pCurNode->GetNumChildren();
-		BRANCH_DATA tmpBranch(*this->_Branch.pOriginalMap, this->_Branch.CurBotData, this->_Branch.pPathStorage);;
+		BRANCH_DATA tmpBranch(*this->_Branch.pOriginalMaps, this->_Branch.CurBotData, this->_Branch.pPathStorage);;
 		for(TREE_NODE::CHILD_ID curChildID = 0; curChildID < numChildren; ++curChildID)
 		{
 			// Check if child node is leaf
@@ -1245,7 +848,7 @@ int MonteCarloOption3::Backtrack()
 		if(!curChild->IsLeaf())
 		{
 			this->_Branch.StepDownOneNodeSimple(curChild - childStorage.begin());
-			this->Backtrack_Step();		// Backtrack to child that isn't leaf
+			this->Backtrack_Step(this->_Branch);		// Backtrack to child that isn't leaf
 			this->_Branch.StepUpOneNodeSimple();
 		}
 	}
@@ -1253,12 +856,214 @@ int MonteCarloOption3::Backtrack()
 	// Continue backtracking until root is reached
 	while(this->_Branch.pCurNode->GetParent() != nullptr)
 	{
-		this->Backtrack_Step();
+		this->Backtrack_Step(this->_Branch);
 		this->_Branch.StepUpOneNodeSimple();
 	}
 
 	// Perform one last backtrack to calculate root node values
-	this->Backtrack_Step();
+	this->Backtrack_Step(this->_Branch);
+
+	return 1;
+}
+
+PolicyData MonteCarloOption3::CreatePolicyFromTree(const char *FileName)
+{
+	auto branch = this->_StartBranch;
+
+	// Convert tree to policy
+	PolicyData::TREE_NODE rootNode;
+
+	// Create header
+	const auto &rootData = branch.pCurNode->GetData();
+	PolicyData::FILE_HEADER header;
+	header.DestPos = branch.Destination;
+	header.StartPos = branch.Start;
+	header.GoalCertainty = rootData.Certainty;
+	header.LengthToGoal = rootData.ExpectedLength;
+	header.MapHeight = branch.CurCertaintyLogData.GetHeight();
+	header.MapWidth = branch.CurCertaintyLogData.GetWidth();
+	header.LengthToPolicyCompletion = rootData.ExpectedLengthPolicy;
+	header.PolicyCertainty = rootData.CertaintyPolicy;
+
+	// Convert current node to policy node
+	this->CreatePolicyFromTreeStep(branch, rootNode);
+
+	// Write policy to file and return it
+	PolicyData newPolicy;
+	newPolicy.WritePolicyToFile(FileName, header, rootNode);
+	return newPolicy;
+}
+
+void MonteCarloOption3::CreatePolicyFromTreeStep( BRANCH_DATA &Branch, PolicyData::TREE_NODE &PolicyNode )
+{
+	TREE_NODE *&ppCurNode = Branch.pCurNode;
+	const NODE_DATA *pCurLeafData = &ppCurNode->GetData();
+
+	auto *pPolData = &PolicyNode.GetDataR();
+
+	// Sync data
+	Branch.StepDownOneNodeSync();
+
+	// Get map state
+	OccupancyGridMap::CalculateProbMapFromCertaintyLogMap(pPolData->MapState, Branch.CurCertaintyLogData);
+
+	// Find next observe action or leaf
+	while(!pCurLeafData->Action.IsObserveAction() && !ppCurNode->IsLeaf() && !pCurLeafData->Action.IsIncompleteMove())
+	{
+		bool tmp;
+		auto *bestChildLeaf = this->FindBestChildNode(*ppCurNode, tmp);
+
+		// Move down to best child
+		Branch.StepDownOneNodeSimple(bestChildLeaf-&(ppCurNode->GetStorage().front()));
+		pCurLeafData = &ppCurNode->GetData();
+	}
+
+	if(pCurLeafData->Action.IsObserveAction())
+	{
+		Branch.StepDownOneNodeSync();
+
+		// At observe action, create observation
+		pPolData->MovePos = Branch.CurBotData.GetGlobalBotPosition();
+		pPolData->ScanPos = dynamic_cast<const NODE_EXTRA_DATA_OBSERVE_ACTION&>(pCurLeafData->GetExtraData()).ObservationPoint;
+
+		// Create two children
+		auto *pFreeNode = PolicyNode.AddChild(PolicyData::NODE_DATA());
+		auto *pOccupiedNode = PolicyNode.AddChild(PolicyData::NODE_DATA());
+
+		// Add two children
+		auto occupiedBranch = Branch;
+
+		// Free node
+		Branch.StepDownOneNode(0);
+		this->CreatePolicyFromTreeStep(Branch, *pFreeNode);
+
+		// Occupied node
+		occupiedBranch.StepDownOneNode(1);
+		this->CreatePolicyFromTreeStep(occupiedBranch, *pOccupiedNode);
+	}
+	else if(pCurLeafData->Action.IsIncompleteMove())
+	{
+		auto *pPolNode = &PolicyNode;
+		pPolData = &pPolNode->GetDataR();
+
+		auto freeBranch = Branch;
+
+		// Map Certainty
+		size_t bestID = 0;
+		float bestCert = 0;
+		for(size_t curMapID = 0; curMapID < Branch.MapCertaintiesNormalized.size(); ++curMapID)
+		{
+			if(Branch.MapCertaintiesNormalized[curMapID] > bestCert)
+			{
+				bestCert = Branch.MapCertaintiesNormalized[curMapID];
+				bestID = curMapID;
+			}
+		}
+
+		// Create new orders for every cell
+		auto prevPos = Branch.CurBotData.GetGlobalBotPosition();
+		const auto &skippedPath = dynamic_cast<const NODE_EXTRA_DATA_JUMP&>(pCurLeafData->GetExtraData()).PathData;
+		for(const auto &curPos : skippedPath)
+		{
+			pPolData->MovePos = prevPos;
+			pPolData->ScanPos = curPos;
+
+			auto occupiedBranch = Branch;
+
+			// Free Node and occupied node
+			auto *pFreeNode = pPolNode->AddChild(PolicyData::NODE_DATA());
+			auto *pOccupiedNode = pPolNode->AddChild(PolicyData::NODE_DATA());
+
+			// Occupied data
+			occupiedBranch.SetMapPositionDiscrete(curPos, 1);
+			auto &occupiedData = pOccupiedNode->GetDataR();
+			OccupancyGridMap::CalculateProbMapFromCertaintyLogMap(occupiedData.MapState, occupiedBranch.CurCertaintyLogData);
+			occupiedData.MovePos = prevPos;
+			occupiedData.ScanPos = prevPos;
+			occupiedData.PolicyState = POLICY_DATA::POLICY_UNKNOWN;		// Set to error result
+			occupiedData.MapID = bestID;
+
+			// Free data
+			freeBranch.SetMapPositionDiscrete(curPos, 0);
+			auto &freeData = pOccupiedNode->GetDataR();
+			OccupancyGridMap::CalculateProbMapFromCertaintyLogMap(freeData.MapState, freeBranch.CurCertaintyLogData);
+			freeData.ScanPos = curPos;
+			freeData.PolicyState = POLICY_DATA::POLICY_UNKNOWN;		// Set to error result
+			freeData.MapID = bestID;
+
+			// Move to next free node
+			pPolNode = pFreeNode;
+			pPolData = &pPolNode->GetDataR();
+
+			prevPos = curPos;
+		}
+
+		// Afterwards, sync up
+		Branch.StepDownOneNodeSync();
+		pCurLeafData = &ppCurNode->GetData();
+		if(!ppCurNode->IsLeaf())
+			this->CreatePolicyFromTreeStep(Branch, *pPolNode);		// Continue if not done yet
+		else
+		{
+			// At leaf, compute policy output
+			if(pCurLeafData->CertaintyPolicy >= OGM_PROB_MAX)
+			{
+				if(pCurLeafData->Certainty >= OGM_PROB_MAX)
+					pPolData->PolicyState = POLICY_DATA::POLICY_SUCCESS;		// Return success
+				else
+					pPolData->PolicyState = POLICY_DATA::POLICY_BLOCKED;		// Return no path available
+			}
+			else
+			{
+				pPolData->PolicyState = POLICY_DATA::POLICY_UNKNOWN;		// Return error
+			}
+
+			// Map Certainty
+			pPolData->MapID = 0;
+			float bestCert = 0;
+			for(size_t curMapID = 0; curMapID < Branch.MapCertaintiesNormalized.size(); ++curMapID)
+			{
+				if(Branch.MapCertaintiesNormalized[curMapID] > bestCert)
+				{
+					bestCert = Branch.MapCertaintiesNormalized[curMapID];
+					pPolData->MapID = curMapID;
+				}
+			}
+		}
+	}
+	else if(ppCurNode->IsLeaf())
+	{
+		Branch.StepDownOneNodeSync();
+
+		// At leaf, store data
+		pPolData->MovePos = Branch.CurBotData.GetGlobalBotPosition();
+		pPolData->ScanPos = Branch.Destination;
+
+		// Map Certainty
+		pPolData->MapID = 0;
+		float bestCert = 0;
+		for(size_t curMapID = 0; curMapID < Branch.MapCertaintiesNormalized.size(); ++curMapID)
+		{
+			if(Branch.MapCertaintiesNormalized[curMapID] > bestCert)
+			{
+				bestCert = Branch.MapCertaintiesNormalized[curMapID];
+				pPolData->MapID = curMapID;
+			}
+		}
+
+		// At leaf, compute policy output
+		if(pCurLeafData->CertaintyPolicy >= OGM_PROB_MAX)
+		{
+			if(pCurLeafData->Certainty >= OGM_PROB_MAX)
+				pPolData->PolicyState = POLICY_DATA::POLICY_SUCCESS;		// Return success
+			else
+				pPolData->PolicyState = POLICY_DATA::POLICY_BLOCKED;		// Return no path available
+		}
+		else
+		{
+			pPolData->PolicyState = POLICY_DATA::POLICY_UNKNOWN;		// Return error
+		}
+	}
 }
 
 void MonteCarloOption3::SimulateCurrentLeaf()
@@ -1301,6 +1106,14 @@ void MonteCarloOption3::SimulateBranch(BRANCH_DATA &BranchData)
 		r_CurLeafData.ExpectedLength = BranchData.DStarMaps.GetDStarRatioDistMapToGoal().GetPixel(curBotPos);
 	}
 
+	// Map Certainty
+	r_CurLeafData.MapCertainty = OGM_PROB_MIN;
+	for(const auto curMapCert : BranchData.MapCertaintiesNormalized)
+	{
+		if(curMapCert > r_CurLeafData.MapCertainty)
+			r_CurLeafData.MapCertainty = curMapCert;
+	}
+
 	// Policy length is expected length to goal
 	r_CurLeafData.ExpectedLengthPolicy = r_CurLeafData.ExpectedLength;
 
@@ -1312,10 +1125,10 @@ void MonteCarloOption3::SimulateBranch(BRANCH_DATA &BranchData)
 	this->CalculateNodeValue( r_CurLeafData, BranchData.Constant,  (pParentNode == nullptr ? 1 : pParentNode->GetData().NumVisits), r_CurLeafData.Value);
 }
 
-void MonteCarloOption3::Backtrack_Step()
+void MonteCarloOption3::Backtrack_Step(BRANCH_DATA &BranchData)
 {
 	// Determine type of current node
-	TREE_NODE * const&ppCurNode = this->_Branch.pCurNode;
+	TREE_NODE * const&ppCurNode = BranchData.pCurNode;
 	NODE_DATA &r_CurNodeData = ppCurNode->GetDataR();
 
 	bool allChildNodesDone;
@@ -1331,20 +1144,43 @@ void MonteCarloOption3::Backtrack_Step()
 		if(ppCurNode->GetNumChildren() != 2)
 			return;				// ERROR
 
+		// Get cell certainty data
+		auto bestChoiceCertainty = dynamic_cast<const NODE_EXTRA_DATA_OBSERVE_ACTION&>(r_CurNodeData.GetExtraData()).ObservationFreeProbabilityLog;
+
 		// Get other option
 		const NODE_DATA *pOtherData;
 		if(pBestChildNode == ppCurNode->GetChild(0))
+		{
+			bestChoiceCertainty = OccupancyGridMap::CalculateCertaintyProbValueFromCertaintyLog(bestChoiceCertainty);
 			pOtherData = &(ppCurNode->GetChild(1)->GetData());
+		}
 		else
+		{
+			bestChoiceCertainty = OccupancyGridMap::CalculateProbValueFromCertaintyLog(bestChoiceCertainty);
 			pOtherData = &(ppCurNode->GetChild(0)->GetData());
+		}
 
 		const auto bestCertainty = bestData.GetCertatintyBeforeNodeAction();
 		const auto bestLength = bestData.GetLengthBeforeNodeAction();
 		const auto otherCertainty = pOtherData->GetCertatintyBeforeNodeAction();
 		const auto otherLength = pOtherData->GetLengthBeforeNodeAction();
-		r_CurNodeData.Certainty = bestCertainty+(MONTE_CARLO_OPTION3::MAX_CERTAINTY-bestCertainty)*otherCertainty;
-		r_CurNodeData.ExpectedLength = bestLength+(MONTE_CARLO_OPTION3::MAX_CERTAINTY-bestCertainty)*otherLength;
-		r_CurNodeData.ExpectedCost = bestData.ExpectedCost+(MONTE_CARLO_OPTION3::MAX_CERTAINTY-bestData.Certainty)*pOtherData->ExpectedCost + this->_Branch.ObserveActionCost;		// Add cost for this observation as well
+		r_CurNodeData.Certainty = bestChoiceCertainty * bestCertainty+(MONTE_CARLO_OPTION3::MAX_CERTAINTY-bestChoiceCertainty)*otherCertainty;
+		r_CurNodeData.ExpectedLength = bestChoiceCertainty * bestLength+(MONTE_CARLO_OPTION3::MAX_CERTAINTY-bestChoiceCertainty)*otherLength;
+		r_CurNodeData.ExpectedCost = bestChoiceCertainty * bestData.ExpectedCost+(MONTE_CARLO_OPTION3::MAX_CERTAINTY-bestChoiceCertainty)*pOtherData->ExpectedCost + BranchData.ObserveActionCost;		// Add cost for this observation as well
+
+		// Map Certainty
+		r_CurNodeData.MapCertainty = bestChoiceCertainty * bestData.MapCertainty + (MONTE_CARLO_OPTION3::MAX_CERTAINTY-bestChoiceCertainty)*pOtherData->MapCertainty;
+
+		// Adjust policy data
+		r_CurNodeData.CertaintyPolicy = bestChoiceCertainty * bestData.CertaintyPolicy +(MONTE_CARLO_OPTION3::MAX_CERTAINTY-bestChoiceCertainty)*pOtherData->CertaintyPolicy;
+
+		if(r_CurNodeData.CertaintyPolicy >= OGM_PROB_MAX)
+			r_CurNodeData.IsDone = true;
+
+		if(r_CurNodeData.Certainty <= OGM_PROB_MIN)
+			r_CurNodeData.ExpectedLengthPolicy = 0;
+		else
+			r_CurNodeData.ExpectedLengthPolicy = r_CurNodeData.ExpectedLength;
 	}
 	else
 	{
@@ -1365,58 +1201,444 @@ void MonteCarloOption3::Backtrack_Step()
 			if(bestData.Action.IsMovePath())
 			{
 				const auto &movePathData = dynamic_cast<const NODE_EXTRA_DATA_MOVE_PATH&>(bestData.GetExtraData());
-				r_CurNodeData.ExpectedCost = bestData.ExpectedCost + this->_Branch.MoveActionCost*movePathData.PathLength;
+				r_CurNodeData.ExpectedCost = bestData.ExpectedCost + BranchData.MoveActionCost*movePathData.PathLength;
 				r_CurNodeData.ExpectedLength = bestData.ExpectedLength + movePathData.PathLength;
 			}
 			else
 			{
-				r_CurNodeData.ExpectedCost = bestData.ExpectedCost + this->_Branch.MoveActionCost*1;
+				r_CurNodeData.ExpectedCost = bestData.ExpectedCost + BranchData.MoveActionCost*1;
 				r_CurNodeData.ExpectedLength = bestData.ExpectedLength + 1;
 			}
 		}
-		else // if(bestData.Action.IsObserveaction())
+		else if(bestData.Action.IsObserveAction())
 		{
 			// Copy best value and add uncertainty
 			const auto &observationData = dynamic_cast<const NODE_EXTRA_DATA_OBSERVE_ACTION&>(bestData.GetExtraData());
-			r_CurNodeData.Certainty = OccupancyGridMap::CalculateCertaintyProbValueFromCertaintyLog( OccupancyGridMap::CalculateCertaintyLogValueFromCertaintyProb(bestData.Certainty) + observationData.ObservationFreeProbabilityLog);				// Copy certainty, the uncertainty of this path is already considered in the following observation
+			r_CurNodeData.Certainty = bestData.Certainty; //OccupancyGridMap::CalculateCertaintyProbValueFromCertaintyLog( OccupancyGridMap::CalculateCertaintyLogValueFromCertaintyProb(bestData.Certainty) + observationData.ObservationFreeProbabilityLog);				// Copy certainty, the uncertainty of this path is already considered in the following observation
 
-			r_CurNodeData.ExpectedCost = bestData.ExpectedCost + this->_Branch.ObserveActionCost;
+			r_CurNodeData.ExpectedCost = bestData.ExpectedCost + BranchData.ObserveActionCost;
 			r_CurNodeData.ExpectedLength = bestData.ExpectedLength;
+		}
+
+		// Map Certainty
+		r_CurNodeData.MapCertainty = bestData.MapCertainty;
+
+		// Adjust policy data
+		if(r_CurNodeData.Certainty <= OGM_PROB_MIN)
+		{
+			r_CurNodeData.CertaintyPolicy = OGM_PROB_MAX;
+
+			r_CurNodeData.ExpectedLength = 0;
+			r_CurNodeData.ExpectedLengthPolicy = 0;
+
+			r_CurNodeData.IsDone = true;
+		}
+		else if(r_CurNodeData.Certainty >= OGM_PROB_MAX)
+		{
+			r_CurNodeData.CertaintyPolicy = OGM_PROB_MAX;
+
+			r_CurNodeData.ExpectedLengthPolicy = r_CurNodeData.ExpectedLength;
+
+			r_CurNodeData.IsDone = true;
+		}
+		else
+		{
+			r_CurNodeData.CertaintyPolicy = r_CurNodeData.Certainty;
+			r_CurNodeData.ExpectedLengthPolicy = r_CurNodeData.ExpectedLength;
+
+			r_CurNodeData.IsDone = allChildNodesDone;
 		}
 	}
 
-	// Adjust policy data
-	if(r_CurNodeData.Certainty <= OGM_PROB_MIN)
-	{
-		r_CurNodeData.CertaintyPolicy = OGM_PROB_MAX;
-
-		r_CurNodeData.ExpectedLength = 0;
-		r_CurNodeData.ExpectedLengthPolicy = 0;
-
-		r_CurNodeData.IsDone = true;
-	}
-	else if(r_CurNodeData.Certainty >= OGM_PROB_MAX)
-	{
-		r_CurNodeData.CertaintyPolicy = OGM_PROB_MAX;
-
-		r_CurNodeData.ExpectedLengthPolicy = r_CurNodeData.ExpectedLength;
-
-		r_CurNodeData.IsDone = true;
-	}
-	else
-	{
-		r_CurNodeData.CertaintyPolicy = r_CurNodeData.Certainty;
-		r_CurNodeData.ExpectedLengthPolicy = r_CurNodeData.ExpectedLength;
-
-		r_CurNodeData.IsDone = allChildNodesDone;
-	}
-
 	// Calculate node value
-	const auto *const pParentNode = this->_Branch.pCurNode->GetParent();
-	this->CalculateNodeValue( r_CurNodeData, this->_Branch.Constant,  (pParentNode == nullptr ? r_CurNodeData.NumVisits : pParentNode->GetData().NumVisits), r_CurNodeData.Value);
+	const auto *const pParentNode = BranchData.pCurNode->GetParent();
+	this->CalculateNodeValue( r_CurNodeData, BranchData.Constant,  (pParentNode == nullptr ? r_CurNodeData.NumVisits : pParentNode->GetData().NumVisits), r_CurNodeData.Value);
 
 	// Increase number of visits
 	r_CurNodeData.NumVisits++;
+}
+
+int MonteCarloOption3::PerformLeafExpansion(BRANCH_DATA &BranchData)
+{
+	TREE_NODE * const&ppCurNode = BranchData.pCurNode;
+	NODE_DATA *pCurNodeData = &ppCurNode->GetDataR();
+
+	// Sanity Check that we are at leaf
+	if(!ppCurNode->IsLeaf())
+		return -1;
+
+	// Make sure data is synced
+	BranchData.StepDownOneNodeSync();
+
+	// Calculate move costs to these quads
+	BranchData.SyncDStarMaps(1,1);
+
+	const auto curPos = BranchData.CurBotData.GetGlobalBotPosition();
+	auto curID = BranchData.DStarMaps.GetQuadIDAtPos(curPos);
+
+	// Create new paths out of quad
+	bool pathFound = false;
+	do
+	{
+		// Get all adjacent quads
+		auto adjacentQuads = BranchData.DStarMaps.GetAdjacentQuadIDs(curID);
+		for(const auto adjacentID : adjacentQuads)
+		{
+			// Make sure this quad hasn't been traversed recently
+			bool prevVisited = false;
+			for(const auto prevID : BranchData.VisitedQuads)
+			{
+				if(prevID == adjacentID)
+				{
+					prevVisited = true;
+					break;
+				}
+			}
+			if(prevVisited)
+				continue;		// Skip if previously visited
+
+			// Find best edge position to this quad
+			const auto edgeRectangle = BranchData.DStarMaps.GetAdjacentRectangle(curID, adjacentID);
+			auto bestPosVal = GetInfiniteVal<EXPECTED_LENGTH_TYPE>();
+			POS_2D bestEdgePos = curPos;
+			POS_2D edgePos;
+			for(edgePos.X = edgeRectangle.BottomLeftPos.X; edgePos.X-edgeRectangle.BottomLeftPos.X < edgeRectangle.Width; ++edgePos.X)
+			{
+				for(edgePos.Y = edgeRectangle.BottomLeftPos.Y; edgePos.Y-edgeRectangle.BottomLeftPos.Y < edgeRectangle.Height; ++edgePos.Y)
+				{
+					auto curVal = BranchData.DStarMaps.GetDStarRatioMapToStart().GetPixel(edgePos)+BranchData.DStarMaps.GetDStarRatioDistMapToGoal().GetPixel(edgePos);
+					if(curVal < bestPosVal)
+					{
+						bestPosVal = curVal;
+						bestEdgePos = edgePos;
+					}
+				}
+			}
+
+			if(bestEdgePos == curPos)
+				continue;				// No position found that wasn't occupied, skip
+
+			// Check that position wasn't previously visited
+			for(const auto &prevPos : BranchData.PrevPath)
+			{
+				if(prevPos == bestEdgePos)
+				{
+					prevVisited = true;
+					break;
+				}
+			}
+			if(prevVisited)
+				continue;		// Skip if previously visited
+
+			pathFound = true;
+
+			// Create a jump to this position
+			std::unique_ptr<NODE_EXTRA_DATA_JUMP> pNewJump(new NODE_EXTRA_DATA_JUMP());
+			pNewJump->PathData = BranchData.DStarMaps.CalculateRatioPathFromStart(bestEdgePos);
+			pNewJump->RecentPathLength = BranchData.DStarMaps.GetDStarRatioDistMapToStart().GetPixel(bestEdgePos);
+			pNewJump->RecentPathLogCertainty = BranchData.DStarMaps.GetDStarRatioCertaintyMapToStart().GetPixel(bestEdgePos);
+
+			// Add jump to children
+			ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_JUMP, NODE_EXTRA_DATA(std::move(pNewJump))));
+		}
+
+		// If no path was found, divide quad
+		if(!pathFound)
+		{
+			// Divide quad
+			if(!BranchData.DStarMaps.DivideQuad(BranchData.CurCertaintyLogData, BranchData.PosToUpdate, curID, 1, 1))
+				continue;		// Division failed, stop
+
+			BranchData.PosToUpdate.clear();
+			pCurNodeData->NumDivisions++;
+
+			curID = BranchData.DStarMaps.GetQuadIDAtPos(curPos);
+		}
+	}
+	while(!pathFound);
+
+	// If both dest and bot are in same quad, create path
+	bool destPathCreated = false;
+	if(curID == BranchData.DStarMaps.GetQuadIDAtPos(BranchData.Destination))
+	{
+		// Check that dest is reachable and that bot isn't already at destination
+		if(curPos != BranchData.Destination && BranchData.DStarMaps.GetDStarRatioMapToStart().GetPixel(BranchData.Destination) < OGM_LOG_MAX)
+		{
+			// Create a jump to destination
+			std::unique_ptr<NODE_EXTRA_DATA_JUMP> pNewJump(new NODE_EXTRA_DATA_JUMP());
+			pNewJump->PathData = BranchData.DStarMaps.CalculateRatioPathFromStart(BranchData.Destination);
+			pNewJump->RecentPathLength = BranchData.DStarMaps.GetDStarRatioDistMapToStart().GetPixel(BranchData.Destination);
+			pNewJump->RecentPathLogCertainty = BranchData.DStarMaps.GetDStarRatioCertaintyMapToStart().GetPixel(BranchData.Destination);
+
+			// Add jump to children
+			ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_JUMP, NODE_EXTRA_DATA(std::move(pNewJump))));
+
+			destPathCreated = true;
+		}
+	}
+
+	// If no new path was created, set this node as finished
+	if(!destPathCreated && !pathFound)
+	{
+		pCurNodeData->IsDone = true;
+	}
+
+	return 1;
+}
+
+int MonteCarloOption3::InsertSkippedCell(BRANCH_DATA &BranchData)
+{
+	// Check where to insert cell
+	TREE_NODE * const&ppCurNode = BranchData.pCurNode;
+	NODE_DATA *pCurNodeData = &ppCurNode->GetDataR();
+
+	NODE_EXTRA_DATA_JUMP &r_CurJumpData = dynamic_cast<NODE_EXTRA_DATA_JUMP &>(pCurNodeData->GetExtraData());
+
+	// Return error if jump is empty
+	if(r_CurJumpData.PathData.empty())
+		return -1;
+
+	// Find division cell
+	POS_2D curPos = BranchData.CurBotData.GetGlobalBotPosition();
+	CERTAINTY_TYPE firstPathLogCert = OGM_LOG_MIN;
+	EXPECTED_LENGTH_TYPE firstPathLength = 0;
+	CERTAINTY_TYPE secondPathLogCert = r_CurJumpData.RecentPathLogCertainty;
+	EXPECTED_LENGTH_TYPE secondPathLength = r_CurJumpData.RecentPathLength;
+	auto curPathPosIterator = r_CurJumpData.PathData.begin();
+	for(; curPathPosIterator != r_CurJumpData.PathData.end(); ++curPathPosIterator)
+	{
+		auto curLogCert = BranchData.CurCertaintyLogData.GetPixel(*curPathPosIterator);
+
+		// Update certainty and length
+		firstPathLogCert = r_CurJumpData.RecentPathLogCertainty - secondPathLogCert;
+		firstPathLength = r_CurJumpData.RecentPathLength - secondPathLength;
+
+		secondPathLogCert -= curLogCert;
+		secondPathLength -= GetMovementCost(curPos, *curPathPosIterator);
+
+		if(firstPathLogCert >= secondPathLogCert)
+			break;
+
+		// Update current pos
+		curPos = *curPathPosIterator;
+	}
+
+	const auto newPos = *curPathPosIterator;
+	std::unique_ptr<TREE_NODE> pChildNode(nullptr);
+
+	// Divide jump into three parts (first jump, inserted cell, second jump)
+	if(curPathPosIterator == r_CurJumpData.PathData.begin())
+	{
+		// If it should be divided at start, don't insert first jump, just alter it to second one
+		r_CurJumpData.PathData.erase(r_CurJumpData.PathData.begin(), curPathPosIterator+1);
+		r_CurJumpData.RecentPathLength = secondPathLength;
+		r_CurJumpData.RecentPathLogCertainty = secondPathLogCert;
+
+		// Move back up to parent node
+		pChildNode.reset(ppCurNode);
+		BranchData.StepUpOneNodeSimple();
+		pCurNodeData = &ppCurNode->GetDataR();
+
+		// Remove this branch from parent (will be done later)
+		//pChildNode = pChildNode->RemoveAndSetAsRoot();
+	}
+	else
+	{
+		// Save data for second node
+		std::unique_ptr<NODE_EXTRA_DATA_JUMP> pOldData(new NODE_EXTRA_DATA_JUMP(r_CurJumpData));
+
+		// Update next node data
+		const auto curPathPosID = curPathPosIterator-r_CurJumpData.PathData.begin();
+		pOldData->PathData.erase(pOldData->PathData.begin(), pOldData->PathData.begin()+curPathPosID+1);
+		pOldData->RecentPathLength = secondPathLength;
+		pOldData->RecentPathLogCertainty = secondPathLogCert;
+
+		// Update current node data
+		r_CurJumpData.PathData.erase(curPathPosIterator, r_CurJumpData.PathData.end());
+		r_CurJumpData.RecentPathLength = firstPathLength;
+		r_CurJumpData.RecentPathLogCertainty = firstPathLogCert;
+
+		// Sync and move down
+		BranchData.StepDownOneNodeSync();
+
+		// Create second path step
+		pChildNode.reset(ppCurNode->InsertChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_JUMP, NODE_EXTRA_DATA(std::move(pOldData)))));
+	}
+
+	// Expand node
+	this->ExpandSkippedCell(BranchData, pChildNode, newPos, 1);
+
+	// Remove cell if second stage is empty
+	if(pChildNode != nullptr)
+	{
+		if(secondPathLength <= 0.125f)
+			ppCurNode->RemoveChildOutOfTree(&(*pChildNode) - &ppCurNode->GetStorage().front());
+
+		// Release pointer if parent available (else it will be deleted at end)
+		if(pChildNode->GetParent() != nullptr)
+			pChildNode.release();
+	}
+
+	return 1;
+}
+
+int MonteCarloOption3::ExpandSkippedCell(BRANCH_DATA &BranchData, std::unique_ptr<TREE_NODE> &ChildNode, const POS_2D &ChildPos, bool SkipPreviousPath)
+{
+	TREE_NODE *&ppCurNode = BranchData.pCurNode;
+	NODE_DATA *pCurNodeData = &ppCurNode->GetDataR();
+
+	// Remove child node from any nodes (this prevents errors when arrays are adjusted)
+	ChildNode = ChildNode.release()->RemoveAndSetAsRoot();
+
+	// Synchronize data
+	BranchData.StepDownOneNodeSync();
+	BranchData.SyncDStarMaps(1,0);
+
+	bool childNodeInserted = false;
+
+	// Go through all adjacent positions
+	const auto curPos = BranchData.CurBotData.GetGlobalBotPosition();
+	for(const auto moveOrder : NavigationOptions)
+	{
+		const auto adjacentPos = curPos+moveOrder;
+
+		CERTAINTY_TYPE adjacentCert;
+		if(BranchData.CurCertaintyLogData.GetPixel(adjacentPos, adjacentCert) < 0)
+			continue;		// Skip if outside of map
+
+		// Skip if already traversed
+		bool skipPos = false;
+		if(!SkipPreviousPath)
+		{
+			for(const auto prevPos : BranchData.PrevPath)
+			{
+				if(adjacentPos == prevPos)
+				{
+					skipPos = true;
+					continue;
+				}
+			}
+			if(skipPos)
+				continue;
+		}
+
+		// Skip if already a node of this cell
+		for(auto curChildNodeIterator = ppCurNode->GetStorage().begin(); curChildNodeIterator != ppCurNode->GetStorage().end(); ++curChildNodeIterator)
+		{
+			if(!curChildNodeIterator->GetData().Action.IsIncompleteMove() && *this->NextPosOfNode(*curChildNodeIterator) == adjacentPos)
+			{
+				skipPos = true;
+				continue;
+			}
+		}
+		if(skipPos)
+			continue;
+
+		// Create new node
+		if(adjacentCert <= OGM_LOG_MIN)
+		{
+			// Create move order
+			auto *const pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE, NODE_EXTRA_DATA_MOVE(adjacentPos)));
+
+			if(ChildPos != adjacentPos)
+			{
+				// Simulate data if it won't be appended later
+				auto tmpBranch = BranchData;
+				tmpBranch.StepDownOneNode(ppCurNode->GetNumChildren()-1);
+				tmpBranch.SyncDStarMaps(1,0);
+
+				this->SimulateBranch(tmpBranch);
+			}
+		}
+		else if(adjacentCert < OGM_LOG_MAX)
+		{
+			// Create observe order
+			auto *const pNewNode = ppCurNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_OBSERVE, NODE_EXTRA_DATA_OBSERVE_ACTION(adjacentPos, adjacentCert)));
+
+			auto occupiedBranch = BranchData;
+			occupiedBranch.StepDownOneNode(occupiedBranch.pCurNode->GetNumChildren()-1);
+
+			// Create a free node
+			pNewNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_NONE));
+			if(ChildPos != adjacentPos)
+			{
+				// Simulate data if it won't be appended later
+				auto tmpBranch = occupiedBranch;
+				tmpBranch.StepDownOneNode(tmpBranch.pCurNode->GetNumChildren()-1);
+				tmpBranch.SyncDStarMaps(1,0);
+
+				this->SimulateBranch(tmpBranch);
+			}
+
+			// Create an occupied node
+			pNewNode->AddChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_NONE));
+			occupiedBranch.StepDownOneNode(occupiedBranch.pCurNode->GetNumChildren()-1);
+			occupiedBranch.SyncDStarMaps(1,0);
+
+			this->SimulateBranch(occupiedBranch);
+
+			// Backtrack to decision
+			if(ChildPos != adjacentPos)
+			{
+				occupiedBranch.StepUpOneNodeSimple();
+				this->Backtrack_Step(occupiedBranch);
+			}
+		}
+	}
+
+	if(!childNodeInserted)
+	{
+		// Insert child node if not yet done
+		for(auto &curChild : ppCurNode->GetStorageR())
+		{
+			if(*this->NextPosOfNode(curChild) == ChildPos)
+			{
+				childNodeInserted = true;
+
+				BranchData.StepDownOneNode(&curChild - &ppCurNode->GetStorageR().front());
+
+				// Append to proper place
+				if(curChild.GetData().Action.IsObserveAction())
+					BranchData.StepDownOneNodeSimple(0);
+
+				// Release child node
+				ChildNode.reset(ppCurNode->AddChild(std::move(*ChildNode.release())));
+
+				break;
+			}
+		}
+	}
+
+	if(childNodeInserted)
+		return 1;
+
+	// Delete node if no insertion possible
+	ChildNode.reset(nullptr);
+
+	return 0;
+}
+
+const POS_2D *MonteCarloOption3::NextPosOfNode(const TREE_NODE &Node)
+{
+	const auto &nodeData = Node.GetData();
+	if(nodeData.Action.IsIncompleteMove())
+	{
+		return &(dynamic_cast<const NODE_EXTRA_DATA_JUMP&>(nodeData.GetExtraData()).PathData.front());
+	}
+	else if (nodeData.Action.IsCompleteMove())
+	{
+		return &(dynamic_cast<const NODE_EXTRA_DATA_MOVE&>(nodeData.GetExtraData()).NewPos);
+	}
+	else if (nodeData.Action.IsObserveAction())
+	{
+		return &(dynamic_cast<const NODE_EXTRA_DATA_OBSERVE_ACTION&>(nodeData.GetExtraData()).ObservationPoint);
+	}
+	else if(nodeData.Action.IsMovePath())
+	{
+		return &(dynamic_cast<const NODE_EXTRA_DATA_MOVE_PATH&>(nodeData.GetExtraData()).TargetPosition);
+	}
+
+	return nullptr;
 }
 
 //int MonteCarloOption3::CalculatePath(const BRANCH_DATA &BranchData, const POS_2D &StartPos, const POS_2D &Destination, PATH_DATA *const PathTaken, EXPECTED_LENGTH_TYPE *const ExpectedLength, CERTAINTY_TYPE *const Certainty, COST_TYPE *const Cost)
@@ -1597,9 +1819,10 @@ void MonteCarloOption3::Backtrack_Step()
 //	this->CalculateNodeValue(Result, this->_Branch.Constant, NumParentsVisit, Result.Value);
 //}
 
-std::vector<MONTE_CARLO_OPTION3::NODE_DATA> MonteCarloOption3::ExpandCurrentNode(const BRANCH_DATA &BranchData, const POS_2D &CurPos, const POS_2D &NextPos)
+std::vector<MONTE_CARLO_OPTION3::NODE_DATA> MonteCarloOption3::ExpandCurrentNode(const BRANCH_DATA &BranchData, const POS_2D &CurPos, const POS_2D &NextPos, bool &NextPosReached)
 {
 	std::vector<MONTE_CARLO_OPTION3::NODE_DATA> newNodes;
+	NextPosReached = false;
 
 	// Go through all adjacent nodes
 	for(const auto moveData : NavigationOptions)
@@ -1645,7 +1868,60 @@ std::vector<MONTE_CARLO_OPTION3::NODE_DATA> MonteCarloOption3::ExpandCurrentNode
 
 		// Check if this cell covers the next position
 		if(adjacentPos == NextPos)
+		{
 			std::swap(newNodes.front(), curNode);		// If it does, move it to first vector location
+			NextPosReached = true;
+		}
+	}
+
+	return newNodes;
+}
+
+std::vector<MONTE_CARLO_OPTION3::NODE_DATA> MonteCarloOption3::ExpandCurrentNode(const BRANCH_DATA &BranchData, const POS_2D &CurPos)
+{
+	std::vector<MONTE_CARLO_OPTION3::NODE_DATA> newNodes;
+
+	// Go through all adjacent nodes
+	for(const auto moveData : NavigationOptions)
+	{
+		const POS_2D adjacentPos = CurPos+moveData;
+
+		// Skip if outside of map
+		CERTAINTY_TYPE adjacentLogCert;
+		if(!BranchData.CurCertaintyLogData.GetPixel(adjacentPos, adjacentLogCert))
+			continue;
+
+		if(adjacentLogCert >= OGM_LOG_MAX)
+			continue;				// Skip if cell occupied
+
+		// Skip if previously visited
+		bool previouslyVisited = false;
+		for(const auto prevPathPos : BranchData.PrevPath)
+		{
+			if(adjacentPos == prevPathPos)
+			{
+				previouslyVisited = true;
+				break;
+			}
+		}
+		if(previouslyVisited)
+			continue;				// Skip if visited since last observe action
+
+		// Create new empty node
+		newNodes.push_back(NODE_DATA());
+		auto &curNode = newNodes.back();
+		if(adjacentLogCert > OGM_LOG_MIN)
+		{
+			// Create scan node
+			curNode.Action.SetAction(MONTE_CARLO_OPTION3::NODE_ACTION_OBSERVE);
+			curNode.SetExtraData(NODE_EXTRA_DATA_OBSERVE_ACTION(adjacentPos, adjacentLogCert));
+		}
+		else
+		{
+			// Change to complete move (move to next quad)
+			curNode.Action.SetAction(MONTE_CARLO_OPTION3::NODE_ACTION_MOVE);			// Set action type
+			curNode.SetExtraData(NODE_EXTRA_DATA_MOVE(adjacentPos));					// Set extra data to new value
+		}
 	}
 
 	return newNodes;
@@ -1658,8 +1934,6 @@ void MonteCarloOption3::ExpandScanNode(TREE_NODE &ScanNode)
 	// Do nothing if not scan action
 	if(scanNodeData.Action.IsObserveAction())
 		return;
-
-	const auto &extraNodeData = dynamic_cast<const NODE_EXTRA_DATA_OBSERVE_ACTION&>(scanNodeData.GetExtraData());
 
 	// Insert node indicator for observe result free
 	ScanNode.InsertChild(NODE_DATA(MONTE_CARLO_OPTION3::NODE_ACTION_NONE));

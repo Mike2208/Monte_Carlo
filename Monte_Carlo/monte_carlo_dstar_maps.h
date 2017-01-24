@@ -4,6 +4,8 @@
 #include "standard_definitions.h"
 #include "occupancy_grid_map.h"
 
+#include <queue>
+
 namespace MONTE_CARLO_DSTAR_MAPS
 {
 	struct MAP_UPDATES
@@ -98,8 +100,8 @@ class MonteCarloDStarMaps
 		void ResetDistMap(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, const OGM_LOG_TYPE ObstacleValue, Map2D<MOVE_DIST_TYPE> &DistMap);
 		void ResetProbMapToTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap);
 		void ResetProbMapFromTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &ProbMap);
-		void ResetRatioMapToTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap);
-		void ResetRatioMapFromTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap);
+		void ResetRatioMapToTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap, std::queue<POS_2D> *const QueueData = nullptr);
+		void ResetRatioMapFromTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap, std::queue<POS_2D> *const QueueData = nullptr);
 
 		// Updating maps
 		void UpdateDistMap(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, const OGM_LOG_TYPE ObstacleValue, Map2D<MOVE_DIST_TYPE> &DistMap);

@@ -8,7 +8,6 @@ SOURCES += main.cpp \
     occupancy_grid_map.cpp \
     algorithm_d_star.cpp \
     robot_navigation.cpp \
-    monte_carlo_option1.cpp \
     tree_node.cpp \
     tree_class.cpp \
     monte_carlo_branch_data.cpp \
@@ -62,7 +61,9 @@ SOURCES += main.cpp \
     map_2d_overlay.cpp \
     map_2d_move.cpp \
     quad_map.cpp \
-    quad_d_star_maps.cpp
+    quad_d_star_maps.cpp \
+    policy_data.cpp \
+    check_conditions.cpp
 
 HEADERS += \
     map_2d.h \
@@ -71,7 +72,6 @@ HEADERS += \
     standard_definitions.h \
     algorithm_d_star.h \
     robot_navigation.h \
-    monte_carlo_option1.h \
     tree_node.h \
     tree_class.h \
     monte_carlo_branch_data.h \
@@ -113,6 +113,10 @@ HEADERS += \
     map_2d_overlay.h \
     map_2d_move.h \
     quad_map.h \
-    quad_d_star_maps.h
+    quad_d_star_maps.h \
+    policy_data.h \
+    check_conditions.h
 
 unix:!macx: LIBS += -lpng
+
+unix|win32: LIBS += -lboost_program_options

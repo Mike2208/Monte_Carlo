@@ -2,37 +2,51 @@
 
 void MonteCarloBranchData::Reset()
 {
+	this->PrevBranches->clear();
+
 	this->PathTaken.clear();
 	this->FirstPosAfterObservation = 0;
-	this->pOGMap = nullptr;
+	this->pOGMaps = nullptr;
 }
 
-void MonteCarloBranchData::SetMonteCarloObjectives(const OccupancyGridMap &Map, const POS_2D &Destination)
+void MonteCarloBranchData::SetMonteCarloObjectives(const std::vector<OccupancyGridMap> &Maps, const POS_2D &Destination)
 {
 	this->Reset();
 
 	this->Destination = Destination;
-	this->pOGMap = &Map;
+	this->pOGMaps = &Maps;
 }
 
 void MonteCarloBranchData::ResetBranchDataToRoot(const MONTE_CARLO_TREE_CLASS &Tree)
 {
-	// Set paths to zero
-	this->PathTaken.clear();
-	this->FirstPosAfterObservation = 0;
+	if(this->PrevBranches->empty())
+	{
+		// Set paths to zero
+		this->PathTaken.clear();
+		this->FirstPosAfterObservation = 0;
 
-	// Recalculate log map
-	OccupancyGridMap::CalculateLogMapFromCellMap(*this->pOGMap, this->LogMap);
+		// Calculate total map certainties
+		this->MapCertainties.resize(this->pOGMaps->size(), 1.0f);
+		this->MapCertaintiesNormalized.resize(this->pOGMaps->size(), 1.0f/(this->pOGMaps->size()));
 
-	// Recalculate D* Map
-	this->DStarCostMap.CalculateDStarCostMap(this->LogMap, this->Destination, OGM_LOG_MIN, OGM_LOG_MAX);
+		// Recalculate total map
+		this->CertaintyLogMap.ResizeMap(this->pOGMaps->at(0).GetWidth(), this->pOGMaps->at(0).GetHeight());
+		this->UpdateTotalMap();
 
-	// Reset number of visits to zero for all cells
-	this->NumVisitsMap.ResetMap(this->pOGMap->GetWidth(), this->pOGMap->GetHeight(), 0);
+		// Recalculate D* Map
+		this->DStarCostMap.ResetDestPos(this->CertaintyLogMap, this->Destination);
 
-	// Set current node to root node
-	this->pCurNode = &(const_cast<MONTE_CARLO_TREE_CLASS &>(Tree).GetRoot());
+		// Reset number of visits to zero for all cells
+		this->NumVisitsMap.ResetMap(this->pOGMaps->at(0).GetWidth(), this->pOGMaps->at(0).GetHeight(), 0);
 
+		// Set current node to root node
+		this->pCurNode = &(const_cast<MONTE_CARLO_TREE_CLASS &>(Tree).GetRoot());
+	}
+	else
+	{
+		*this = std::move(this->PrevBranches->at(0));
+		this->PrevBranches->clear();
+	}
 }
 
 int	MonteCarloBranchData::MoveDownOneNode(const MONTE_CARLO_NODE::CHILD_ID &NextNodeID)
@@ -59,8 +73,64 @@ int	MonteCarloBranchData::MoveUpOneNode()
 	return 1;
 }
 
+void MonteCarloBranchData::UpdateCostMap()
+{
+	// Update and clear update pos vector
+	this->DStarCostMap.UpdateDStarMaps(this->CertaintyLogMap, this->PosToUpdate, this->GetBotPos(), 1, 0);
+	this->PosToUpdate.clear();
+}
+
+void MonteCarloBranchData::UpdateMapCertainties(const float PrevOccupancyProb, const bool PosOccupied)
+{
+	float totalCertainty = 0;
+	for(auto &curCertainty : this->MapCertainties)
+	{
+		if(PosOccupied)
+			curCertainty *= PrevOccupancyProb;
+		else
+			curCertainty *= (1.0f-PrevOccupancyProb);
+
+		totalCertainty += curCertainty;
+	}
+
+	for(size_t curNormCertID = 0; curNormCertID < this->MapCertaintiesNormalized.size(); ++curNormCertID)
+	{
+		this->MapCertaintiesNormalized.at(curNormCertID) = this->MapCertainties.at(curNormCertID)/totalCertainty;
+	}
+}
+
+void MonteCarloBranchData::UpdateTotalMap()
+{
+	POS_2D curPos;
+	for(curPos.X = 0; curPos.X < this->CertaintyLogMap.GetWidth(); ++curPos.X)
+	{
+		for(curPos.Y = 0; curPos.Y < this->CertaintyLogMap.GetHeight(); ++curPos.Y)
+		{
+			auto &r_CurVal = this->CertaintyLogMap.GetPixelR(curPos);
+			if(r_CurVal > OGM_LOG_MIN && r_CurVal < OGM_LOG_MAX)
+			{
+				const auto prevVal = r_CurVal;
+
+				r_CurVal = 0;
+				for(size_t curMapID = 0; curMapID < this->pOGMaps->size(); ++curMapID)
+				{
+					r_CurVal += this->MapCertaintiesNormalized.at(curMapID)*this->pOGMaps->at(curMapID).GetPixel(curPos);
+				}
+
+				r_CurVal = OccupancyGridMap::CalculateCertaintyLogFromProb(r_CurVal/OGM_CELL_MAX);
+
+				if(prevVal != r_CurVal)
+					this->PosToUpdate.push_back(curPos);
+			}
+		}
+	}
+}
+
 void MonteCarloBranchData::UpdateBranchData(const MONTE_CARLO_NODE &NextNode)
 {
+	// Save current branch
+	this->PrevBranches->push_back(*this);
+
 	// Set new current node
 	this->pCurNode = const_cast<MONTE_CARLO_NODE *>(&NextNode);
 
@@ -84,19 +154,32 @@ void MonteCarloBranchData::UpdateBranchData(const MONTE_CARLO_NODE &NextNode)
 	}
 	else
 	{
+		this->PosToUpdate.push_back(nextData.NewCell);
+
 		// If this is an observation result, update log data
 		if(nextData.Action.IsCellFree())
 		{
 			// At free cell, set log map position to zero
-			this->LogMap.GetPixelR(nextData.NewCell) = OGM_LOG_MIN;
+			auto &curLogCert = this->CertaintyLogMap.GetPixelR(nextData.NewCell);
+
+			this->UpdateMapCertainties(OccupancyGridMap::CalculateCertaintyProbFromLog(curLogCert), 0);
+
+			curLogCert = OGM_LOG_MIN;
 		}
 		else
 		{
 			// At occpupied cell, set log map position to infinity
-			this->LogMap.GetPixelR(nextData.NewCell) = OGM_LOG_MAX;
+			auto &curLogCert = this->CertaintyLogMap.GetPixelR(nextData.NewCell);
+
+			this->UpdateMapCertainties(OccupancyGridMap::CalculateCertaintyProbFromLog(curLogCert), 1);
+
+			curLogCert = OGM_LOG_MAX;
 		}
 
-		this->DStarCostMap.CalculateDStarCostMap(this->LogMap, this->Destination, OGM_LOG_MIN, OGM_LOG_MAX);
+		if(this->pOGMaps->size() > 1)
+			this->UpdateTotalMap();
+
+		//this->DStarCostMap.ResetDestPos(this->LogMap, this->Destination);
 	}
 }
 
@@ -106,33 +189,9 @@ void MonteCarloBranchData::RevertBranchData(const MONTE_CARLO_NODE &PrevNode)
 	if(&PrevNode != this->pCurNode->GetParent())
 		return;
 
-	// Get current Data
-	const MonteCarloNodeData &curData = this->pCurNode->GetData();
+	// Move up one node
+	*this = std::move(this->PrevBranches->back());
 
-	// Revert maps with data
-	if(curData.Action.IsMoveAction())
-	{
-		// If this node represents a move action, update path and visits map
-		this->NumVisitsMap.GetPixelR(curData.NewCell)--;
-
-		this->PathTaken.pop_back();
-
-		// Just set first move after observation to invalid
-		this->FirstPosAfterObservation = this->PathTaken.size();
-	}
-	else if(curData.Action.IsObserveAction())
-	{
-		// If this is observe action, reset first position after observation to next move
-		this->FirstPosAfterObservation = this->PathTaken.size();
-	}
-	else
-	{
-		// Recalculate Log Map value from cell data
-		this->LogMap.GetPixelR(curData.NewCell) = OccupancyGridMap::CalculateLogValFromCell(this->pOGMap->GetPixel(curData.NewCell));
-
-		this->DStarCostMap.CalculateDStarCostMap(this->LogMap, this->Destination, OGM_LOG_MIN, OGM_LOG_MAX);
-	}
-
-	// Set new current node
-	this->pCurNode = const_cast<MONTE_CARLO_NODE *>(&PrevNode);
+	// Remove last element
+	this->PrevBranches->pop_back();
 }

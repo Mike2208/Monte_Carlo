@@ -1,7 +1,5 @@
 #include "monte_carlo_dstar_maps.h"
 
-#include <queue>
-
 const OGM_LOG_TYPE MIN_OBSTACLE_VALUE = OGM_LOG_MAX;
 
 struct RATIO_DATA
@@ -382,22 +380,27 @@ void MonteCarloDStarMaps::ResetProbMapToTarget(const OGM_LOG_MAP_TYPE &OriginalM
 	while(!posToCheck.empty());
 }
 
-void MonteCarloDStarMaps::ResetRatioMapFromTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
+void MonteCarloDStarMaps::ResetRatioMapFromTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap, std::queue<POS_2D> *const QueueData)
 {
-
-	// Reset Maps
-	RatioMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
-	RatioDistMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<MOVE_DIST_TYPE>());
-	RatioProbMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
-
-	RatioDistMap.SetPixel(TargetPos, 0);
-	RatioProbMap.SetPixel(TargetPos, OGM_LOG_MIN);
-	RatioMap.SetPixel(TargetPos, this->CalculateRatio(0, OGM_LOG_MIN));
-
 	// Go through map and calculate shortest distances
 	std::queue<POS_2D> posToCheck;
-	posToCheck.push(TargetPos);
-	do
+	if(QueueData == nullptr)
+	{
+		// Reset Maps
+		RatioMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
+		RatioDistMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<MOVE_DIST_TYPE>());
+		RatioProbMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
+
+		RatioDistMap.SetPixel(TargetPos, 0);
+		RatioProbMap.SetPixel(TargetPos, OGM_LOG_MIN);
+		RatioMap.SetPixel(TargetPos, this->CalculateRatio(0, OGM_LOG_MIN));
+
+		posToCheck.push(TargetPos);
+	}
+	else
+		posToCheck = std::move(*QueueData);
+
+	while(!posToCheck.empty())
 	{
 		// Current position values
 		const POS_2D &curPos = posToCheck.front();
@@ -438,25 +441,29 @@ void MonteCarloDStarMaps::ResetRatioMapFromTarget(const OGM_LOG_MAP_TYPE &Origin
 		// Remove checked element
 		posToCheck.pop();
 	}
-	while(!posToCheck.empty());
 }
 
-void MonteCarloDStarMaps::ResetRatioMapToTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
+void MonteCarloDStarMaps::ResetRatioMapToTarget(const OGM_LOG_MAP_TYPE &OriginalMap, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap, std::queue<POS_2D> *const QueueData)
 {
-
-	// Reset Maps
-	RatioMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
-	RatioDistMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<MOVE_DIST_TYPE>());
-	RatioProbMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
-
-	RatioDistMap.SetPixel(TargetPos, 0);
-	RatioProbMap.SetPixel(TargetPos, OGM_LOG_MIN);
-	RatioMap.SetPixel(TargetPos, this->CalculateRatio(0, OGM_LOG_MIN));
-
 	// Go through map and calculate shortest distances
 	std::queue<POS_2D> posToCheck;
-	posToCheck.push(TargetPos);
-	do
+	if(QueueData == nullptr)
+	{
+		// Reset Maps
+		RatioMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
+		RatioDistMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<MOVE_DIST_TYPE>());
+		RatioProbMap.ResetMap(OriginalMap.GetWidth(), OriginalMap.GetHeight(), GetInfiniteVal<OGM_LOG_TYPE>());
+
+		RatioDistMap.SetPixel(TargetPos, 0);
+		RatioProbMap.SetPixel(TargetPos, OGM_LOG_MIN);
+		RatioMap.SetPixel(TargetPos, this->CalculateRatio(0, OGM_LOG_MIN));
+
+		posToCheck.push(TargetPos);
+	}
+	else
+		posToCheck = std::move(*QueueData);
+
+	while(!posToCheck.empty())
 	{
 		// Current position values
 		const POS_2D &curPos = posToCheck.front();
@@ -497,7 +504,6 @@ void MonteCarloDStarMaps::ResetRatioMapToTarget(const OGM_LOG_MAP_TYPE &Original
 		// Remove checked element
 		posToCheck.pop();
 	}
-	while(!posToCheck.empty());
 }
 
 void MonteCarloDStarMaps::UpdateDistMap(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, const OGM_LOG_TYPE ObstacleValue, Map2D<MOVE_DIST_TYPE> &DistMap)
@@ -821,7 +827,8 @@ void MonteCarloDStarMaps::UpdateRatioMapFromTarget(const OGM_LOG_MAP_TYPE &Updat
 		if(curUpdate == TargetPos)
 		{
 			// In this case, simply reset map as everything will change
-			this->ResetRatioMapFromTarget(UpdatedOriginalMap, TargetPos, RatioMap, RatioDistMap, RatioProbMap);
+			this->ResetRatioMapToTarget(UpdatedOriginalMap, TargetPos, RatioMap, RatioDistMap, RatioProbMap);
+
 			return;
 		}
 
@@ -830,7 +837,7 @@ void MonteCarloDStarMaps::UpdateRatioMapFromTarget(const OGM_LOG_MAP_TYPE &Updat
 	}
 
 	// Vector to store positions that should be checked next
-	std::vector<POS_DATA<RATIO_DATA>> storedPositions;
+	std::queue<POS_2D> storedPositions;
 
 	while(!nextPositionsToCheck.empty())
 	{
@@ -839,8 +846,9 @@ void MonteCarloDStarMaps::UpdateRatioMapFromTarget(const OGM_LOG_MAP_TYPE &Updat
 		auto &r_curRatioDist = RatioDistMap.GetPixelR(curPos);
 		auto &r_curRatioProb = RatioProbMap.GetPixelR(curPos);
 
-		//const auto curUpdatedProb = UpdatedOriginalMap.GetPixel(curPos);
+		const auto curUpdatedProb = UpdatedOriginalMap.GetPixel(curPos);
 
+		// Search for position that is correct
 		auto bestRatio = GetInfiniteVal<OGM_LOG_TYPE>();
 		auto bestRatioDist = GetInfiniteVal<MOVE_DIST_TYPE>();
 		auto bestRatioProb = GetInfiniteVal<OGM_LOG_TYPE>();
@@ -858,21 +866,19 @@ void MonteCarloDStarMaps::UpdateRatioMapFromTarget(const OGM_LOG_MAP_TYPE &Updat
 			auto adjacentRatioDist = RatioDistMap.GetPixel(adjacentPos);
 			auto adjacentRatioProb = RatioProbMap.GetPixel(adjacentPos);
 
+			if(adjacentRatio >= GetInfiniteVal<OGM_LOG_TYPE>())
+				continue;		// Skip if already infinite
+
 			const auto adjacentUpdatedProb = UpdatedOriginalMap.GetPixel(adjacentPos);
 
 			// Check if this position is dependent on old value
-			//if(adjacentRatio >= this->CalculateRatio(r_curRatioDist+movementCost, r_curRatioProb+adjacentUpdatedProb))
-			if(adjacentRatio > r_curRatio)
-			{
-				// Add adjacent distance to positions to check
-				nextPositionsToCheck.push(adjacentPos);
-			}
-			else
+			const auto tmpRatioDist = adjacentRatioDist+movementCost;
+			const auto tmpRatioProb = adjacentRatioProb + adjacentUpdatedProb;
+			const auto tmpRatio = this->CalculateRatio(tmpRatioDist, tmpRatioProb);
+
+			if(r_curRatio >= tmpRatio)
 			{
 				// Store best probability and current position + value
-				const auto tmpRatioDist = adjacentRatioDist+movementCost;
-				const auto tmpRatioProb = adjacentRatioProb + adjacentUpdatedProb;
-				const auto tmpRatio = this->CalculateRatio(tmpRatioDist, tmpRatioProb);
 				if(tmpRatio < bestRatio)
 				{
 					bestRatio = tmpRatio;
@@ -881,23 +887,14 @@ void MonteCarloDStarMaps::UpdateRatioMapFromTarget(const OGM_LOG_MAP_TYPE &Updat
 				}
 
 				// Store value to check whether adjacent dist can be improved with new curDist later
-				storedPositions.push_back(POS_DATA<RATIO_DATA>(adjacentPos, RATIO_DATA(adjacentRatio, adjacentRatioDist, adjacentRatioProb)));
+				storedPositions.push(adjacentPos);
 			}
-		}
-
-		// Check all stored positions to see which can be improved with new best value
-		if(bestRatio < r_curRatio)
-		{
-			for(const auto &curStoredPos : storedPositions)
+			else if(adjacentRatio >= this->CalculateRatio(tmpRatioDist, r_curRatioProb+curUpdatedProb))
 			{
-				// TODO: Maybe save UpdatedOriginalMap.GetPixel(curStoredPos.Position) earlier for faster access
-				if(this->CalculateRatio(bestRatioDist+GetMovementCost(curPos, curStoredPos.Position), bestRatioProb+UpdatedOriginalMap.GetPixel(curStoredPos.Position)) < curStoredPos.Value.Ratio)
-					nextPositionsToCheck.push(curStoredPos.Position);
+				// Add adjacent distance to positions to check if dependent on this one
+				nextPositionsToCheck.push(adjacentPos);
 			}
 		}
-
-		// Clear saved data
-		storedPositions.clear();
 
 		// Update curProb with best new possible value
 		r_curRatio = bestRatio;
@@ -906,6 +903,9 @@ void MonteCarloDStarMaps::UpdateRatioMapFromTarget(const OGM_LOG_MAP_TYPE &Updat
 
 		nextPositionsToCheck.pop();
 	}
+
+	// Perform standard
+	this->ResetRatioMapFromTarget(UpdatedOriginalMap, TargetPos, RatioMap, RatioDistMap, RatioProbMap, &storedPositions);
 }
 
 void MonteCarloDStarMaps::UpdateRatioMapToTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
@@ -929,7 +929,7 @@ void MonteCarloDStarMaps::UpdateRatioMapToTarget(const OGM_LOG_MAP_TYPE &Updated
 	}
 
 	// Vector to store positions that should be checked next
-	std::vector<POS_DATA<RATIO_DATA>> storedPositions;
+	std::queue<POS_2D> storedPositions;
 
 	while(!nextPositionsToCheck.empty())
 	{
@@ -940,6 +940,7 @@ void MonteCarloDStarMaps::UpdateRatioMapToTarget(const OGM_LOG_MAP_TYPE &Updated
 
 		const auto curUpdatedProb = UpdatedOriginalMap.GetPixel(curPos);
 
+		// Search for position that is correct
 		auto bestRatio = GetInfiniteVal<OGM_LOG_TYPE>();
 		auto bestRatioDist = GetInfiniteVal<MOVE_DIST_TYPE>();
 		auto bestRatioProb = GetInfiniteVal<OGM_LOG_TYPE>();
@@ -957,46 +958,35 @@ void MonteCarloDStarMaps::UpdateRatioMapToTarget(const OGM_LOG_MAP_TYPE &Updated
 			auto adjacentRatioDist = RatioDistMap.GetPixel(adjacentPos);
 			auto adjacentRatioProb = RatioProbMap.GetPixel(adjacentPos);
 
-			//const auto adjacentUpdatedProb = UpdatedOriginalMap.GetPixel(adjacentPos);
+			if(adjacentRatio >= GetInfiniteVal<OGM_LOG_TYPE>())
+				continue;		// Skip if already infinite
+
+			const auto adjacentUpdatedProb = UpdatedOriginalMap.GetPixel(adjacentPos);
 
 			// Check if this position is dependent on old value
-			//if(adjacentRatio >= this->CalculateRatio(r_curRatioDist+movementCost, r_curRatioProb+adjacentUpdatedProb))
-			if(adjacentRatio > r_curRatio)
-			{
-				// Add adjacent distance to positions to check
-				nextPositionsToCheck.push(adjacentPos);
-			}
-			else
+			const auto tmpRatioDist = adjacentRatioDist+movementCost;
+			const auto tmpRatioProb = adjacentRatioProb + curUpdatedProb;
+			const auto tmpRatio = this->CalculateRatio(tmpRatioDist, tmpRatioProb);
+
+			if(r_curRatio >= tmpRatio)
 			{
 				// Store best probability and current position + value
-				const auto tmpRatioDist = adjacentRatioDist+movementCost;
-				const auto tmpRatioProb = adjacentRatioProb + curUpdatedProb;
-				const auto tmpRatio = this->CalculateRatio(tmpRatioDist, tmpRatioProb);
-				if(tmpRatio < bestRatio)
-				{
-					bestRatio = tmpRatio;
-					bestRatioDist = tmpRatioDist;
-					bestRatioProb = tmpRatioProb;
-				}
+				//if(tmpRatio < bestRatio)
+				//{
+				//	bestRatio = tmpRatio;
+				//	bestRatioDist = tmpRatioDist;
+				//	bestRatioProb = tmpRatioProb;
+				//}
 
 				// Store value to check whether adjacent dist can be improved with new curDist later
-				storedPositions.push_back(POS_DATA<RATIO_DATA>(adjacentPos, RATIO_DATA(adjacentRatio, adjacentRatioDist, adjacentRatioProb)));
+				storedPositions.push(adjacentPos);
 			}
-		}
-
-		// Check all stored positions to see which can be improved with new best value
-		if(bestRatio < r_curRatio)
-		{
-			for(const auto &curStoredPos : storedPositions)
+			else if(adjacentRatio >= this->CalculateRatio(tmpRatioDist, r_curRatioProb+adjacentRatioProb))
 			{
-				// TODO: Maybe save UpdatedOriginalMap.GetPixel(curStoredPos.Position) earlier for faster access
-				if(this->CalculateRatio(bestRatioDist+GetMovementCost(curPos, curStoredPos.Position), bestRatioProb+UpdatedOriginalMap.GetPixel(curStoredPos.Position)) < curStoredPos.Value.Ratio)
-					nextPositionsToCheck.push(curStoredPos.Position);
+				// Add adjacent distance to positions to check if dependent on this one
+				nextPositionsToCheck.push(adjacentPos);
 			}
 		}
-
-		// Clear saved data
-		storedPositions.clear();
 
 		// Update curProb with best new possible value
 		r_curRatio = bestRatio;
@@ -1005,7 +995,207 @@ void MonteCarloDStarMaps::UpdateRatioMapToTarget(const OGM_LOG_MAP_TYPE &Updated
 
 		nextPositionsToCheck.pop();
 	}
+
+	// Perform standard
+	this->ResetRatioMapToTarget(UpdatedOriginalMap, TargetPos, RatioMap, RatioDistMap, RatioProbMap, &storedPositions);
 }
+
+//void MonteCarloDStarMaps::UpdateRatioMapFromTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
+//{
+//	// Set all updated values
+//	std::queue<POS_2D> nextPositionsToCheck;
+
+//	for(const auto &curUpdate : UpdatedValues)
+//	{
+//		// Check if map origin was updated
+//		if(curUpdate == TargetPos)
+//		{
+//			// In this case, simply reset map as everything will change
+//			this->ResetRatioMapFromTarget(UpdatedOriginalMap, TargetPos, RatioMap, RatioDistMap, RatioProbMap);
+//			return;
+//		}
+
+//		// Add position to queue
+//		nextPositionsToCheck.push(curUpdate);
+//	}
+
+//	// Vector to store positions that should be checked next
+//	std::vector<POS_DATA<RATIO_DATA>> storedPositions;
+
+//	while(!nextPositionsToCheck.empty())
+//	{
+//		const auto &curPos = nextPositionsToCheck.front();
+//		auto &r_curRatio = RatioMap.GetPixelR(curPos);
+//		auto &r_curRatioDist = RatioDistMap.GetPixelR(curPos);
+//		auto &r_curRatioProb = RatioProbMap.GetPixelR(curPos);
+
+//		//const auto curUpdatedProb = UpdatedOriginalMap.GetPixel(curPos);
+
+//		auto bestRatio = GetInfiniteVal<OGM_LOG_TYPE>();
+//		auto bestRatioDist = GetInfiniteVal<MOVE_DIST_TYPE>();
+//		auto bestRatioProb = GetInfiniteVal<OGM_LOG_TYPE>();
+//		for(const auto navOption : NavigationOptions)
+//		{
+//			// Get adjacent positions
+//			const auto adjacentPos = curPos + navOption;
+//			const auto movementCost = GetMovementCost(curPos, adjacentPos);
+
+//			// Check that pos is in map
+//			if(!RatioMap.IsInMap(adjacentPos))
+//				continue;
+
+//			auto adjacentRatio = RatioMap.GetPixel(adjacentPos);
+//			auto adjacentRatioDist = RatioDistMap.GetPixel(adjacentPos);
+//			auto adjacentRatioProb = RatioProbMap.GetPixel(adjacentPos);
+
+//			const auto adjacentUpdatedProb = UpdatedOriginalMap.GetPixel(adjacentPos);
+
+//			// Check if this position is dependent on old value
+//			//if(adjacentRatio >= this->CalculateRatio(r_curRatioDist+movementCost, r_curRatioProb+adjacentUpdatedProb))
+//			if(adjacentRatio > r_curRatio)
+//			{
+//				// Add adjacent distance to positions to check
+//				nextPositionsToCheck.push(adjacentPos);
+//			}
+//			else
+//			{
+//				// Store best probability and current position + value
+//				const auto tmpRatioDist = adjacentRatioDist+movementCost;
+//				const auto tmpRatioProb = adjacentRatioProb + adjacentUpdatedProb;
+//				const auto tmpRatio = this->CalculateRatio(tmpRatioDist, tmpRatioProb);
+//				if(tmpRatio < bestRatio)
+//				{
+//					bestRatio = tmpRatio;
+//					bestRatioDist = tmpRatioDist;
+//					bestRatioProb = tmpRatioProb;
+//				}
+
+//				// Store value to check whether adjacent dist can be improved with new curDist later
+//				storedPositions.push_back(POS_DATA<RATIO_DATA>(adjacentPos, RATIO_DATA(adjacentRatio, adjacentRatioDist, adjacentRatioProb)));
+//			}
+//		}
+
+//		// Check all stored positions to see which can be improved with new best value
+//		if(bestRatio < r_curRatio)
+//		{
+//			for(const auto &curStoredPos : storedPositions)
+//			{
+//				// TODO: Maybe save UpdatedOriginalMap.GetPixel(curStoredPos.Position) earlier for faster access
+//				if(this->CalculateRatio(bestRatioDist+GetMovementCost(curPos, curStoredPos.Position), bestRatioProb+UpdatedOriginalMap.GetPixel(curStoredPos.Position)) < curStoredPos.Value.Ratio)
+//					nextPositionsToCheck.push(curStoredPos.Position);
+//			}
+//		}
+
+//		// Clear saved data
+//		storedPositions.clear();
+
+//		// Update curProb with best new possible value
+//		r_curRatio = bestRatio;
+//		r_curRatioDist = bestRatioDist;
+//		r_curRatioProb = bestRatioProb;
+
+//		nextPositionsToCheck.pop();
+//	}
+//}
+
+//void MonteCarloDStarMaps::UpdateRatioMapToTarget(const OGM_LOG_MAP_TYPE &UpdatedOriginalMap, const std::vector<POS_2D> &UpdatedValues, const POS_2D &TargetPos, Map2D<OGM_LOG_TYPE> &RatioMap, Map2D<MOVE_DIST_TYPE> &RatioDistMap, Map2D<OGM_LOG_TYPE> &RatioProbMap)
+//{
+//	// Set all updated values
+//	std::queue<POS_2D> nextPositionsToCheck;
+
+//	for(const auto &curUpdate : UpdatedValues)
+//	{
+//		// Check if map origin was updated
+//		if(curUpdate == TargetPos)
+//		{
+//			// In this case, simply reset map as everything will change
+//			this->ResetRatioMapToTarget(UpdatedOriginalMap, TargetPos, RatioMap, RatioDistMap, RatioProbMap);
+
+//			return;
+//		}
+
+//		// Add position to queue
+//		nextPositionsToCheck.push(curUpdate);
+//	}
+
+//	// Vector to store positions that should be checked next
+//	std::vector<POS_DATA<RATIO_DATA>> storedPositions;
+
+//	while(!nextPositionsToCheck.empty())
+//	{
+//		const auto &curPos = nextPositionsToCheck.front();
+//		auto &r_curRatio = RatioMap.GetPixelR(curPos);
+//		auto &r_curRatioDist = RatioDistMap.GetPixelR(curPos);
+//		auto &r_curRatioProb = RatioProbMap.GetPixelR(curPos);
+
+//		const auto curUpdatedProb = UpdatedOriginalMap.GetPixel(curPos);
+
+//		auto bestRatio = GetInfiniteVal<OGM_LOG_TYPE>();
+//		auto bestRatioDist = GetInfiniteVal<MOVE_DIST_TYPE>();
+//		auto bestRatioProb = GetInfiniteVal<OGM_LOG_TYPE>();
+//		for(const auto navOption : NavigationOptions)
+//		{
+//			// Get adjacent positions
+//			const auto adjacentPos = curPos + navOption;
+//			const auto movementCost = GetMovementCost(curPos, adjacentPos);
+
+//			// Check that pos is in map
+//			if(!RatioMap.IsInMap(adjacentPos))
+//				continue;
+
+//			auto adjacentRatio = RatioMap.GetPixel(adjacentPos);
+//			auto adjacentRatioDist = RatioDistMap.GetPixel(adjacentPos);
+//			auto adjacentRatioProb = RatioProbMap.GetPixel(adjacentPos);
+
+//			//const auto adjacentUpdatedProb = UpdatedOriginalMap.GetPixel(adjacentPos);
+
+//			// Check if this position is dependent on old value
+//			//if(adjacentRatio >= this->CalculateRatio(r_curRatioDist+movementCost, r_curRatioProb+adjacentUpdatedProb))
+//			if(adjacentRatio > r_curRatio)
+//			{
+//				// Add adjacent distance to positions to check
+//				nextPositionsToCheck.push(adjacentPos);
+//			}
+//			else
+//			{
+//				// Store best probability and current position + value
+//				const auto tmpRatioDist = adjacentRatioDist+movementCost;
+//				const auto tmpRatioProb = adjacentRatioProb + curUpdatedProb;
+//				const auto tmpRatio = this->CalculateRatio(tmpRatioDist, tmpRatioProb);
+//				if(tmpRatio < bestRatio)
+//				{
+//					bestRatio = tmpRatio;
+//					bestRatioDist = tmpRatioDist;
+//					bestRatioProb = tmpRatioProb;
+//				}
+
+//				// Store value to check whether adjacent dist can be improved with new curDist later
+//				storedPositions.push_back(POS_DATA<RATIO_DATA>(adjacentPos, RATIO_DATA(adjacentRatio, adjacentRatioDist, adjacentRatioProb)));
+//			}
+//		}
+
+//		// Check all stored positions to see which can be improved with new best value
+//		if(bestRatio < r_curRatio)
+//		{
+//			for(const auto &curStoredPos : storedPositions)
+//			{
+//				// TODO: Maybe save UpdatedOriginalMap.GetPixel(curStoredPos.Position) earlier for faster access
+//				if(this->CalculateRatio(bestRatioDist+GetMovementCost(curPos, curStoredPos.Position), bestRatioProb+UpdatedOriginalMap.GetPixel(curStoredPos.Position)) < curStoredPos.Value.Ratio)
+//					nextPositionsToCheck.push(curStoredPos.Position);
+//			}
+//		}
+
+//		// Clear saved data
+//		storedPositions.clear();
+
+//		// Update curProb with best new possible value
+//		r_curRatio = bestRatio;
+//		r_curRatioDist = bestRatioDist;
+//		r_curRatioProb = bestRatioProb;
+
+//		nextPositionsToCheck.pop();
+//	}
+//}
 
 OGM_LOG_TYPE MonteCarloDStarMaps::CalculateRatio(const MOVE_DIST_TYPE Dist, const OGM_LOG_TYPE LogValueFromMaps) const
 {

@@ -252,6 +252,8 @@ bool QuadDStarMaps::DivideQuad(const OGM_LOG_MAP_TYPE &OriginalMap, const std::v
 	}
 	else
 		this->_StartMapsSynced = false;		// Maps are no longer synced
+
+	return retVal;
 }
 
 const MonteCarloDStarMaps &QuadDStarMaps::UpdateDStarMaps(const OGM_LOG_MAP_TYPE &OriginalMap, const std::vector<POS_2D> &UpdatedPositions, const POS_2D &BotPosition, bool UpdateDStarDestMaps, bool UpdateDStarStartMaps)

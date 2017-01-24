@@ -105,6 +105,55 @@ TreeNode<T> *TreeNode<T>::AddChild(T &&NewData)
 }
 
 template<class T>
+TreeNode<T> *TreeNode<T>::AddChild(TreeNode<T> &&ChildNode)
+{
+	ChildNode.RemoveAndSetAsRoot();
+	ChildNode._Parent = this;
+
+	this->_Children.push_back(std::move(ChildNode));
+
+	this->ResetChildPointersSingle();
+
+	return &(this->_Children.back());
+}
+
+template<class T>
+std::unique_ptr<TreeNode<T>> TreeNode<T>::RemoveAndSetAsRoot()
+{
+	if(this->_Parent == nullptr)
+		return std::unique_ptr<TreeNode<T>>(this);
+
+	auto *pParent = this->_Parent;
+
+	std::unique_ptr<TreeNode<T>> pTmpPointer(new TreeNode<T>(std::move(*this)));
+
+	auto childIterator = pParent->_Children.begin();
+	childIterator += this-&(*childIterator);
+	pParent->_Children.erase(childIterator);
+
+	pParent->ResetChildPointersSingle();
+	pTmpPointer->ResetChildPointersSingle();
+
+	pTmpPointer->_Parent = nullptr;
+	return pTmpPointer;
+}
+
+template<class T>
+void TreeNode<T>::RemoveChildOutOfTree(const CHILD_ID &ID)
+{
+	TreeNode<T> *pChild = &this->_Children.at(ID);
+
+	for(auto &curChildsChild : pChild->_Children)
+	{
+		this->_Children.push_back(std::move(curChildsChild));
+	}
+
+	this->_Children.erase(this->_Children.begin()+ID);
+
+	this->ResetChildPointersSingle();
+}
+
+template<class T>
 TreeNode<T> *TreeNode<T>::InsertChild(const T &NewData)
 {
 	// Move children to temporary storage

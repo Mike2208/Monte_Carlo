@@ -242,6 +242,37 @@ bool QuadMap::DivideQuad(const ID QuadID)
 	if(!newTopLeftQuad)
 		this->_IDData.erase(this->_IDData.begin()+newIDData[TOP_LEFT_QUAD].QuadID);
 
+	// Add new adjacent quads
+	if(newTopRightQuad)
+	{
+		// If all quads created
+		newIDData[BOTTOM_LEFT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[TOP_LEFT_QUAD].QuadID);
+		newIDData[BOTTOM_LEFT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[BOTTOM_RIGHT_QUAD].QuadID);
+
+		newIDData[TOP_LEFT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[BOTTOM_LEFT_QUAD].QuadID);
+		newIDData[TOP_LEFT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[TOP_RIGHT_QUAD].QuadID);
+
+		newIDData[BOTTOM_RIGHT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[BOTTOM_LEFT_QUAD].QuadID);
+		newIDData[BOTTOM_RIGHT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[TOP_RIGHT_QUAD].QuadID);
+
+		newIDData[TOP_RIGHT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[TOP_LEFT_QUAD].QuadID);
+		newIDData[TOP_RIGHT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[BOTTOM_RIGHT_QUAD].QuadID);
+	}
+	else if(newTopLeftQuad)
+	{
+		// If only top quad created
+		newIDData[BOTTOM_LEFT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[TOP_LEFT_QUAD].QuadID);
+
+		newIDData[TOP_LEFT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[BOTTOM_LEFT_QUAD].QuadID);
+	}
+	else
+	{
+		// If only right quad
+		newIDData[BOTTOM_LEFT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[BOTTOM_RIGHT_QUAD].QuadID);
+
+		newIDData[BOTTOM_RIGHT_QUAD].QuadData->AdjacentIDs.push_back(newIDData[BOTTOM_LEFT_QUAD].QuadID);
+	}
+
 	return true;
 }
 

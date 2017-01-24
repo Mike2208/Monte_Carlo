@@ -6,7 +6,7 @@
  */
 
 #include "standard_definitions.h"
-#include "monte_carlo_option1.h"
+#include "monte_carlo_option2.h"
 #include "png_convert_image_to_ogm.h"
 
 #include "graph_class.h"

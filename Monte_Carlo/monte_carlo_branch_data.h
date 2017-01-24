@@ -12,7 +12,7 @@
 
 #include "map_2d.h"
 #include "occupancy_grid_map.h"
-#include "d_star_map.h"
+#include "quad_d_star_maps.h"
 
 #include <vector>
 
@@ -23,11 +23,11 @@ class MonteCarloBranchData
 		typedef OGM_LOG_TYPE	LOG_MAP_TYPE;
 
 	public:
-		//MonteCarloBranchData() = default;
+		MonteCarloBranchData(const POS_2D_TYPE MapWidth, const POS_2D_TYPE MapHeight, std::vector<MonteCarloBranchData> &_PrevBranches) : DStarCostMap(MapWidth, MapHeight), PrevBranches(&_PrevBranches) {}
 
 		void Reset();
 
-		void SetMonteCarloObjectives(const OccupancyGridMap &Map, const POS_2D &Destination);
+		void SetMonteCarloObjectives(const std::vector<OccupancyGridMap> &Maps, const POS_2D &Destination);
 
 		void ResetBranchDataToRoot(const MONTE_CARLO_TREE_CLASS &Tree);
 
@@ -45,17 +45,37 @@ class MonteCarloBranchData
 		std::vector<POS_2D>	PathTaken;					// Path of robot to reach this node
 		PATH_ITERATOR		FirstPosAfterObservation;	// Stores where the last observation took place
 
-		const Map2D<OGM_CELL_TYPE>	*pOGMap;		// Occupancy Grid Map
-		Map2D<LOG_MAP_TYPE>			LogMap;			// Converted Occupancy Grid Map to log values for D* algorithm ( log values let us add probabilities instead of multiplying )
+		const std::vector<OccupancyGridMap>	*pOGMaps;		// Occupancy Grid Map
+		std::vector<float> MapCertainties;					// Map certainties
+		std::vector<float> MapCertaintiesNormalized;		// Normalized Map certainties
 
-		DStarMap<LOG_MAP_TYPE>		DStarCostMap;	// Used to store D* calculations
+		Map2D<LOG_MAP_TYPE>			CertaintyLogMap;			// Converted Occupancy Grid Map to log values for D* algorithm ( log values let us add probabilities instead of multiplying )
+
+		QuadDStarMaps				DStarCostMap;	// Used to store D* calculations
 
 		Map2D<VISIT_COUNTER_TYPE>	NumVisitsMap;	// Keeps track of visits to map position
 
+		float	Constant = 1;							// Explore Parameter
+
+		MonteCarloBranchData(const MonteCarloBranchData &S) = default;
+		MonteCarloBranchData(MonteCarloBranchData &&S) = default;
+		MonteCarloBranchData &operator=(const MonteCarloBranchData &S) = default;
+		MonteCarloBranchData &operator=(MonteCarloBranchData &&S) = default;
+		~MonteCarloBranchData() = default;
+
+		void UpdateCostMap();
+
 	private:
+
+		void UpdateMapCertainties(const float PrevOccupancyProb, const bool PosOccupied);
+		void UpdateTotalMap();
 
 		void UpdateBranchData(const MONTE_CARLO_NODE &NextNode);	// Move down towrds leaves
 		void RevertBranchData(const MONTE_CARLO_NODE &PrevNode);		// Move up towards root
+
+		std::vector<MonteCarloBranchData>	*PrevBranches;				// Previous data;
+
+		std::vector<POS_2D> PosToUpdate;
 };
 
 #endif // MONTE_CARLO_BRANCH_DATA_H

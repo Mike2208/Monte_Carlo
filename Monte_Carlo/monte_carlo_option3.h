@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "check_conditions.h"
 #include "standard_definitions.h"
 #include "district_map_storage.h"
 #include "tree_class.h"
@@ -19,6 +20,7 @@
 #include "d_star_map.h"
 #include "quad_map.h"
 #include "quad_d_star_maps.h"
+#include "policy_data.h"
 
 namespace MONTE_CARLO_OPTION3
 {
@@ -90,6 +92,8 @@ namespace MONTE_CARLO_OPTION3
 
 	struct NODE_EXTRA_DATA
 	{
+			NODE_ACTION	Action;				// Action/Result of this node
+
 			// Access extra data
 			const NODE_EXTRA_DATA_OBJECT &GetExtraData() const;
 			NODE_EXTRA_DATA_OBJECT &GetExtraData();
@@ -112,6 +116,9 @@ namespace MONTE_CARLO_OPTION3
 			NODE_EXTRA_DATA(NODE_EXTRA_DATA &&S) = default;
 			NODE_EXTRA_DATA &operator=(NODE_EXTRA_DATA &&S) = default;
 
+			// Compare operator
+			bool operator==(const NODE_EXTRA_DATA &S) const;
+
 		private:
 
 			std::unique_ptr<NODE_EXTRA_DATA_OBJECT> _pExtraData = nullptr;
@@ -126,15 +133,15 @@ namespace MONTE_CARLO_OPTION3
 	typedef unsigned int NUM_VISIT_TYPE;
 	struct NODE_DATA : public NODE_EXTRA_DATA
 	{
-			NODE_ACTION	Action;				// Action/Result of this node
-
 			NODE_VALUE_TYPE	Value = 0;				// Value of this node (used during selection phase)
 
 			EXPECTED_LENGTH_TYPE	ExpectedLength;	// Expected length to dest from here
 			CERTAINTY_TYPE			Certainty;		// Certainty of reaching dest from here
 
 			EXPECTED_LENGTH_TYPE	ExpectedLengthPolicy;		// Expected Length until policy completion
-			EXPECTED_LENGTH_TYPE	CertaintyPolicy;			// Certainty that policy will be completed
+			CERTAINTY_TYPE			CertaintyPolicy;			// Certainty that policy will be completed
+
+			CERTAINTY_TYPE			MapCertainty = 0;			// Certainty of maps
 
 			COST_TYPE		ExpectedCost;	// Cost to reach dest from here
 			NUM_VISIT_TYPE	NumVisits = 1;	// Number of times this node was visited by MCTS
@@ -337,7 +344,9 @@ namespace MONTE_CARLO_OPTION3
 		typedef PROB_MAP::CELL_TYPE PROB_CELL_TYPE;
 		typedef PROB_MAP PROBABILITY_MAP;
 
-		const OGM_MAP *pOriginalMap;				// Original Map
+		const std::vector<OGM_MAP> *pOriginalMaps;				// Original Map
+		std::vector<CERTAINTY_TYPE> MapCertainties;					// Map certainties
+		std::vector<CERTAINTY_TYPE> MapCertaintiesNormalized;		// Normalized Map certainties
 
 		//LOG_MAP				CurLogData;				// Current Map (in log form) after branch operations have been executed
 		LOG_MAP				CurCertaintyLogData;	// Current Map (in reverse log form) after branch operations have been executed
@@ -375,10 +384,10 @@ namespace MONTE_CARLO_OPTION3
 		void SyncDStarMaps(const bool SyncDestMaps = true, const bool SyncStartMaps = true);							// Sync up D* maps with path data
 		void SimulateObserveObservation(const POS_2D &Position, const OGM_DISCRETE_TYPE CellOccupied);		// Simulate whether a cell is occupied or free
 
-		void Init(const OGM_MAP &OriginalMap, const POS_2D &Start, const POS_2D &Destination, TREE_CLASS &TreeData);
+		void Init(const std::vector<OGM_MAP> &OriginalMaps, const POS_2D &Start, const POS_2D &Destination, TREE_CLASS &TreeData);
 
-		CERTAINTY_TYPE MinPathCertainty = 0.5;		// Certainty threshold after which obstacle is said to be detected
-		EXPECTED_LENGTH_TYPE MinPathLength = 20;		// Length threshold after which obstacle is said to be detected
+		//CERTAINTY_TYPE MinPathCertainty = 0.5;		// Certainty threshold after which obstacle is said to be detected
+		//EXPECTED_LENGTH_TYPE MinPathLength = 20;		// Length threshold after which obstacle is said to be detected
 
 		EXPECTED_LENGTH_TYPE ObstacleLength = 1;	// Length of obstacle that should be created (perpendicular to bot direction)
 		EXPECTED_LENGTH_TYPE ObstacleHeight = 1;	// Height of obstacle that should be created (parallel to bot direction)
@@ -391,16 +400,20 @@ namespace MONTE_CARLO_OPTION3
 		COST_TYPE MoveActionCost = 1;				// Cost of a move action
 		COST_TYPE ObserveActionCost = 1;			// Cost of an observe action
 
-		BRANCH_DATA(const OGM_MAP &MapData, RobotData &_RobotData, MCPathStorage *const PathStorage);
+		BRANCH_DATA(const std::vector<OGM_MAP> &MapData, RobotData &_RobotData, MCPathStorage *const PathStorage);
 		BRANCH_DATA(const BRANCH_DATA &S) = default;
 		BRANCH_DATA(BRANCH_DATA &&S) = default;
 		BRANCH_DATA &operator=(const BRANCH_DATA &S) = default;
 		BRANCH_DATA &operator=(BRANCH_DATA &&S) = default;
 
+		void SetMapPositionDiscrete(const POS_2D &Position, const bool &NewValue);		// Set a map position to either 1 or 0
+
 		private:
 
+			void UpdateMapCertainties(const CERTAINTY_TYPE PrevOccupancyProb, const bool PosOccupied);
+			void UpdateTotalMap();
+
 			void SetMapPositionFromCertaintyLogValue(const POS_2D &Position, const OGM_LOG_TYPE &CertaintyValue);			// Set a map position to either 1 or 0
-			void SetMapPositionDiscrete(const POS_2D &Position, const bool &NewValue);		// Set a map position to either 1 or 0
 
 			//void UpdateBranchData(const TREE_NODE &NextNode);	// Move down towards leaves
 			void RevertBranchDataSimple();						// Simple move up, can't be reversed!
@@ -434,23 +447,33 @@ class MonteCarloOption3
 		typedef MONTE_CARLO_OPTION3::NUM_VISIT_TYPE		NUM_VISITS_TYPE;
 		typedef MONTE_CARLO_OPTION3::DISTRICT_STORAGE	DISTRICT_STORAGE;
 	public:
-		MonteCarloOption3(const OccupancyGridMap &Map, RobotData _RobotData, const MC_PATH_STORAGE::PATH_ID &MaxStoredPaths);
+		MonteCarloOption3(const std::vector<OccupancyGridMap> &Maps, RobotData _RobotData, const MC_PATH_STORAGE::PATH_ID &MaxStoredPaths);
 
-		int PerformMonteCarlo(const POS_2D &StartPos, const POS_2D &Destination);
+		int PerformMonteCarlo(const POS_2D &StartPos, const POS_2D &Destination, const NODE_VALUE_TYPE &Constant, const CheckConditions &StopConditions, const char *const PolicyFileName, PolicyData &NewPolicy);
 
 		int Selection();
 		int Expansion();
 		int Simulation();
 		int Backtrack();
 
+		PolicyData CreatePolicyFromTree(const char *FileName);
+		void CreatePolicyFromTreeStep( BRANCH_DATA &Branch, PolicyData::TREE_NODE &PolicyNode );
+
 	private:
 		TREE_CLASS	_MCTree;		// Monte Carlo Tree
 		BRANCH_DATA	_Branch;		// Data of current branch
+		BRANCH_DATA _StartBranch;	// Branch at root
 		MCPathStorage _PathStorage;	// Path Storage
 
 		void SimulateCurrentLeaf();
 		void SimulateBranch(BRANCH_DATA &BranchData);
-		void Backtrack_Step();
+		void Backtrack_Step(BRANCH_DATA &BranchData);
+
+		int PerformLeafExpansion(BRANCH_DATA &BranchData);
+		int InsertSkippedCell(BRANCH_DATA &BranchData);
+		int ExpandSkippedCell(BRANCH_DATA &BranchData, std::unique_ptr<TREE_NODE> &ChildNode, const POS_2D &ChildPos, bool SkipPreviousPath);
+
+		const POS_2D *NextPosOfNode(const TREE_NODE &Node);
 
 		// Extra functions
 		//int CalculatePath(const BRANCH_DATA &BranchData, const POS_2D &StartPos, const POS_2D &Destination, PATH_DATA *const PathTaken, EXPECTED_LENGTH_TYPE *const ExpectedLength, CERTAINTY_TYPE *const Certainty, COST_TYPE *const Cost);		// Calculate path taken
@@ -458,7 +481,8 @@ class MonteCarloOption3
 		NODE_EXTRA_DATA_OBSTACLE &&CreateObstacleAtPos(const BRANCH_DATA &BranchData, const POS_2D &ObstaclePosition, const POS_2D &BotPosition, const EXPECTED_LENGTH_TYPE &ObstacleLength, const EXPECTED_LENGTH_TYPE &ObstacleHeight, const CERTAINTY_TYPE &MinObstacleCertainty, const CERTAINTY_TYPE &MaxObstacleCertainty);				// Create an obstacle
 		//void CalculateMoveNodeData(const BRANCH_DATA &BranchData, NODE_DATA &NodeToCalculate);
 
-		std::vector<NODE_DATA> ExpandCurrentNode(const BRANCH_DATA &BranchData, const POS_2D &CurPos, const POS_2D &NextPos);			// Create node data for adjacent cells
+		std::vector<NODE_DATA> ExpandCurrentNode(const BRANCH_DATA &BranchData, const POS_2D &CurPos, const POS_2D &NextPos, bool &NextPosReached);			// Create node data for adjacent cells
+		std::vector<NODE_DATA> ExpandCurrentNode(const BRANCH_DATA &BranchData, const POS_2D &CurPos);			// Create node data for adjacent cells
 		void ExpandScanNode(TREE_NODE &ScanNode);
 
 		//void RunSimulation(const POS_2D &BotPos, const POS_2D &Destination, const BRANCH_DATA &MapData, const NUM_VISITS_TYPE &NumParentsVisit, NODE_DATA &Result);		// Run the simulation from the given position, then save the data in node data

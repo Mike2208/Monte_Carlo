@@ -72,8 +72,8 @@ namespace TEST_FUNCTIONS
 		OccupancyGridMap testMap;
 		testMap.SetMap(tMap);
 
-		MonteCarloOption1 test;
-		test.PerformMonteCarlo(testMap, POS_2D(0,0), POS_2D(2,2));
+		//MonteCarloOption2 test(std::vector<OccupancyGridMap>{testMap});
+		//test.PerformMonteCarlo(POS_2D(0,0), POS_2D(2,2), 1);
 
 		std::cout.rdbuf(coutbuf); //reset to standard output again
 
@@ -98,14 +98,14 @@ namespace TEST_FUNCTIONS
 
 		testMaps.GetOGMap().PrintMap("/tmp/tmp.pgm");
 
-		MonteCarloOption1 testMonteCarlo;
-		testMonteCarlo.PerformMonteCarlo(testMaps.GetOGMap(), startPos, destPos);
+		//MonteCarloOption2 testMonteCarlo(std::vector<OccupancyGridMap>{testMaps.GetOGMapR()});
+		//testMonteCarlo.PerformMonteCarlo(startPos, destPos, 1);
 
-		PolicyTree testPolicy;
-		PolicyMonteCarloConverter::ConvertMonteCarloToPolicyTree(testMonteCarlo.GetTree(), testPolicy);
+		//PolicyTree testPolicy;
+		//PolicyMonteCarloConverter::ConvertMonteCarloToPolicyTree(testMonteCarlo.GetTree(), testPolicy);
 
-		class TestPolicy policyTester;
-		policyTester.PerformTest(testPolicy, startPos, destPos, testMaps.GetRealMap());
+		//class TestPolicy policyTester;
+		//policyTester.PerformTest(testPolicy, startPos, destPos, testMaps.GetRealMap());
 
 		return 1;
 	}
